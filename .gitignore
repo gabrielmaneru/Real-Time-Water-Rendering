@@ -1,0 +1,8 @@
+
+*.user
+
+\.vs/
+
+*.db
+
+*.filters
