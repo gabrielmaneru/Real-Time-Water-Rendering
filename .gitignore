@@ -6,3 +6,23 @@
 *.db
 
 *.filters
+
+*.pdb
+
+*.ilk
+
+*.exe
+
+*.iobj
+
+*.ipdb
+
+*.idb
+
+*.lastbuildstate
+
+*.tlog
+
+*.obj
+
+*.log
