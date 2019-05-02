@@ -3,7 +3,7 @@
 namespace session
 {
 	extern bool end;
-	void init();
+	bool init();
 	void update();
 	void shutdown();
 }

@@ -3,10 +3,11 @@
 #include <graphics/renderer.h>
 
 bool session::end{false};
-void session::init()
+bool session::init()
 {
-	window_manager->init();
-	renderer->init();
+	if (!window_manager->init()) return false;
+	if (!renderer->init()) return false;
+	return true;
 }
 
 void session::update()
