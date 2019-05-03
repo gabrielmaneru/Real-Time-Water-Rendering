@@ -8,63 +8,7 @@
 #include <algorithm>
 
 c_renderer* renderer = new c_renderer;
-constexpr int MAX_STEPS = 100;
-constexpr float MAX_DIST = 100.f;
-constexpr float SURF_DIST = .01f;
-float c_renderer::get_dist(vec3 p)
-{
-	float dist{ MAX_DIST };
-	for (auto& pObj : scene->m_objects)
-	{
-		float newdist = dynamic_cast<BaseShape*>(pObj)->get_distance(p);
-		if (dist == MAX_DIST)
-			dist = newdist;
-		else
-			dist = glm::min<float>(dist, newdist);
-	}
-	return dist;
-}
-float c_renderer::ray_march(vec3 cam_eye, vec3 cam_dir)
-{
-	float dO = 0.0f;
-	for (int i = 0; i < MAX_STEPS; i++)
-	{
-		vec3 p = cam_eye + cam_dir * dO;
-		float ds = get_dist(p);
-		if (ds < SURF_DIST)
-			break;
 
-		dO += ds;
-		if (dO >= MAX_DIST)
-			break;
-	}
-	return dO;
-}
-vec3 c_renderer::get_normal(vec3 p)
-{
-	float d = get_dist(p);
-	vec3 n = d - vec3{
-		get_dist(p - vec3{.01f, .0f, .0f}),
-		get_dist(p - vec3{.0f, .01f, .0f}),
-		get_dist(p - vec3{.0f, .0f, .01f}),
-	};
-	if (glm::length2(n) == 0.0f)
-		return n;
-	return glm::normalize(n);
-}
-float c_renderer::get_light(vec3 p)
-{
-	vec3 lightPos{ 4, 5, 6 };
-	vec3 l = glm::normalize(lightPos - p);
-	vec3 n = get_normal(p);
-
-	float dif = glm::clamp(glm::dot(n, l), 0.0f, 1.0f);
-
-	float d = ray_march(p + n * SURF_DIST * 2.0f, l);
-	if (d < glm::length(lightPos - p))
-		dif *= 0.1f;
-	return dif;
-}
 bool c_renderer::init()
 {
 	if (gl3wInit())
@@ -77,15 +21,15 @@ bool c_renderer::init()
 	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 
 	//Load Programs
-	try { shader = new Shader_Program("resources/shaders/color.vert", "resources/shaders/color.frag"); }
+	try { ray_marching_shader = new Shader_Program("resources/shaders/raymarch.vert", "resources/shaders/raymarch.frag"); }
 	catch (const std::string & log) { std::cout << log; return false; }
 
 	//Load Resources
-	render_texture.setup(window_manager->get_width(), window_manager->get_height());
-	render_texture.clear({ 0.5f, 0.1f, 0.2f });
+	//render_texture.setup(window_manager->get_width(), window_manager->get_height());
+	//render_texture.clear({ 0.5f, 0.1f, 0.2f });
 	cam.eye = { 0.0f, 0.0f, 1.0f };
 	cam.target = { 0.0f, 0.0f, 0.0f };
-	cam.view_rect = { 0.0f, (float)render_texture.m_width, 0.0f, (float)render_texture.m_height };
+	cam.view_rect = { 0.0f, (float)window_manager->get_width(), 0.0f, (float)window_manager->get_height() };
 	model_texture.set_tr({ 0.0f, 0.0f }, { cam.view_rect.y, cam.view_rect.w });
 
 	//Load Meshes
@@ -157,39 +101,16 @@ void c_renderer::update()
 	// Camera Update
 	cam.update();
 
-	// Scene Draw
-	vec3 cam_eye{ 0.0f, 0.0f, 1.0f };
-	float fov = 90.0f;
-	float fov_ratio_h = fov / 90.0f;
-	float fov_ratio_v = fov_ratio_h * render_texture.m_height / render_texture.m_width;
-	
-	for (size_t y = 0; y < render_texture.m_height; ++y)
-		for (size_t x = 0; x < render_texture.m_width; ++x)
-		{
-			vec3 cam_dir{ 
-				map(x, (size_t)0, render_texture.m_width, -fov_ratio_h, fov_ratio_h),
-				map(y, (size_t)0, render_texture.m_height, -fov_ratio_v, fov_ratio_v),
-				-1.0f
-			};
-			cam_dir = glm::normalize(cam_dir);
-			float d = ray_march(cam_eye, cam_dir);
-			vec3 p = cam_eye + cam_dir * d;
-			vec3 col{ get_light(p) };
-			render_texture.set(x, y, col);
-		}
-
-	// Load Quad texture
-	render_texture.load();
-	
 	// Set shader
-	shader->use();
+	ray_marching_shader->use();
 
 	mat4 mvp = cam.proj * cam.view * model_texture.m_tr.get_model();
-	shader->set_uniform("MVP", mvp);
+	ray_marching_shader->set_uniform("MVP", mvp);
 
-	GL_CALL(glActiveTexture(GL_TEXTURE0));
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, render_texture.m_id));
-	GL_CALL(glUniform1i(render_texture.m_id, 0));
+	// Set Scene
+	static float deltaTime = 0.0f;
+	ray_marching_shader->set_uniform("dt", deltaTime);
+	deltaTime += 1 / 100.0f;
 
 	// Bind mesh
 	GL_CALL(glBindVertexArray(quad.vao));

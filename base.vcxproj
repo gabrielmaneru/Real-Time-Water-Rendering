@@ -549,6 +549,10 @@
     <None Include="dependencies\include\glm\gtx\vector_angle.inl" />
     <None Include="dependencies\include\glm\gtx\vector_query.inl" />
     <None Include="dependencies\include\glm\gtx\wrap.inl" />
+    <None Include="resources\shaders\raymarch.frag" />
+    <None Include="resources\shaders\raymarch.vert" />
+    <None Include="resources\shaders\texture.frag" />
+    <None Include="resources\shaders\texture.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
