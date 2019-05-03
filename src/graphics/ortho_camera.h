@@ -10,6 +10,6 @@ struct ortho_camera
 	vec3 target;
 	vec3 up{ 0.0f, 1.0f, 0.0f };
 
-	mat4 proj;
-	mat4 view;
+	mat4 proj{};
+	mat4 view{};
 };

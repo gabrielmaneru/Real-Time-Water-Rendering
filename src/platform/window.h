@@ -14,4 +14,11 @@ struct window
 
 	static std::unordered_set<int> m_updated_keys;
 	static int m_keyboard[keyboard_size];
+	static bool mouse_but_left_pressed;
+	static bool mouse_but_left_triggered;
+	static bool mouse_but_right_pressed;
+	static bool mouse_but_right_triggered;
+	static float mouse_offset[2];
+	static int stat[2];
+	friend class c_editor;
 };

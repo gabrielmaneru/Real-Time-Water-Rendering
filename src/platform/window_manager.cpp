@@ -45,12 +45,12 @@ int c_window_manager::get_height()
 
 bool c_window_manager::is_key_up(int key)
 {
-	return m_window->m_keyboard[key] == 0;
+	return m_window->m_keyboard[key-1] == 0;
 }
 
 bool c_window_manager::is_key_down(int key)
 {
-	return m_window->m_keyboard[key] == 1;
+	return m_window->m_keyboard[key-1] == 1;
 }
 
 bool c_window_manager::is_key_triggered(int key)

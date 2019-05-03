@@ -5,7 +5,14 @@ out vec4 out_color;
 const int MAX_STEPS = 100;
 const float MAX_DIST = 100.;
 const float SURF_DIST = .001;
-uniform  float dt;
+
+uniform int highlight_factor;
+uniform float dt;
+uniform float blend_factor;
+uniform vec3 eye;
+uniform vec3 vec_front;
+uniform vec3 vec_right;
+uniform vec3 vec_up;
 
 float coef(float value, float min_, float max_)
 {
@@ -70,8 +77,10 @@ float sdPlane(vec3 p, float h)
 
 float min_smooth(float a, float b)
 {
-	float k = 2.0;
-	float h = max(k-abs(a-b), 0)/k;
+	float k = blend_factor;
+	float h = 0.0f;
+	if(k > 0.0f)
+		h = max(k-abs(a-b), 0)/k;
 	return min(a,b) - h*h*h*k/6.0;
 }
 
@@ -91,7 +100,7 @@ float GetDist(vec3 p, out vec3 color) {
     
     float d1 = min_smooth(sd, td);
 	color = map(d1, sd, td, vec3(1., .0, .0), vec3(.0, 1., .0));
-
+	
     float d2 = min_smooth(d1, bd);
     color = map(d2, d1, bd, color, vec3(.0, .0, 1.));
     return d2;
@@ -109,6 +118,17 @@ float RayMarch(vec3 ro, vec3 rd) {
     
     return dO;
 }
+float RayMarch(vec3 ro, vec3 rd, out int steps) {
+	float dO=0.;
+    
+    for(steps=0; steps<MAX_STEPS; steps++) {
+    	vec3 p = ro + rd*dO;
+        float dS = GetDist(p);
+        dO += dS;
+        if(dO>MAX_DIST || dS<SURF_DIST) break;
+    }
+    return dO;
+}
 
 vec3 GetNormal(vec3 p) {
 	float d = GetDist(p);
@@ -123,30 +143,29 @@ vec3 GetNormal(vec3 p) {
 }
 
 vec3 GetLight(vec3 p) {
-    vec3 lightPos = vec3(3, 3, 3);
+    vec3 lightPos = vec3(3, 3, -3);
     vec3 l = normalize(lightPos-p);
     vec3 n = GetNormal(p);
     
 	vec3 color;
 	GetDist(p, color);
-    color *= clamp(dot(n, l), 0., 1.);
+    color *= clamp(dot(n, l), 0.0, 1.);
     float d = RayMarch(p+n*SURF_DIST*2., l);
-    if(d<length(lightPos-p))
-		color *= .1;
     return color;
 }
 
 void main()
 {
-	vec3 ro = vec3(0, 2, 0);
+	vec3 ro = eye;
 	float rat = 1080./1920.;
-    vec3 rd = normalize(vec3(map(var_uv.x, 0., 1., -1, 1), map(var_uv.y, 0., 1., -rat, rat), 1));
-
-    float d = RayMarch(ro, rd);
+    vec3 rd = vec_front + map(var_uv.x, 0., 1., -vec_right, vec_right) + map(var_uv.y, 0., 1., -vec_up, vec_up);
+	int steps;
+    float d = RayMarch(ro, rd, steps);
     
     vec3 p = ro + rd * d;
     
     vec3 dif = GetLight(p);
-
+	if(steps > highlight_factor)
+		dif = vec3(1.0f);
 	out_color = vec4(dif, 1.0f);
 }

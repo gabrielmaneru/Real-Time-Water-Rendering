@@ -1,13 +1,15 @@
 #pragma once
 
 struct window;
+
 class c_window_manager
 {
-	window * m_window{ nullptr };
 public:
 	bool init();
 	void update();
 	void shutdown();
+
+	window * m_window{ nullptr };
 
 	int get_width();
 	int get_height();

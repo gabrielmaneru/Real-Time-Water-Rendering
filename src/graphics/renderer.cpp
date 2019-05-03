@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "gl_error.h"
 #include <platform/window_manager.h>
+#include <platform/window.h>
 #include <scene/scene.h>
 #include <scene/shape.h>
 #include <GL/gl3w.h>
@@ -31,6 +32,11 @@ bool c_renderer::init()
 	cam.target = { 0.0f, 0.0f, 0.0f };
 	cam.view_rect = { 0.0f, (float)window_manager->get_width(), 0.0f, (float)window_manager->get_height() };
 	model_texture.set_tr({ 0.0f, 0.0f }, { cam.view_rect.y, cam.view_rect.w });
+
+	scene_cam.m_eye = { 0.0f, 2.0f, -1.0f };
+	scene_cam.m_yaw = 90.0f;
+	scene_cam.m_pitch = 0.0f;
+	scene_cam.update_cam_vectors();
 
 	//Load Meshes
 	{ // Load Quad
@@ -100,6 +106,7 @@ void c_renderer::update()
 
 	// Camera Update
 	cam.update();
+	scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
 
 	// Set shader
 	ray_marching_shader->use();
@@ -111,6 +118,12 @@ void c_renderer::update()
 	static float deltaTime = 0.0f;
 	ray_marching_shader->set_uniform("dt", deltaTime);
 	deltaTime += 1 / 100.0f;
+	ray_marching_shader->set_uniform("eye", scene_cam.m_eye);
+	ray_marching_shader->set_uniform("vec_front", scene_cam.m_front);
+	ray_marching_shader->set_uniform("vec_right", scene_cam.m_right);
+	ray_marching_shader->set_uniform("vec_up", scene_cam.m_up);
+	ray_marching_shader->set_uniform("blend_factor", blendfactor);
+	ray_marching_shader->set_uniform("highlight_factor", highlightfactor);
 
 	// Bind mesh
 	GL_CALL(glBindVertexArray(quad.vao));
