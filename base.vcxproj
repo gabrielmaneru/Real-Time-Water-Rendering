@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -110,6 +110,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +150,8 @@
     <ClCompile Include="src\graphics\transform3d.cpp" />
     <ClCompile Include="src\platform\window.cpp" />
     <ClCompile Include="src\platform\window_manager.cpp" />
+    <ClCompile Include="src\scene\scene.cpp" />
+    <ClCompile Include="src\scene\shape.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\include\GLFW\glfw3.h" />
@@ -402,12 +405,16 @@
     <ClInclude Include="src\graphics\gl_error.h" />
     <ClInclude Include="src\graphics\ortho_camera.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
+    <ClInclude Include="src\graphics\renderable.h" />
     <ClInclude Include="src\graphics\renderer.h" />
     <ClInclude Include="src\graphics\shader_program.h" />
     <ClInclude Include="src\graphics\transform2d.h" />
     <ClInclude Include="src\graphics\transform3d.h" />
     <ClInclude Include="src\platform\window.h" />
     <ClInclude Include="src\platform\window_manager.h" />
+    <ClInclude Include="src\scene\scene_object.h" />
+    <ClInclude Include="src\scene\scene.h" />
+    <ClInclude Include="src\scene\shape.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dependencies\include\glm\detail\func_common.inl" />
