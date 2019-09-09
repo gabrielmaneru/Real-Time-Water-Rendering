@@ -581,13 +581,6 @@
     <None Include="resources\shaders\raymarch.vert" />
     <None Include="resources\shaders\texture.frag" />
   </ItemGroup>
-  <ItemGroup>
-    <Object Include="resources\meshes\cube.obj" />
-    <Object Include="resources\meshes\octohedron.obj" />
-    <Object Include="resources\meshes\quad.obj" />
-    <Object Include="resources\meshes\segment.obj" />
-    <Object Include="resources\meshes\sphere.obj" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
