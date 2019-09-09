@@ -54,14 +54,5 @@ void c_editor::draw_main_window()
 	ImGui::Begin("Hydraulic Erosion", nullptr, ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2{ 0.0f, 0.0f });
 
-	//if (ImGui::TreeNode("Camera"))
-	//{
-	//	ImGui::InputFloat3("Eye", &renderer->scene_cam.m_eye.x);
-	//	ImGui::InputFloat3("Front", &renderer->scene_cam.m_front.x);
-	//	ImGui::InputFloat3("Right", &renderer->scene_cam.m_right.x);
-	//	ImGui::InputFloat3("Up", &renderer->scene_cam.m_up.x);
-	//	ImGui::TreePop();
-	//}
-	renderer->m_generator.draw_gui();
 	ImGui::End();
 }

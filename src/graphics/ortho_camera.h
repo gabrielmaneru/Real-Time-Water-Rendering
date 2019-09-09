@@ -1,15 +1,14 @@
 #pragma once
-#include <glm/glm.h>
-struct ortho_camera
+#include "camera.h"
+class ortho_camera : public camera
 {
-	void update();
+public:
+	ortho_camera(vec3 eye=def_cam.eye,
+		vec3 front=def_cam.front,
+		vec3 up=def_cam.up,
+		vec4 view_rect=def_cam.viewrect);
+	void update()override;
 
-	vec4 view_rect;
-
-	vec3 eye{0.0f, 0.0f, 1.0f};
-	vec3 target{};
-	vec3 up{ 0.0f, 1.0f, 0.0f };
-
-	mat4 m_proj{};
-	mat4 m_view{};
+private:
+	vec4 m_view_rect;
 };

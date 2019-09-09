@@ -2,7 +2,11 @@
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <GLFW/glfw3.h>
-void vectorial_camera::update(float xOff, float yOff)
+
+vectorial_camera::vectorial_camera(vec3 eye, vec3 front, vec3 up, float yaw, float pitch)
+	:camera(eye, front, up), m_yaw(yaw), m_pitch(pitch) {}
+
+void vectorial_camera::update()
 {
 	constexpr float MOUSE_SENSITIVITY{ 0.2f };
 	constexpr float MOUSE_SPEED{ 0.01f };
@@ -26,10 +30,8 @@ void vectorial_camera::update(float xOff, float yOff)
 			m_eye -= m_up * speed;
 
 		// Apply Offset
-		xOff *= MOUSE_SENSITIVITY;
-		yOff *= MOUSE_SENSITIVITY;
-		m_yaw += xOff;
-		m_pitch += yOff;
+		m_yaw += window::mouse_offset[0] * MOUSE_SENSITIVITY;
+		m_pitch += window::mouse_offset[1] * MOUSE_SENSITIVITY;
 
 		// Check Bounds
 		if (m_pitch > 89.0f)
@@ -42,7 +44,7 @@ void vectorial_camera::update(float xOff, float yOff)
 
 	// Update Projection
 	float aspect = window_manager->get_width() / (float)window_manager->get_height();
-	m_proj = glm::perspective(m_fovY, aspect, m_near, m_far);
+	m_proj = glm::perspective(m_fov, aspect, m_near, m_far);
 }
 
 void vectorial_camera::update_cam_vectors()
@@ -52,19 +54,6 @@ void vectorial_camera::update_cam_vectors()
 	front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 	front.y = sin(glm::radians(m_pitch));
 	front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-	m_front = glm::normalize(front);
-
-	// Recompute Right and Up
-	m_right = glm::normalize(glm::cross(m_front, m_worldup));
-	m_up = glm::normalize(glm::cross(m_right, m_front));
-
-	// Update View
-	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
-}
-
-void vectorial_camera::update_cam_vectors(vec3 front)
-{
-	// Recompute Front
 	m_front = glm::normalize(front);
 
 	// Recompute Right and Up

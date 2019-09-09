@@ -40,13 +40,8 @@ bool c_renderer::init()
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
-	scene_cam.m_eye = { .0f, 0.4f, 0.4f };
-	scene_cam.m_yaw = -90.0f;
-	scene_cam.m_pitch = -40.0f;
-	scene_cam.update_cam_vectors();
-
-
-	ortho_cam.view_rect = {-1.0f, 1.0f, -1.0f, 1.0f};
+	// Setup Cameras
+	scene_cam.update();
 	ortho_cam.update();
 
 	return true;
@@ -58,14 +53,11 @@ void c_renderer::update()
 	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
+
 	// Camera Update
-	scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
+	scene_cam.update();
 
-	invert_cam.m_eye = vec3(scene_cam.m_eye.x, m_generator.m_water_height + glm::reflect(scene_cam.m_eye - vec3(0.0f, m_generator.m_water_height, 0.0f), {0.0f, 1.0f, 0.0f}).y, scene_cam.m_eye.z);
-	invert_cam.update_cam_vectors(glm::reflect(scene_cam.m_front, { 0.0f, 1.0f, 0.0f }));
-	mat4 m;
-	mat4 vp;
-
+	/*
 	switch (m_generator.step)
 	{
 	case s_select_noise_map:
@@ -222,6 +214,7 @@ void c_renderer::update()
 	default:
 		break;
 	}
+	*/
 }
 
 void c_renderer::shutdown()

@@ -10,9 +10,8 @@ class c_renderer
 	Shader_Program* texture_shader;
 
 	// Cameras
-	vectorial_camera scene_cam;
-	vectorial_camera invert_cam;
-	ortho_camera ortho_cam;
+	vectorial_camera scene_cam{};
+	ortho_camera ortho_cam{};
 
 	// Scene
 	std::vector<Mesh*> m_meshes;

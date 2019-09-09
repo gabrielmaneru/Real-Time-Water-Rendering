@@ -1,29 +1,24 @@
 #pragma once
-#include <glm/glm.h>
-
-struct vectorial_camera
+#include "camera.h"
+class vectorial_camera : public camera
 {
-	void update(float xOff, float yOff);
+public:
+	vectorial_camera(vec3 eye = def_cam.eye,
+		vec3 front = def_cam.front,
+		vec3 up = def_cam.up,
+		float yaw = def_cam.yaw,
+		float pitch = def_cam.pitch);
+	void update()override;
+
+	float m_fov{ glm::pi<float>() / 4 };
+	float m_near{ 0.01f };
+	float m_far{ 100.0f };
+
+private:
 	void update_cam_vectors();
-	void update_cam_vectors(vec3 front);
-
-	const float min_near = 0.0001f;
-	const float max_far = 1000.0f;
-
-	float m_fovY{ glm::pi<float>() / 4 };
-	float m_near{ min_near };
-	float m_far{ max_far };
-
-	mat4 m_proj;
-	mat4 m_view;
-
-	vec3 m_eye{0.0f, 0.0f, 0.0f};
-	vec3 m_front{};
-	vec3 m_right{};
-	vec3 m_up{0.0f, 1.0f, 0.0f};
-
+	
 	float m_yaw = 0.0f;
 	float m_pitch = 0.0f;
-
-	vec3 m_worldup{ 0.0f, 1.0f, 0.0f };
+	vec3 m_worldup{ def_cam.up };
+	vec3 m_right;
 };
