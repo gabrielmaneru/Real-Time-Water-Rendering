@@ -38,9 +38,9 @@ namespace glm
 	}
 
 	// round
-#	if GLM_HAS_CXX11_STL
-		using ::std::round;
-#	else
+//#	if GLM_HAS_CXX11_STL
+	//	using ::std::rnd;
+//#	else
 		template<typename genType>
 		GLM_FUNC_QUALIFIER genType round(genType x)
 		{
@@ -48,7 +48,7 @@ namespace glm
 
 			return x < static_cast<genType>(0) ? static_cast<genType>(int(x - static_cast<genType>(0.5))) : static_cast<genType>(int(x + static_cast<genType>(0.5)));
 		}
-#	endif
+//#	endif
 
 	// trunc
 #	if GLM_HAS_CXX11_STL

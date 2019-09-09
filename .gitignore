@@ -28,3 +28,7 @@
 *.log
 
 obj/
+
+*.opendb
+
+*.ini

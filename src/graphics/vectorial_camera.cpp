@@ -5,12 +5,12 @@
 void vectorial_camera::update(float xOff, float yOff)
 {
 	constexpr float MOUSE_SENSITIVITY{ 0.2f };
-	constexpr float MOUSE_SPEED{ 0.05f };
+	constexpr float MOUSE_SPEED{ 0.01f };
 
 	// Check for Mouse Imput
 	if (window::mouse_but_right_pressed)
 	{
-		float speed = MOUSE_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 5.0f : 1.0f);
+		float speed = MOUSE_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 10.0f : 1.0f);
 
 		if (window_manager->is_key_down(GLFW_KEY_W))
 			m_eye += m_front * speed;
@@ -40,8 +40,7 @@ void vectorial_camera::update(float xOff, float yOff)
 		update_cam_vectors();
 	}
 
-	// Update Camera Matrices
-	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
+	// Update Projection
 	float aspect = window_manager->get_width() / (float)window_manager->get_height();
 	m_proj = glm::perspective(m_fovY, aspect, m_near, m_far);
 }
@@ -58,4 +57,20 @@ void vectorial_camera::update_cam_vectors()
 	// Recompute Right and Up
 	m_right = glm::normalize(glm::cross(m_front, m_worldup));
 	m_up = glm::normalize(glm::cross(m_right, m_front));
+
+	// Update View
+	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
+}
+
+void vectorial_camera::update_cam_vectors(vec3 front)
+{
+	// Recompute Front
+	m_front = glm::normalize(front);
+
+	// Recompute Right and Up
+	m_right = glm::normalize(glm::cross(m_front, m_worldup));
+	m_up = glm::normalize(glm::cross(m_right, m_front));
+
+	// Update View
+	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
 }

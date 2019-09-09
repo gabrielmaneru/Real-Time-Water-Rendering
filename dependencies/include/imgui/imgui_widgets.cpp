@@ -2854,6 +2854,17 @@ bool ImGui::InputFloat4(const char* label, float v[4], int decimal_precision, Im
 }
 #endif // IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
+bool ImGui::InputUInt(const char* label, size_t* v, int step, int step_fast, ImGuiInputTextFlags flags)
+{
+	int cpy = static_cast<int>(*v);
+	if (ImGui::InputInt(label, &cpy, step, step_fast, flags))
+	{
+		*v = static_cast<size_t>(cpy);
+		return true;
+	}
+	return false;
+}
+
 bool ImGui::InputInt(const char* label, int* v, int step, int step_fast, ImGuiInputTextFlags flags)
 {
     // Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use InputText() to parse your own data, if you want to handle prefixes.

@@ -2,6 +2,6 @@
 
 void ortho_camera::update()
 {
-	view = glm::lookAt(eye, target, up);
-	proj = glm::ortho<float>(view_rect.x, view_rect.y, view_rect.z, view_rect.w);
+	m_view = glm::lookAt(eye, target, up);
+	m_proj = glm::ortho<float>(view_rect.x, view_rect.y, view_rect.z, view_rect.w);
 }

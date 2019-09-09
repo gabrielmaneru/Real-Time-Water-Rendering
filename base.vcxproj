@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -22,13 +22,13 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{BA1F5A5B-CD6E-4A65-9C30-FDC0E8CAB8BD}</ProjectGuid>
     <RootNamespace>base</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -41,13 +41,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -148,18 +148,21 @@
     <ClCompile Include="src\core\session.cpp" />
     <ClCompile Include="src\core\main.cpp" />
     <ClCompile Include="src\graphics\framebuffer.cpp" />
+    <ClCompile Include="src\graphics\mesh.cpp" />
     <ClCompile Include="src\graphics\ortho_camera.cpp" />
+    <ClCompile Include="src\graphics\raw_mesh.cpp" />
     <ClCompile Include="src\graphics\raw_texture.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\graphics\shader_program.cpp" />
-    <ClCompile Include="src\graphics\transform2d.cpp" />
     <ClCompile Include="src\graphics\transform3d.cpp" />
     <ClCompile Include="src\graphics\vectorial_camera.cpp" />
     <ClCompile Include="src\platform\editor.cpp" />
     <ClCompile Include="src\platform\window.cpp" />
     <ClCompile Include="src\platform\window_manager.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
-    <ClCompile Include="src\scene\shape.cpp" />
+    <ClCompile Include="src\scene\scene_object.cpp" />
+    <ClCompile Include="src\utils\generate_noise.cpp" />
+    <ClCompile Include="src\utils\math_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\include\GLFW\glfw3.h" />
@@ -419,12 +422,13 @@
     <ClInclude Include="src\core\session.h" />
     <ClInclude Include="src\graphics\framebuffer.h" />
     <ClInclude Include="src\graphics\gl_error.h" />
+    <ClInclude Include="src\graphics\mesh.h" />
     <ClInclude Include="src\graphics\ortho_camera.h" />
+    <ClInclude Include="src\graphics\raw_mesh.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
     <ClInclude Include="src\graphics\renderable.h" />
     <ClInclude Include="src\graphics\renderer.h" />
     <ClInclude Include="src\graphics\shader_program.h" />
-    <ClInclude Include="src\graphics\transform2d.h" />
     <ClInclude Include="src\graphics\transform3d.h" />
     <ClInclude Include="src\graphics\vectorial_camera.h" />
     <ClInclude Include="src\platform\editor.h" />
@@ -433,6 +437,9 @@
     <ClInclude Include="src\scene\scene_object.h" />
     <ClInclude Include="src\scene\scene.h" />
     <ClInclude Include="src\scene\shape.h" />
+    <ClInclude Include="src\utils\generate_noise.h" />
+    <ClInclude Include="src\utils\map2d.h" />
+    <ClInclude Include="src\utils\math_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dependencies\include\glm\detail\func_common.inl" />
@@ -567,10 +574,18 @@
     <None Include="dependencies\include\glm\gtx\vector_angle.inl" />
     <None Include="dependencies\include\glm\gtx\vector_query.inl" />
     <None Include="dependencies\include\glm\gtx\wrap.inl" />
+    <None Include="resources\shaders\basic.vert" />
+    <None Include="resources\shaders\color.frag" />
     <None Include="resources\shaders\raymarch.frag" />
     <None Include="resources\shaders\raymarch.vert" />
     <None Include="resources\shaders\texture.frag" />
-    <None Include="resources\shaders\texture.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="resources\meshes\cube.obj" />
+    <Object Include="resources\meshes\octohedron.obj" />
+    <Object Include="resources\meshes\quad.obj" />
+    <Object Include="resources\meshes\segment.obj" />
+    <Object Include="resources\meshes\sphere.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -17,6 +17,7 @@ public:
 	void set_uniform(const char *name, const vec4 & v) const;
 	void set_uniform(const char *name, const mat3 & m) const;
 	void set_uniform(const char *name, const mat4 & m) const;
+	void set_uniform_sampler(const char *name, const int & val) const;
 
 private:
 	enum class e_shader_type { VERTEX, FRAGMENT, GEOMETRY };

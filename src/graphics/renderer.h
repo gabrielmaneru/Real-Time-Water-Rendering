@@ -1,28 +1,30 @@
 #pragma once
-#include "raw_texture.h"
 #include "shader_program.h"
-#include "ortho_camera.h"
 #include "vectorial_camera.h"
-#include "transform2d.h"
-#include "framebuffer.h"
+#include "ortho_camera.h"
+#include "mesh.h"
 class c_renderer
 {
-	Shader_Program* ray_marching_shader;
-	ortho_camera cam;
+	// Shaders
+	Shader_Program* color_shader;
+	Shader_Program* texture_shader;
+
+	// Cameras
 	vectorial_camera scene_cam;
-	transform2d model_texture;
-	float blendfactor{ 1.0f };
-	int highlightfactor{ 100 };
-	struct
-	{
-		uint32_t vao{ 0 };
-		uint32_t cnt{};
-	} quad{};
+	vectorial_camera invert_cam;
+	ortho_camera ortho_cam;
+
+	// Scene
+	std::vector<Mesh*> m_meshes;
+	enum e_meshes{ cube=0, octohedron, quad, segment, sphere };
+	
 
 public:
 	bool init();
 	void update();
 	void shutdown();
 	friend class c_editor;
+	friend struct generator;
+	friend class eroder;
 };
 extern c_renderer* renderer;

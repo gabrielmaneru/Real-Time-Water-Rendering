@@ -1,9 +1,10 @@
 #pragma once
-#include <graphics\renderable.h>
-struct scene_object : public renderable
+#include <graphics\renderer.h>
+struct scene_object
 {
 	virtual ~scene_object() = default;
-	virtual void enter() {};
-	virtual void update() {};
-	virtual void exit() {};
+	virtual void enter();
+	virtual void update();
+	virtual void draw();
+	virtual void exit();
 };

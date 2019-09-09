@@ -9,16 +9,15 @@ bool window::mouse_but_left_triggered{ false };
 bool window::mouse_but_right_pressed{ false };
 bool window::mouse_but_right_triggered{ false };
 float window::mouse_offset[2]{ 0.0f };
-int window::stat[2]{ 0 };
 
 static void glfw_key_callback(GLFWwindow*, int key, int, int action, int)
 {
 	if (key > 0)
 	{
 		if (action == GLFW_PRESS)
-			window::m_keyboard[key-1] = 1, window::stat[0]++;
+			window::m_keyboard[key-1] = 1;
 		else if (action == GLFW_RELEASE)
-			window::m_keyboard[key-1] = 0, window::stat[1]++;
+			window::m_keyboard[key-1] = 0;
 		window::m_updated_keys.insert(key);
 	}
 }
@@ -72,4 +71,9 @@ void window::update_window()
 	glfwPollEvents();
 	if (glfwWindowShouldClose(m_window))
 		session::end |= true;
+
+	int w, h;
+	glfwGetFramebufferSize(m_window, &w, &h);
+	if (h > 0)
+		m_width = w, m_height = h;
 }

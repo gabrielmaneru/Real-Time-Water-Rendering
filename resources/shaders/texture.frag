@@ -1,10 +1,11 @@
 #version 440
-in vec2 var_uv;
-out vec4 out_color;
+in vec2 uv;
+
 uniform sampler2D uniform_texture;
+
+out vec4 out_color;
 
 void main()
 {
-	vec3 texel = texture2D(uniform_texture, var_uv).rgb;
-	out_color = vec4(texel, 1.0f);
+	out_color = vec4(texture2D(uniform_texture, uv).rgb, 1.0);
 }

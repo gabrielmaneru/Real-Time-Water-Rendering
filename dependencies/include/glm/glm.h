@@ -9,6 +9,7 @@
 #include "gtc/type_ptr.hpp"
 #include "gtc/quaternion.hpp"
 #include "gtx/quaternion.hpp"
+#include "gtc/noise.hpp"
 
 using glm::vec2;
 using glm::ivec2;
@@ -18,19 +19,3 @@ using glm::mat2;
 using glm::mat3;
 using glm::mat4;
 using glm::quat;
-
-template <typename T>
-T lerp(const T& min, const T& max, const float& coef)
-{
-	return min + (max - min) * coef;
-}
-template <typename T>
-float coef(const T& min, const T& max, const T& value)
-{
-	return static_cast<float>(value - min) / static_cast<float>(max - min);
-}
-template<typename T, typename R>
-R map(T value, T in_min, T in_max, R out_min, R out_max)
-{
-	return lerp(out_min, out_max, coef(in_min, in_max, value));
-}
