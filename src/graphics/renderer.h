@@ -2,7 +2,8 @@
 #include "shader_program.h"
 #include "vectorial_camera.h"
 #include "ortho_camera.h"
-#include "mesh.h"
+#include "model.h"
+
 class c_renderer
 {
 	// Shaders
@@ -14,17 +15,20 @@ class c_renderer
 	ortho_camera ortho_cam{};
 
 	// Meshes
-	std::vector<Mesh*> m_meshes;
-	enum e_meshes{ cube=0, octohedron, quad, segment, sphere };
+	std::vector<Model*> m_models;
 	
 
 public:
 	bool init();
 	void update();
 	void shutdown();
+
+	enum e_meshes{ cube=0, octohedron, quad, segment, sphere, sponza };
+	const Model* get_model(size_t i) { return m_models[i]; }
+
 	friend class c_editor;
 	friend struct generator;
 	friend class eroder;
-	friend class MeshReference;
+	friend struct MeshReference;
 };
 extern c_renderer* renderer;

@@ -7,7 +7,7 @@ void randomize_noise()
 	random_offset.y = rand() * rand() / (float)RAND_MAX ;
 }
 
-map2d<float> generate_noise(size_t size, float scale, int iterations, float persistance, float lacunarity, float lowerbound, float upperbound, vec2 falloff)
+map2d<float> generate_noise(size_t size, float scale, int iterations, float persistance, float lacunarity)
 {
 	map2d<float> noise_map{ size, size };
 
@@ -33,11 +33,6 @@ map2d<float> generate_noise(size_t size, float scale, int iterations, float pers
 				frequency *= lacunarity;
 			}
 
-			float x__ = lerp(0.001f, 1.0f, glm::abs(coef<float>(0.0f, size / 2.0f, x) - 1));
-			float y__ = lerp(0.001f, 1.0f, glm::abs(coef<float>(0.0f, size / 2.0f, y) - 1));
-			float dist = glm::pow(glm::sqrt(x__*x__ + y__*y__),falloff.x);
-			noise_value = lerp(noise_value, noise_value*(1-dist), falloff.y);
-			
 			if (noise_value < min_value)
 				min_value = noise_value;
 			if (noise_value > max_value)
@@ -49,7 +44,7 @@ map2d<float> generate_noise(size_t size, float scale, int iterations, float pers
 	noise_map.loop(
 		[&](size_t, size_t, float prev) -> float
 		{
-			return map(prev, min_value, max_value, lowerbound, upperbound);
+			return map(prev, min_value, max_value, 0.0f, 1.0f);
 		}
 	);
 	return noise_map;

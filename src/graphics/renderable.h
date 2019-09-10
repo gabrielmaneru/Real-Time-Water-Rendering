@@ -1,9 +1,9 @@
 #pragma once
 #include "transform3d.h"
-#include "mesh.h"
+#include "model.h"
 class renderable
 {
 public:
 	transform3d m_transform;
-	MeshReference m_mesh_ref;
+	const Model * m_model{nullptr};
 };

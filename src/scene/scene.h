@@ -1,5 +1,6 @@
 #pragma once
 #include "scene_object.h"
+#include "graphics/shader_program.h"
 #include <vector>
 class c_scene
 {
@@ -8,6 +9,7 @@ class c_scene
 public:
 	bool init();
 	void update();
+	void draw(Shader_Program*);
 	void shutdown();
 	friend class c_renderer;
 };

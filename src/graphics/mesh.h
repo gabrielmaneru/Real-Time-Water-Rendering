@@ -1,45 +1,34 @@
 #pragma once
+#include "shader_program.h"
+#include "texture.h"
 #include <glm/glm.h>
-#include <vector>
-#include <string>
-#include <fstream>
 #include <GL/gl3w.h>
+#include <vector>
+
+struct Vertex {
+	vec3 position;
+	vec3 normal;
+	vec2 textureCoords;
+	vec3 tangent;
+	vec3 bitangent;
+};
 
 struct Mesh
 {
-	Mesh()=default;
-	Mesh(const std::string&);
+public:
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures);
 	~Mesh();
 
-	bool load_obj(const std::string&);
+	void draw(Shader_Program* shader)const;
+
+	GLuint getVAO() const { return m_VAO; }
+	std::vector<GLuint> getIndices() const { return m_indices; }
+private:
 	void load();
-	void bind()const;
-	void draw()const;
-	unsigned idx_count()const;
 
-	GLuint m_VAO;
-	GLuint m_vertexbuffer;
-	GLuint m_uvbuffer;
-	GLuint m_normalbuffer;
-	GLuint m_indexbuffer;
+	GLuint m_VAO, m_VBO, m_EBO;
 
-	std::vector<vec3> m_vertices;
-	std::vector<vec3> m_normals;
-	std::vector<vec2> m_uvs;
-	std::vector<unsigned short> m_index;
-
-	std::string m_name;
-	bool has_normals{ false };
-	bool m_loaded{ false };
-
-	vec2 parse_vec2(std::ifstream& file);
-	vec3 parse_vec3(std::ifstream& file);
-	void parse_face(std::vector<vec2>& temp_uvs, std::vector<vec3>& temp_normals, std::vector<vec3>& temp_vertices, std::vector<vec2>& in_uvs, std::vector<vec3>& in_normals, std::vector<vec3>& in_vertices, std::ifstream& file);
-	void fill_idx_buffers(std::vector<vec3> & in_vertices, std::vector<vec2> & in_uvs, std::vector<vec3> & in_normals);
-};
-
-struct MeshReference
-{
-	void validate(const std::string& name);
-	Mesh* m_mesh_p{nullptr};
+	std::vector<Vertex> m_vertices;
+	std::vector<GLuint> m_indices;
+	std::vector<Texture> m_textures;
 };
