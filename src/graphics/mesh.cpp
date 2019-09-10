@@ -7,12 +7,12 @@ Mesh::Mesh(const std::string& filepath) : Mesh()
 {
 	if(!load_obj(filepath))
 		throw std::string("Mesh not found: ")+filepath;
-	bind();
+	load();
 }
 
 Mesh::~Mesh()
 {
-	if (m_binded)
+	if (m_loaded)
 	{
 		glDeleteBuffers(1, &m_indexbuffer);
 		glDeleteBuffers(1, &m_normalbuffer);
@@ -70,9 +70,9 @@ bool Mesh::load_obj(const std::string & filepath)
 	return true;
 }
 
-void Mesh::bind()
+void Mesh::load()
 {
-	if (m_binded)
+	if (m_loaded)
 		return;
 
 	glGenVertexArrays(1, &m_VAO);
@@ -110,12 +110,17 @@ void Mesh::bind()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_index.size() * sizeof(unsigned short), &m_index[0], GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
-	m_binded = true;
+	m_loaded = true;
 }
 
-void Mesh::use() const
+void Mesh::bind() const
 {
 	glBindVertexArray(m_VAO);
+}
+
+void Mesh::draw() const
+{
+	glDrawElements(GL_TRIANGLES, (GLsizei)m_index.size(), GL_UNSIGNED_INT, 0);
 }
 
 unsigned Mesh::idx_count() const
@@ -269,4 +274,16 @@ void Mesh::fill_idx_buffers(std::vector<vec3>& in_vertices, std::vector<vec2>& i
 		else
 			m_index.push_back(it->second);
 	}
+}
+
+#include "renderer.h"
+void MeshReference::validate(const std::string & name)
+{
+	for (auto mesh_p : renderer->m_meshes)
+		if (mesh_p->m_name == name)
+		{
+			m_mesh_p = mesh_p;
+			return;
+		}
+	throw std::string("Mesh not loaded: ") + name;
 }

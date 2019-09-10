@@ -13,7 +13,7 @@ class c_renderer
 	vectorial_camera scene_cam{};
 	ortho_camera ortho_cam{};
 
-	// Scene
+	// Meshes
 	std::vector<Mesh*> m_meshes;
 	enum e_meshes{ cube=0, octohedron, quad, segment, sphere };
 	
@@ -25,5 +25,6 @@ public:
 	friend class c_editor;
 	friend struct generator;
 	friend class eroder;
+	friend class MeshReference;
 };
 extern c_renderer* renderer;

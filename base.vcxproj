@@ -419,6 +419,7 @@
     <ClInclude Include="dependencies\include\imgui\imstb_rectpack.h" />
     <ClInclude Include="dependencies\include\imgui\imstb_textedit.h" />
     <ClInclude Include="dependencies\include\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\graphics\renderable.h" />
     <ClInclude Include="src\core\session.h" />
     <ClInclude Include="src\graphics\camera.h" />
     <ClInclude Include="src\graphics\framebuffer.h" />
@@ -427,7 +428,6 @@
     <ClInclude Include="src\graphics\ortho_camera.h" />
     <ClInclude Include="src\graphics\raw_mesh.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
-    <ClInclude Include="src\graphics\renderable.h" />
     <ClInclude Include="src\graphics\renderer.h" />
     <ClInclude Include="src\graphics\shader_program.h" />
     <ClInclude Include="src\graphics\transform3d.h" />

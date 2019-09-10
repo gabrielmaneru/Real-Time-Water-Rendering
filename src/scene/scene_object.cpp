@@ -1,17 +1,7 @@
 #include "scene_object.h"
-
-void scene_object::enter()
+void scene_object::draw(Shader_Program * shader)
 {
-}
-
-void scene_object::update()
-{
-}
-
-void scene_object::draw()
-{
-}
-
-void scene_object::exit()
-{
+	shader->set_uniform("Model", m_transform.m_tr.get_model());
+	m_mesh_ref.m_mesh_p->bind();
+	m_mesh_ref.m_mesh_p->draw();
 }

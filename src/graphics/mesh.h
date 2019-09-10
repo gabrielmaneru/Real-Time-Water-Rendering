@@ -12,8 +12,9 @@ struct Mesh
 	~Mesh();
 
 	bool load_obj(const std::string&);
-	void bind();
-	void use()const;
+	void load();
+	void bind()const;
+	void draw()const;
 	unsigned idx_count()const;
 
 	GLuint m_VAO;
@@ -29,10 +30,16 @@ struct Mesh
 
 	std::string m_name;
 	bool has_normals{ false };
-	bool m_binded{ false };
+	bool m_loaded{ false };
 
 	vec2 parse_vec2(std::ifstream& file);
 	vec3 parse_vec3(std::ifstream& file);
 	void parse_face(std::vector<vec2>& temp_uvs, std::vector<vec3>& temp_normals, std::vector<vec3>& temp_vertices, std::vector<vec2>& in_uvs, std::vector<vec3>& in_normals, std::vector<vec3>& in_vertices, std::ifstream& file);
 	void fill_idx_buffers(std::vector<vec3> & in_vertices, std::vector<vec2> & in_uvs, std::vector<vec3> & in_normals);
+};
+
+struct MeshReference
+{
+	void validate(const std::string& name);
+	Mesh* m_mesh_p{nullptr};
 };
