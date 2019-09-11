@@ -25,7 +25,7 @@ bool c_renderer::init()
 
 	//Load Programs
 	try {
-		color_shader = new Shader_Program("../data/shaders/basic.vert", "../data/shaders/color.frag");
+		//color_shader = new Shader_Program("../data/shaders/basic.vert", "../data/shaders/color.frag");
 		texture_shader = new Shader_Program("../data/shaders/basic.vert", "../data/shaders/g_buffer.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -35,21 +35,18 @@ bool c_renderer::init()
 	{
 		// Basic
 		m_models.push_back(new Model("../data/meshes/cube.obj"));
-		//m_models.push_back(new Model("../data/meshes/octohedron.obj"));
-		//m_models.push_back(new Model("../data/meshes/quad.obj"));
-		//m_models.push_back(new Model("../data/meshes/segment.obj"));
-		//m_models.push_back(new Model("../data/meshes/sphere.obj"));
+		m_models.push_back(new Model("../data/meshes/octohedron.obj"));
+		m_models.push_back(new Model("../data/meshes/quad.obj"));
+		m_models.push_back(new Model("../data/meshes/sphere.obj"));
 
 		// Complex
-		//m_models.push_back(new Model("../data/meshes/sponza.obj"));
+		m_models.push_back(new Model("../data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
 
 	// Setup Cameras
 	scene_cam.update();
-	ortho_cam.update();
-
 	return true;
 }
 
@@ -63,14 +60,18 @@ void c_renderer::update()
 	scene_cam.update();
 
 	texture_shader->use();
-	texture_shader->set_uniform("VP", scene_cam.m_proj*scene_cam.m_view);
+	texture_shader->set_uniform("V", scene_cam.m_view);
+	texture_shader->set_uniform("P", scene_cam.m_proj);
 	scene->draw(texture_shader);
-	
-
 }
 
 void c_renderer::shutdown()
 {
-	//Clean Resouces
+	delete color_shader;
+	delete texture_shader;
 
+	// Clean Meshes
+	for (auto m : m_models)
+		delete m;
+	m_models.clear();
 }

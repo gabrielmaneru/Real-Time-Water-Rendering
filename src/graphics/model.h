@@ -2,6 +2,7 @@
 #include "shader_program.h"
 #include "mesh.h"
 #include "texture.h"
+#include "material.h"
 #include <string>
 
 #include <assimp/Importer.hpp>
@@ -11,16 +12,16 @@
 class Model
 {
 public:
-	Model() = default;
 	Model(const std::string&);
 	void draw(Shader_Program *)const;
 private:
 	void load_obj(const std::string&);
 	void processNode(aiNode* node, const aiScene* scene);
-	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
-	std::vector<Texture> loadMaterialTextures(aiMaterial *material, aiTextureType type, Texture::e_texture_type textureType);
-	unsigned int textureFromFile(const char* str, Texture::e_texture_type type);
+	Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
+	int processMaterial(aiMaterial * material);
+	Texture loadMaterialTexture(aiMaterial *material, aiTextureType type);
 
-	std::vector<Mesh> m_meshes;
+	std::vector<Mesh*> m_meshes;
 	std::vector<Texture> m_textures;
+	std::vector<Material> m_materials;
 };

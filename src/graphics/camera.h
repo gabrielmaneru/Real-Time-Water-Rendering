@@ -1,11 +1,11 @@
 #pragma once
 #include <glm/glm.h>
 constexpr struct {
-	vec3 eye{ 0,0,0 };
-	vec3 front{ 0,0,0 };
-	vec3 up{ 0,0,0 };
+	vec3 eye{ 0,0,10 };
+	vec3 front{ 0,0,-1 };
+	vec3 up{ 0,1,0 };
 	vec4 viewrect{ -1,1,-1,1 };
-	float yaw{ 0.0f };
+	float yaw{ -90.0f };
 	float pitch{ 0.0f };
 
 }def_cam;

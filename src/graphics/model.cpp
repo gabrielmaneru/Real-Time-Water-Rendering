@@ -1,7 +1,5 @@
 #include "model.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image/stb_image.h>
-
+#include "gl_error.h"
 Model::Model(const std::string & path)
 {
 	load_obj(path);
@@ -11,15 +9,24 @@ Model::Model(const std::string & path)
 void Model::draw(Shader_Program * shader)const
 {
 	for (auto& mesh : m_meshes)
-		mesh.draw(shader);
+	{
+		if (mesh->m_material_idx >= 0)
+			m_materials[mesh->m_material_idx].set_uniform(shader);
+		mesh->draw(shader);
+	}
 }
 
 void Model::load_obj(const std::string & path)
 {
 	Assimp::Importer importer{};
-	const aiScene* scn = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-	if (!scn || scn->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scn->mRootNode)
-		throw std::string("Mesh not loaded: ") + path;
+	const aiScene* scn = importer.ReadFile(path, aiProcess_CalcTangentSpace);
+
+	if (!scn)
+		throw std::string("Mesh not found: ") + path;
+	if (scn->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
+		throw std::string("Mesh couldn't be loaded: ") + path;
+	if (!scn->mRootNode)
+		throw std::string("Mesh empty: ") + path;
 
 	processNode(scn->mRootNode, scn);
 }
@@ -36,167 +43,116 @@ void Model::processNode(aiNode * node, const aiScene * scn)
 	}
 }
 
-Mesh Model::processMesh(aiMesh * mesh, const aiScene * scene)
+Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 {
-	std::vector<Vertex> vertices;
+	VertexBuffer vertices{ mesh->mNumVertices };
 	std::vector<GLuint> indices;
-	std::vector<Texture> textures;
 
 	// Vertex
-	for (size_t i = 0; i < mesh->mNumVertices; i++) {
-		Vertex vertex;
-
+	for (size_t i = 0; i < mesh->mNumVertices; i++)
+	{
 		// Set position
-		vertex.position.x = mesh->mVertices[i].x;
-		vertex.position.y = mesh->mVertices[i].y;
-		vertex.position.z = mesh->mVertices[i].z;
+		vertices.position[i].x = mesh->mVertices[i].x;
+		vertices.position[i].y = mesh->mVertices[i].y;
+		vertices.position[i].z = mesh->mVertices[i].z;
 
 		// Set normal
-		if (mesh->HasNormals()) {
-			vertex.normal.x = mesh->mNormals[i].x;
-			vertex.normal.y = mesh->mNormals[i].y;
-			vertex.normal.z = mesh->mNormals[i].z;
+		if (mesh->HasNormals())
+		{
+			vertices.normal[i].x = mesh->mNormals[i].x;
+			vertices.normal[i].y = mesh->mNormals[i].y;
+			vertices.normal[i].z = mesh->mNormals[i].z;
 		}
 
 		// Set tangents and bitangents
-		if (mesh->HasTangentsAndBitangents()) {
-			vertex.tangent.x = mesh->mTangents[i].x;
-			vertex.tangent.y = mesh->mTangents[i].y;
-			vertex.tangent.z = mesh->mTangents[i].z;
-			vertex.bitangent.x = mesh->mBitangents[i].x;
-			vertex.bitangent.y = mesh->mBitangents[i].y;
-			vertex.bitangent.z = mesh->mBitangents[i].z;
+		if (mesh->HasTangentsAndBitangents())
+		{
+			vertices.tangent[i].x = mesh->mTangents[i].x;
+			vertices.tangent[i].y = mesh->mTangents[i].y;
+			vertices.tangent[i].z = mesh->mTangents[i].z;
+			vertices.bitangent[i].x = mesh->mBitangents[i].x;
+			vertices.bitangent[i].y = mesh->mBitangents[i].y;
+			vertices.bitangent[i].z = mesh->mBitangents[i].z;
 		}
 
 		// Texture coordinates
-		if (mesh->HasTextureCoords(0)) {
-			vertex.textureCoords.x = mesh->mTextureCoords[0][i].x;
-			vertex.textureCoords.y = mesh->mTextureCoords[0][i].y;
+		if (mesh->HasTextureCoords(0))
+		{
+			vertices.uv[i].x = mesh->mTextureCoords[0][i].x;
+			vertices.uv[i].y = mesh->mTextureCoords[0][i].y;
 		}
-		else {
-			vertex.textureCoords = glm::vec2(0.0f);
-		}
-
-		vertices.push_back(vertex);
+		else 
+			vertices.uv[i] = glm::vec2(0.0f);
 	}
 
 	// Index
-	for (size_t i = 0; i < mesh->mNumFaces; i++) {
-		aiFace face = mesh->mFaces[i];
-		for (size_t j = 0; j < face.mNumIndices; j++) {
+	for (size_t i = 0; i < mesh->mNumFaces; i++)
+	{
+		const aiFace& face = mesh->mFaces[i];
+		for (size_t j = 0; j < face.mNumIndices; j++)
 			indices.push_back(face.mIndices[j]);
-		}
 	}
 
 	// Material
-	if (mesh->mMaterialIndex >= 0) {
-		// Get the material
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+	int material_idx{ -1 };
+	if (scene->HasMaterials() && mesh->mMaterialIndex > 0)
+		material_idx = processMaterial(scene->mMaterials[mesh->mMaterialIndex]);
 
-		// Load the textures
-		std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, Texture::e_texture_type::DIFFUSE);
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-		std::vector<Texture> metalnessMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, Texture::e_texture_type::METALNESS);
-		textures.insert(textures.end(), metalnessMaps.begin(), metalnessMaps.end());
-		
-		std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, Texture::e_texture_type::NORMAL);
-		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
-		std::vector<Texture> roughnessMaps = loadMaterialTextures(material, aiTextureType_SHININESS, Texture::e_texture_type::ROUGHNESS);
-		textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
-	}
-
-	return Mesh(vertices, indices, textures);
+	return new Mesh(vertices, indices, material_idx);
 }
 
-std::vector<Texture> Model::loadMaterialTextures(aiMaterial * material, aiTextureType type, Texture::e_texture_type textureType)
+int Model::processMaterial(aiMaterial * material)
 {
-	std::vector<Texture> textures;
-	for (size_t i = 0; i < material->GetTextureCount(type); i++) {
-		aiString str;
-		material->GetTexture(type, (unsigned int)i, &str);
-		bool skipTextureLoad = false;
+	// Get Material Name
+	aiString name_;
+	material->Get(AI_MATKEY_NAME, name_);
+	std::string name{ name_.C_Str() };
 
-		// Check if the current texture has been loaded already
-		for (size_t j = 0; j < m_textures.size(); j++) {
-			if (std::strcmp(m_textures[j].m_path.c_str(), str.C_Str()) == 0) {
-				textures.push_back(m_textures[j]);
-				skipTextureLoad = true;
-				break;
-			}
-		}
+	// Search among already existing materials
+	for (int i = 0; i < (int)m_materials.size(); i++)
+		if (m_materials[i].m_name == name)
+			return i;
 
-		// Textures isn't loaded yet
-		if (!skipTextureLoad) {
-			Texture texture;
-			texture.m_id = textureFromFile(str.C_Str(), textureType);
+	// Add new Material
+	m_materials.push_back({});
+	int idx = (int)m_materials.size() - 1;
+	Material& mat = m_materials[idx];
+	mat.m_name = name;
 
-			texture.m_type = textureType;
-			texture.m_path = str.C_Str();
-			textures.push_back(texture);
-			m_textures.push_back(texture);
-		}
-	}
+	// Extract material keys
+	aiColor3D color;
+	material->Get(AI_MATKEY_COLOR_AMBIENT, color);
+	mat.m_ambient.r = color.r;
+	mat.m_ambient.g = color.g;
+	mat.m_ambient.b = color.b;
+	material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+	mat.m_diffuse.r = color.r;
+	mat.m_diffuse.g = color.g;
+	mat.m_diffuse.b = color.b;
+	material->Get(AI_MATKEY_COLOR_SPECULAR, color);
+	mat.m_specular.r = color.r;
+	mat.m_specular.g = color.g;
+	mat.m_specular.b = color.b;
 
-	return textures;
+	material->Get(AI_MATKEY_SHININESS, mat.m_shininess);
+	
+	mat.m_diffuse_txt = loadMaterialTexture(material, aiTextureType_DIFFUSE);
+	mat.m_specular_txt = loadMaterialTexture(material, aiTextureType_SPECULAR);
+	mat.m_normal_txt = loadMaterialTexture(material, aiTextureType_HEIGHT);
+	return idx;
 }
 
-unsigned int Model::textureFromFile(const char * str, Texture::e_texture_type type)
+Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 {
-	//stbi_set_flip_vertically_on_load(true);
-	bool gamma_correction = type == Texture::e_texture_type::DIFFUSE;
+	if (material->GetTextureCount(type) == 0)
+		return Texture{};
+
+	aiString str;
+	material->GetTexture(type, 0, &str);
 
 	Texture texture;
-
-	// Generate and bind texture
-	glGenTextures(1, &texture.m_id);
-
-	// Load textures
-	int nrChannels;
-	unsigned char* data = stbi_load((std::string(".")+str).c_str(), &texture.m_width, &texture.m_height, &nrChannels, 0);
-	if (data)
-	{
-		GLenum format, internalFormat;
-		if (nrChannels == 1) {
-			format = internalFormat = GL_RED;
-		}
-
-		else if (nrChannels == 3) {
-			if (gamma_correction)
-				internalFormat = GL_SRGB;
-			else
-				internalFormat = GL_RGB;
-
-			format = GL_RGB;
-		}
-
-		else if (nrChannels == 4) {
-			if (gamma_correction)
-				internalFormat = GL_SRGB8_ALPHA8;
-			else
-				internalFormat = GL_RGBA;
-
-			format = GL_RGBA;
-		}
-
-		// Load data into the current bound texture
-		glBindTexture(GL_TEXTURE_2D, texture.m_id);
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, texture.m_width, texture.m_height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		// Set texture parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	}
-	else
-		throw std::string("Image not loaded: ") + str;
-
-	// Free the image data
-	stbi_image_free(data);
-
-	return texture.m_id;
+	texture.loadFromFile(str.C_Str(), type == Texture::e_texture_type::DIFFUSE);
+	texture.m_type = static_cast<Texture::e_texture_type>(type);
+	texture.m_path = str.C_Str();
+	return texture;
 }

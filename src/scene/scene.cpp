@@ -5,7 +5,7 @@ bool c_scene::init()
 {
 	//Load Scene:
 	m_objects.push_back(new scene_object());
-	m_objects[0]->m_model = renderer->get_model(renderer->cube);
+	m_objects[0]->m_model = renderer->get_model(renderer->sponza);
 	return true;
 }
 

@@ -11,8 +11,8 @@ public:
 	void update()override;
 
 	float m_fov{ glm::pi<float>() / 4 };
-	float m_near{ 0.01f };
-	float m_far{ 100.0f };
+	float m_near{ 0.001f };
+	float m_far{ 10000.0f };
 
 private:
 	void update_cam_vectors();

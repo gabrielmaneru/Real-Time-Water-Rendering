@@ -5,30 +5,38 @@
 #include <GL/gl3w.h>
 #include <vector>
 
-struct Vertex {
-	vec3 position;
-	vec3 normal;
-	vec2 textureCoords;
-	vec3 tangent;
-	vec3 bitangent;
+struct VertexBuffer
+{
+	VertexBuffer(size_t s);
+	VertexBuffer(const VertexBuffer&) = default;
+	std::vector<vec3> position;
+	std::vector<vec3> normal;
+	std::vector<vec2> uv;
+	std::vector<vec3> tangent;
+	std::vector<vec3> bitangent;
 };
 
 struct Mesh
 {
 public:
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures);
+	Mesh(const VertexBuffer& vertices, const std::vector<GLuint>& indices, int material_idx);
 	~Mesh();
 
 	void draw(Shader_Program* shader)const;
+	int m_material_idx;
 
-	GLuint getVAO() const { return m_VAO; }
-	std::vector<GLuint> getIndices() const { return m_indices; }
 private:
 	void load();
 
-	GLuint m_VAO, m_VBO, m_EBO;
+	GLuint m_VAO{ 0 };
+	GLuint m_vertexbuffer{ 0 };
+	GLuint m_normalbuffer{ 0 };
+	GLuint m_uvbuffer{ 0 };
+	GLuint m_tangentbuffer{ 0 };
+	GLuint m_bitangentbuffer{ 0 };
+	GLuint m_indexbuffer{ 0 };
 
-	std::vector<Vertex> m_vertices;
+	VertexBuffer m_vertices;
 	std::vector<GLuint> m_indices;
 	std::vector<Texture> m_textures;
 };

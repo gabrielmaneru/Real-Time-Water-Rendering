@@ -4,12 +4,15 @@
 #include <GLFW/glfw3.h>
 
 vectorial_camera::vectorial_camera(vec3 eye, vec3 front, vec3 up, float yaw, float pitch)
-	:camera(eye, front, up), m_yaw(yaw), m_pitch(pitch) {}
+	:camera(eye, front, up), m_yaw(yaw), m_pitch(pitch)
+{
+	update_cam_vectors();
+}
 
 void vectorial_camera::update()
 {
 	constexpr float MOUSE_SENSITIVITY{ 0.2f };
-	constexpr float MOUSE_SPEED{ 0.01f };
+	constexpr float MOUSE_SPEED{ 0.1f };
 
 	// Check for Mouse Imput
 	if (window::mouse_but_right_pressed)

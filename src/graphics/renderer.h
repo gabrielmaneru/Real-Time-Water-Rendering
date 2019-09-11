@@ -12,7 +12,6 @@ class c_renderer
 
 	// Cameras
 	vectorial_camera scene_cam{};
-	ortho_camera ortho_cam{};
 
 	// Meshes
 	std::vector<Model*> m_models;
@@ -23,7 +22,7 @@ public:
 	void update();
 	void shutdown();
 
-	enum e_meshes{ cube=0, octohedron, quad, segment, sphere, sponza };
+	enum e_meshes{ cube=0, octohedron, quad, sphere, sponza };
 	const Model* get_model(size_t i) { return m_models[i]; }
 
 	friend class c_editor;

@@ -1,5 +1,6 @@
 #include "shader_program.h"
 #include <gl/gl3w.h>
+#include "gl_error.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -24,13 +25,13 @@ Shader_Program::Shader_Program(const std::string & vtx, const std::string & geo,
 Shader_Program::~Shader_Program()
 {
 	if (m_handle > 0)
-		glDeleteProgram(m_handle);
+		GL_CALL(glDeleteProgram(m_handle));
 }
 
 void Shader_Program::use() const
 {
 	if (m_handle > 0 && m_linked)
-		glUseProgram(m_handle);
+		GL_CALL(glUseProgram(m_handle));
 }
 
 void Shader_Program::set_uniform(const char * name, bool val) const
@@ -42,49 +43,49 @@ void Shader_Program::set_uniform(const char * name, int val) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-		glUniform1i(loc, val);
+		GL_CALL(glUniform1i(loc, val));
 }
 
 void Shader_Program::set_uniform(const char * name, float val) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-		glUniform1f(loc, val);
+		GL_CALL(glUniform1f(loc, val));
 }
 
 void Shader_Program::set_uniform(const char * name, const vec3 & v) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-		glUniform3f(loc, v.x, v.y, v.z);
+		GL_CALL(glUniform3f(loc, v.x, v.y, v.z));
 }
 
 void Shader_Program::set_uniform(const char * name, const vec4 & v) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-		glUniform4f(loc, v.x, v.y, v.z, v.w);
+		GL_CALL(glUniform4f(loc, v.x, v.y, v.z, v.w));
 }
 
 void Shader_Program::set_uniform(const char * name, const mat3 & m) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-		glUniformMatrix3fv(loc, 1, GL_FALSE, &m[0][0]);
+		GL_CALL(glUniformMatrix3fv(loc, 1, GL_FALSE, &m[0][0]));
 }
 
 void Shader_Program::set_uniform(const char * name, const mat4 & m) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-	glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]);
+		GL_CALL(glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]));
 }
 
 void Shader_Program::set_uniform_sampler(const char * name, const int & val) const
 {
 	int loc = uniform_location(name);
 	if (loc >= 0)
-		glUniform1i(loc, val);
+		GL_CALL(glUniform1i(loc, val));
 }
 
 bool Shader_Program::create_handle()
