@@ -1,5 +1,6 @@
 #include "model.h"
 #include "gl_error.h"
+#include <platform/editor.h>
 
 const Material Model::m_def_material
 {
@@ -16,6 +17,7 @@ const Material Model::m_def_material
 Model::Model(const std::string & path)
 {
 	load_obj(path);
+	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }
 
 
@@ -23,10 +25,10 @@ void Model::draw(Shader_Program * shader)const
 {
 	for (auto& mesh : m_meshes)
 	{
-		if (mesh->m_material_idx >= 0)
-			m_materials[mesh->m_material_idx].set_uniform(shader);
-		else
+		if (mesh->m_material_idx == default_material)
 			m_def_material.set_uniform(shader);
+		else
+			m_materials[mesh->m_material_idx].set_uniform(shader);
 		mesh->draw(shader);
 	}
 }
@@ -34,7 +36,7 @@ void Model::draw(Shader_Program * shader)const
 void Model::load_obj(const std::string & path)
 {
 	Assimp::Importer importer{};
-	const aiScene* scn = importer.ReadFile(path, aiProcess_CalcTangentSpace);
+	const aiScene* scn = importer.ReadFile(path, aiProcessPreset_TargetRealtime_Quality);
 
 	if (!scn)
 		throw std::string("Mesh not found: ") + path;
@@ -109,8 +111,8 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 	}
 
 	// Material
-	int material_idx{ -1 };
-	if (scene->HasMaterials() && mesh->mMaterialIndex > 0)
+	int material_idx{ default_material };
+	if (scene->HasMaterials() && mesh->mMaterialIndex >= 0)
 		material_idx = processMaterial(scene->mMaterials[mesh->mMaterialIndex]);
 
 	auto quad = mesh->mPrimitiveTypes & aiPrimitiveType::aiPrimitiveType_POLYGON;
@@ -125,6 +127,10 @@ int Model::processMaterial(aiMaterial * material)
 	aiString name_;
 	material->Get(AI_MATKEY_NAME, name_);
 	std::string name{ name_.C_Str() };
+
+	// Check Default Material
+	if (name == "DefaultMaterial")
+		return default_material;
 
 	// Search among already existing materials
 	for (int i = 0; i < (int)m_materials.size(); i++)

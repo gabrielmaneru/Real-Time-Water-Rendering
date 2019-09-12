@@ -74,3 +74,11 @@ void c_renderer::shutdown()
 		delete m;
 	m_models.clear();
 }
+
+const Model * c_renderer::get_model(std::string s)
+{
+	for (auto& model : m_models)
+		if (model->m_name == s)
+			return model;
+	return nullptr;
+}

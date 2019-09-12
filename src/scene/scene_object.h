@@ -4,6 +4,7 @@
 class scene_object : public renderable
 {
 public:
+	scene_object(std::string mesh, transform3d tr = {});
 	virtual ~scene_object() = default;
 	virtual void enter() {};
 	virtual void update() {};

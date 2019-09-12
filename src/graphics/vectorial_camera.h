@@ -11,7 +11,7 @@ public:
 	void update()override;
 
 	float m_fov{ glm::pi<float>() / 4 };
-	float m_near{ 0.001f };
+	float m_near{ 1.f };
 	float m_far{ 10000.0f };
 
 private:

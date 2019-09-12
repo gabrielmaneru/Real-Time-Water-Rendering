@@ -16,14 +16,12 @@ class c_renderer
 	// Meshes
 	std::vector<Model*> m_models;
 	
-
 public:
 	bool init();
 	void update();
 	void shutdown();
 
-	enum e_meshes{ cube=0, octohedron, quad, sphere, sponza };
-	const Model* get_model(size_t i) { return m_models[i]; }
+	const Model* get_model(std::string s);
 
 	friend class c_editor;
 	friend struct generator;

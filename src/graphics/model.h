@@ -14,6 +14,8 @@ class Model
 public:
 	Model(const std::string&);
 	void draw(Shader_Program *)const;
+	std::string m_name;
+
 private:
 	void load_obj(const std::string&);
 	void processNode(aiNode* node, const aiScene* scene);

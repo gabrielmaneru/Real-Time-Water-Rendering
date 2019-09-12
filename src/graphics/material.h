@@ -3,6 +3,8 @@
 #include <glm/glm.h>
 #include "shader_program.h"
 #include "texture.h"
+
+constexpr int default_material = -1;
 struct Material
 {
 	void set_uniform(Shader_Program*)const;

@@ -25,7 +25,7 @@ void main()
 	vec3 normal = normalize(vNormal);
 
 	if(diff_txt_active)
-		diffuse *= texture(diff_txt, vUv).rgb;
+		diffuse = texture(diff_txt, vUv).rgb;
 	if(spec_txt_active)
 		specular *= texture(spec_txt, vUv).rgb;
 	if(norm_txt_active)
@@ -35,13 +35,13 @@ void main()
 		normal = TBN*normal;
 	}
 
-	vec3 view = vec3(0.0,0.0,1.0);
-	vec3 light = vec3(0.0,0.0,1.0);
+	vec3 view = vec3(0.0,0.0,-1.0);
+	vec3 light = vec3(0.0,0.0,-1.0);
 	vec3 reflect = 2*dot(normal,light)-light;
 
 	float Ia = 0.1;
 	float Id = max(dot(normal, light), 0);
 	float Is = pow(max(dot(reflect, view), 0),ns);
 
-	out_color = vec4(ka*Ia + Id*diffuse + Is*specular, 1.0);
+	out_color = vec4(diffuse, 1.0) + 0.0001 *vec4(ka*Ia + Id*diffuse + Is*specular, 1.0);
 }

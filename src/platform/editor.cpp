@@ -51,8 +51,11 @@ void c_editor::shutdown()
 
 void c_editor::draw_main_window()
 {
-	ImGui::Begin("Hydraulic Erosion", nullptr, ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Base", nullptr, ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2{ 0.0f, 0.0f });
 
+	ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
+	ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
+	ImGui::SliderInt("Test", &m_test_var, 0, 392);
 	ImGui::End();
 }
