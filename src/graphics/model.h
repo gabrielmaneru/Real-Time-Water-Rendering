@@ -14,7 +14,9 @@ class Model
 public:
 	Model(const std::string&);
 	void draw(Shader_Program *)const;
+
 	std::string m_name;
+	std::vector<Mesh*> m_meshes;
 
 private:
 	void load_obj(const std::string&);
@@ -23,7 +25,6 @@ private:
 	int processMaterial(aiMaterial * material);
 	Texture loadMaterialTexture(aiMaterial *material, aiTextureType type);
 
-	std::vector<Mesh*> m_meshes;
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
 	static const Material m_def_material;

@@ -12,5 +12,6 @@ public:
 	void draw(Shader_Program*);
 	void shutdown();
 	friend class c_renderer;
+	friend class c_editor;
 };
 extern c_scene * scene;

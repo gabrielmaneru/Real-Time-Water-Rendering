@@ -36,7 +36,7 @@ void Model::draw(Shader_Program * shader)const
 void Model::load_obj(const std::string & path)
 {
 	Assimp::Importer importer{};
-	const aiScene* scn = importer.ReadFile(path, aiProcessPreset_TargetRealtime_Quality);
+	const aiScene* scn = importer.ReadFile(path, aiProcessPreset_TargetRealtime_Quality|aiProcess_FlipUVs);
 
 	if (!scn)
 		throw std::string("Mesh not found: ") + path;
