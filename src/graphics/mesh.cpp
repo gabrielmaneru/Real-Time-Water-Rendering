@@ -1,8 +1,8 @@
 #include "mesh.h"
 #include "gl_error.h"
 
-Mesh::Mesh(const VertexBuffer& vertices, const std::vector<GLuint>& indices, int material_idx)
-	: m_vertices(vertices)
+Mesh::Mesh(const VertexBuffer& vertices, const std::vector<GLuint>& indices, int material_idx, Mesh::e_prim primitive)
+	: m_vertices(vertices), m_primitive(primitive)
 {
 	m_indices = indices;
 	m_material_idx = material_idx;
@@ -75,7 +75,15 @@ void Mesh::draw(Shader_Program* shader)const
 {
 	// Draw mesh
 	GL_CALL(glBindVertexArray(m_VAO));
-	GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
+	switch (m_primitive)
+	{
+	case Mesh::tri:
+		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
+		break;
+	case Mesh::quad:
+		GL_CALL(glDrawElements(GL_QUADS, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
+		break;
+	}
 	GL_CALL(glBindVertexArray(0));
 }
 

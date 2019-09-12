@@ -1,5 +1,18 @@
 #include "model.h"
 #include "gl_error.h"
+
+const Material Model::m_def_material
+{
+	"default",
+	vec3(1.0),
+	vec3(0.0, 1.0, 0.0),
+	vec3(1.0, 1.0, 1.0),
+	10.f,
+	{},
+	{},
+	{}
+};
+
 Model::Model(const std::string & path)
 {
 	load_obj(path);
@@ -12,6 +25,8 @@ void Model::draw(Shader_Program * shader)const
 	{
 		if (mesh->m_material_idx >= 0)
 			m_materials[mesh->m_material_idx].set_uniform(shader);
+		else
+			m_def_material.set_uniform(shader);
 		mesh->draw(shader);
 	}
 }
@@ -98,7 +113,10 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 	if (scene->HasMaterials() && mesh->mMaterialIndex > 0)
 		material_idx = processMaterial(scene->mMaterials[mesh->mMaterialIndex]);
 
-	return new Mesh(vertices, indices, material_idx);
+	auto quad = mesh->mPrimitiveTypes & aiPrimitiveType::aiPrimitiveType_POLYGON;
+
+	return new Mesh(vertices, indices, material_idx,
+		(quad > 0) ? Mesh::e_prim::quad : Mesh::e_prim::tri);
 }
 
 int Model::processMaterial(aiMaterial * material)

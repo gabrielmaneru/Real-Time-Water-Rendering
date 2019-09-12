@@ -19,7 +19,12 @@ struct VertexBuffer
 struct Mesh
 {
 public:
-	Mesh(const VertexBuffer& vertices, const std::vector<GLuint>& indices, int material_idx);
+	enum e_prim
+	{
+		tri, quad
+	}m_primitive;
+	VertexBuffer m_vertices;
+	Mesh(const VertexBuffer& vertices, const std::vector<GLuint>& indices, int material_idx, e_prim);
 	~Mesh();
 
 	void draw(Shader_Program* shader)const;
@@ -36,7 +41,6 @@ private:
 	GLuint m_bitangentbuffer{ 0 };
 	GLuint m_indexbuffer{ 0 };
 
-	VertexBuffer m_vertices;
 	std::vector<GLuint> m_indices;
 	std::vector<Texture> m_textures;
 };

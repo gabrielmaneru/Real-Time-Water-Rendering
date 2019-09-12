@@ -17,11 +17,14 @@ out vec2 vUv;
 
 void main()
 {
-	vNormal = attr_norm;
-	vTangent = attr_tan;
-	vBitangent = attr_bit;
-	vPosition = (V*M*vec4(attr_pos, 1.0)).xyz;
+	mat4 MV = V*M;
+	mat3 normalMtx = inverse(transpose(mat3(MV)));
+
+	vNormal = normalize(normalMtx * attr_norm);
+	vTangent = normalize(normalMtx * attr_tan);
+	vBitangent = normalize(normalMtx * attr_bit);
+	vPosition = (MV*vec4(attr_pos, 1.0)).xyz;
 	vUv = attr_uvs;
 
-	gl_Position = P*V*M * vec4(attr_pos, 1.0);
+	gl_Position = P*MV* vec4(attr_pos, 1.0);
 }

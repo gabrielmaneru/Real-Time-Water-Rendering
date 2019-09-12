@@ -24,4 +24,5 @@ private:
 	std::vector<Mesh*> m_meshes;
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
+	static const Material m_def_material;
 };

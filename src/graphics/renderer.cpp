@@ -21,7 +21,6 @@ bool c_renderer::init()
 	// GL Options
 	GL_CALL(glClearColor(0.5f, 0.0f, 0.0f, 1.0f));
 	GL_CALL(glEnable(GL_DEPTH_TEST));
-	GL_CALL(glDisable(GL_BLEND));
 
 	//Load Programs
 	try {
