@@ -3,10 +3,11 @@ c_scene * scene = new c_scene;
 bool c_scene::init()
 {
 	//Load Scene:
-	m_objects.push_back(new scene_object("sponza"));
 	transform3d tr;
-	tr.set_pos(vec3(-900.f, 300.f, -30.f));
-	tr.set_scl(vec3(5.f, 5.f, 5.f));
+	tr.set_scl(vec3(0.1f, 0.1f, 0.1f));
+	m_objects.push_back(new scene_object("sponza", tr));
+	tr.set_pos(vec3(-90.f, 30.f, -3.f));
+	tr.set_scl(vec3(0.5f, 0.5f, 0.5f));
 	m_objects.push_back(new scene_object("sphere", tr));
 	return true;
 }

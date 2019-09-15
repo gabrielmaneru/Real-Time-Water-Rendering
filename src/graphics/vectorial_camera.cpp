@@ -12,12 +12,12 @@ vectorial_camera::vectorial_camera(vec3 eye, vec3 front, vec3 up, float yaw, flo
 void vectorial_camera::update()
 {
 	constexpr float MOUSE_SENSITIVITY{ 0.25f };
-	constexpr float MOUSE_SPEED{ 1.0f };
+	constexpr float MOUSE_SPEED{ 0.5f };
 
 	// Check for Mouse Imput
 	if (window::mouse_but_right_pressed)
 	{
-		float speed = MOUSE_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 20.0f : 1.0f);
+		float speed = MOUSE_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 10.0f : 1.0f);
 
 		if (window_manager->is_key_down(GLFW_KEY_W))
 			m_eye += m_front * speed;

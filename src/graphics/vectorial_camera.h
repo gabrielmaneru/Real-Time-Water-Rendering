@@ -12,7 +12,7 @@ public:
 
 	float m_fov{ glm::pi<float>() / 4 };
 	float m_near{ 1.f };
-	float m_far{ 10000.0f };
+	float m_far{ 1000.0f };
 
 private:
 	void update_cam_vectors();

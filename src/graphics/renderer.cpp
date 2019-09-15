@@ -75,33 +75,34 @@ void c_renderer::update()
 
 
 	// Light Pass	///////////////////////////////////////////////////////////
-	/**///GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
-	/**///GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-	/**///GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-	/**///GL_CALL(glViewport(0, 0, light_buffer.m_width, light_buffer.m_height));
-	/**///
-	/**///light_shader->use();
-	/**///light_shader->set_uniform("P", ortho_cam.m_proj);
-	/**///light_shader->set_uniform("V", ortho_cam.m_view);
-	/**///light_shader->set_uniform("M", mat4(1.0f));
-	/**///light_shader->set_uniform("light_position", scene->m_objects[1]->m_transform.get_pos());
-	/**///light_shader->set_uniform("la", vec3{ 0.1, 0.1, 0.1 });
-	/**///light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
-	/**///light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
-	/**///
-	/**///light_shader->set_uniform_sampler("diffuse_txt", 0);
-	/**///glActiveTexture(GL_TEXTURE0);
-	/**///glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[0]);
-	/**///
-	/**///light_shader->set_uniform_sampler("position_txt", 1);
-	/**///glActiveTexture(GL_TEXTURE1);
-	/**///glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[1]);
-	/**///
-	/**///light_shader->set_uniform_sampler("normal_txt", 2);
-	/**///glActiveTexture(GL_TEXTURE2);
-	/**///glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[2]);
-	/**///
-	/**///m_models[2]->m_meshes[0]->draw(light_shader);
+	/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
+	/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+	/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+	/**/GL_CALL(glViewport(0, 0, light_buffer.m_width, light_buffer.m_height));
+	/**/
+	/**/light_shader->use();
+	/**/light_shader->set_uniform("P", mat4(1.0f));
+	/**/light_shader->set_uniform("V", ortho_cam.m_view);
+	/**/light_shader->set_uniform("M", mat4(1.0f));
+
+	/**/light_shader->set_uniform("light_position", scene->m_objects[1]->m_transform.get_pos());
+	/**/light_shader->set_uniform("la", vec3{ 0.1, 0.1, 0.1 });
+	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
+	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
+	/**/
+	/**/light_shader->set_uniform_sampler("diffuse_txt", 10);
+	/**/glActiveTexture(GL_TEXTURE10);
+	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[0]);
+	/**/
+	/**/light_shader->set_uniform_sampler("position_txt", 11);
+	/**/glActiveTexture(GL_TEXTURE11);
+	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[1]);
+	/**/
+	/**/light_shader->set_uniform_sampler("normal_txt", 12);
+	/**/glActiveTexture(GL_TEXTURE12);
+	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[2]);
+	/**/
+	/**/m_models[2]->m_meshes[0]->draw(light_shader);
 	///////////////////////////////////////////////////////////////////////////
 
 
@@ -113,12 +114,12 @@ void c_renderer::update()
 	/**/GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
 	/**/
 	/**/texture_shader->use();
-	/**/texture_shader->set_uniform("P", ortho_cam.m_proj);
+	/**/texture_shader->set_uniform("P", mat4(1.0f));
 	/**/texture_shader->set_uniform("V", ortho_cam.m_view);
 	/**/texture_shader->set_uniform("M", mat4(1.0f));
 	/**/
-	/**/texture_shader->set_uniform_sampler("uniform_texture", 0);
-	/**/glActiveTexture(GL_TEXTURE0);
+	/**/texture_shader->set_uniform_sampler("uniform_texture", 13);
+	/**/glActiveTexture(GL_TEXTURE13);
 	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[2]);
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(texture_shader);
