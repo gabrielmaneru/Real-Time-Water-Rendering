@@ -45,9 +45,6 @@ bool c_renderer::init()
 
 	// Setup Cameras
 	scene_cam.update();
-	ortho_cam.m_eye = { 0.0f, 0.0f, 1.0f };
-	ortho_cam.m_front = { 0.0f, 0.0f, -1.0f };
-	ortho_cam.update();
 
 	// Setup Framebuffers
 	g_buffer.setup(window_manager->get_width(), window_manager->get_height(), 3u);
@@ -82,7 +79,7 @@ void c_renderer::update()
 	/**/
 	/**/light_shader->use();
 	/**/light_shader->set_uniform("P", mat4(1.0f));
-	/**/light_shader->set_uniform("V", ortho_cam.m_view);
+	/**/light_shader->set_uniform("V", mat4(1.0f));
 	/**/light_shader->set_uniform("M", mat4(1.0f));
 
 	/**/light_shader->set_uniform("light_position", scene->m_objects[1]->m_transform.get_pos());
@@ -90,17 +87,17 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
 	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
 	/**/
-	/**/light_shader->set_uniform_sampler("diffuse_txt", 10);
-	/**/glActiveTexture(GL_TEXTURE10);
-	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[0]);
+	/**/light_shader->set_uniform_sampler("diffuse_txt", 0);
+	/**/glActiveTexture(GL_TEXTURE0);
+	/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
 	/**/
-	/**/light_shader->set_uniform_sampler("position_txt", 11);
-	/**/glActiveTexture(GL_TEXTURE11);
-	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[1]);
+	/**/light_shader->set_uniform_sampler("position_txt", 1);
+	/**/glActiveTexture(GL_TEXTURE1);
+	/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
 	/**/
-	/**/light_shader->set_uniform_sampler("normal_txt", 12);
-	/**/glActiveTexture(GL_TEXTURE12);
-	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[2]);
+	/**/light_shader->set_uniform_sampler("normal_txt", 2);
+	/**/glActiveTexture(GL_TEXTURE2);
+	/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(light_shader);
 	///////////////////////////////////////////////////////////////////////////
@@ -115,12 +112,12 @@ void c_renderer::update()
 	/**/
 	/**/texture_shader->use();
 	/**/texture_shader->set_uniform("P", mat4(1.0f));
-	/**/texture_shader->set_uniform("V", ortho_cam.m_view);
+	/**/texture_shader->set_uniform("V", mat4(1.0f));
 	/**/texture_shader->set_uniform("M", mat4(1.0f));
 	/**/
-	/**/texture_shader->set_uniform_sampler("uniform_texture", 13);
-	/**/glActiveTexture(GL_TEXTURE13);
-	/**/glBindTexture(GL_TEXTURE_2D, g_buffer.m_color_texture[2]);
+	/**/texture_shader->set_uniform_sampler("uniform_texture", 3);
+	/**/glActiveTexture(GL_TEXTURE3);
+	/**/glBindTexture(GL_TEXTURE_2D, get_texture(m_txt_cur));
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(texture_shader);
 	///////////////////////////////////////////////////////////////////////////
@@ -135,6 +132,21 @@ void c_renderer::shutdown()
 	for (auto m : m_models)
 		delete m;
 	m_models.clear();
+}
+
+GLuint c_renderer::get_texture(e_texture ref)
+{
+	switch (ref)
+	{
+	case c_renderer::e_texture::DIFFUSE:
+		return g_buffer.m_color_texture[0];
+	case c_renderer::e_texture::POSITION:
+		return g_buffer.m_color_texture[1];
+	case c_renderer::e_texture::NORMAL:
+		return g_buffer.m_color_texture[2];
+	case c_renderer::e_texture::LIGHT:
+		return light_buffer.m_color_texture[0];
+	}
 }
 
 const Model * c_renderer::get_model(std::string s)

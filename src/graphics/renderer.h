@@ -15,7 +15,6 @@ class c_renderer
 
 	// Cameras
 	vectorial_camera scene_cam{};
-	ortho_camera ortho_cam{};
 
 	// Meshes
 	std::vector<Model*> m_models;
@@ -24,11 +23,20 @@ class c_renderer
 	framebuffer g_buffer;
 	framebuffer light_buffer;
 
+	enum e_texture {
+		DIFFUSE,
+		POSITION,
+		NORMAL,
+		LIGHT
+	}m_txt_cur{DIFFUSE};
+
 public:
 	bool init();
 	void update();
 	void shutdown();
 
+	GLuint get_texture(e_texture ref);
+	void set_texture(e_texture ref) { m_txt_cur = ref; }
 	const Model* get_model(std::string s);
 
 	friend class c_editor;

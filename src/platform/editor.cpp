@@ -2,6 +2,7 @@
 #include "editor.h"
 #include "window_manager.h"
 #include "window.h"
+#include <functional>
 #include <graphics/renderer.h>
 #include <scene/scene.h>
 #include <imgui/imgui.h>
@@ -52,17 +53,28 @@ void c_editor::shutdown()
 
 void c_editor::draw_main_window()
 {
+	std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
+	{
+		const float scale = 2.0f;
+		const ImVec2 rect{ scale*192.f, scale*108.f };
+		GLuint id = renderer->get_texture(txt);
+		ImGui::Image(*reinterpret_cast<ImTextureID*>(&id), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+			renderer->set_texture(txt);
+	};
+
 	ImGui::Begin("Base", nullptr, ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2{ 0.0f, 0.0f });
 
 	ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 	ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
 	ImGui::SliderInt("Test", &m_test_var, 0, 10);
-	const ImVec2 rect{ m_test_var*192.f, m_test_var*108.f};
-	ImGui::Image(*reinterpret_cast<ImTextureID*>(&renderer->g_buffer.m_color_texture[0]), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
-	ImGui::Image(*reinterpret_cast<ImTextureID*>(&renderer->g_buffer.m_color_texture[1]), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
-	ImGui::Image(*reinterpret_cast<ImTextureID*>(&renderer->g_buffer.m_color_texture[2]), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
-	ImGui::Image(*reinterpret_cast<ImTextureID*>(&renderer->light_buffer.m_color_texture[0]), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
+
+	show_image(c_renderer::DIFFUSE);
+	show_image(c_renderer::POSITION);
+	show_image(c_renderer::NORMAL);
+	show_image(c_renderer::LIGHT);
+
 	bool chng{ false };
 	if (ImGui::InputFloat3("Pos", &scene->m_objects[1]->m_transform.m_tr.m_pos.x))chng = true;
 	if (ImGui::InputFloat3("Scl", &scene->m_objects[1]->m_transform.m_tr.m_scl.x))chng = true;
