@@ -43,3 +43,7 @@ inline void checkGlError()
 		assert(false);
 	}
 }
+/**
+ *
+ */
+void setup_gl_debug();

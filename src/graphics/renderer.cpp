@@ -17,7 +17,7 @@ bool c_renderer::init()
 	
 	if (!gl3wIsSupported(4, 0))
 		return false;
-
+	setup_gl_debug();
 	// GL Options
 	GL_CALL(glEnable(GL_DEPTH_TEST));
 
@@ -87,16 +87,17 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
 	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
 	/**/
-	/**/light_shader->set_uniform_sampler("diffuse_txt", 0);
-	/**/glActiveTexture(GL_TEXTURE0);
+	/**/light_shader->set_uniform_sampler("diffuse_txt", 10);
+	/**/light_shader->set_uniform_sampler("position_txt", 11);
+	/**/light_shader->set_uniform_sampler("normal_txt", 12);
+
+	/**/glActiveTexture(GL_TEXTURE10);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
 	/**/
-	/**/light_shader->set_uniform_sampler("position_txt", 1);
-	/**/glActiveTexture(GL_TEXTURE1);
+	/**/glActiveTexture(GL_TEXTURE11);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
 	/**/
-	/**/light_shader->set_uniform_sampler("normal_txt", 2);
-	/**/glActiveTexture(GL_TEXTURE2);
+	/**/glActiveTexture(GL_TEXTURE12);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(light_shader);
