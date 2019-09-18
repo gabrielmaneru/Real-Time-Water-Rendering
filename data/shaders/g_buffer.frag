@@ -5,9 +5,9 @@ in vec3 vBitangent;
 in vec3 vPosition;
 in vec2 vUv;
 
-uniform sampler2D diff_txt;
-uniform sampler2D spec_txt;
-uniform sampler2D norm_txt;
+layout (location = 0) uniform sampler2D diff_txt;
+layout (location = 1) uniform sampler2D spec_txt;
+layout (location = 2) uniform sampler2D norm_txt;
 uniform bool diff_txt_active;
 uniform bool spec_txt_active;
 uniform bool norm_txt_active;
@@ -17,8 +17,11 @@ uniform vec3 ks;
 uniform float ns;
 
 layout (location = 0) out vec4 attr_diffuse;
-layout (location = 1) out vec4 attr_position;
-layout (location = 2) out vec4 attr_normal;
+layout (location = 1) out vec3 attr_diffuse_rgb;
+layout (location = 2) out vec4 attr_position;
+layout (location = 3) out vec3 attr_position_rgb;
+layout (location = 4) out vec4 attr_normal;
+layout (location = 5) out vec3 attr_normal_rgb;
 
 void main()
 {
@@ -39,11 +42,15 @@ void main()
 	{
 		mat3 TBN = mat3(normalize(vTangent), normalize(vBitangent), normalize(vNormal));
 		normal = TBN * (2.0 * texture(norm_txt, vUv).xyz - 1.0);
+		normal = vNormal;
 	}
 	else
 		normal = normalize(vNormal);
-		
-	attr_diffuse = vec4(diffuse, 1+specular);
-	attr_position = vec4(vPosition, 1+ka.r);
-	attr_normal = vec4(normal, 1+ns);
+
+	attr_diffuse = vec4(diffuse, specular);
+	attr_diffuse_rgb = diffuse;
+	attr_position = vec4(vPosition, ka.r);
+	attr_position_rgb = vPosition;
+	attr_normal = vec4(normal, ns);
+	attr_normal_rgb = normal;
 }

@@ -11,7 +11,7 @@ void Material::set_uniform(Shader_Program * shader)const
 	if (m_diffuse_txt.m_id > 0)
 	{
 		shader->set_uniform("diff_txt_active", true);
-		shader->set_uniform_sampler("diff_txt", 0);
+		shader->set_uniform_sampler(0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_diffuse_txt.m_id);
 	}
@@ -21,7 +21,7 @@ void Material::set_uniform(Shader_Program * shader)const
 	if (m_specular_txt.m_id > 0)
 	{
 		shader->set_uniform("spec_txt_active", true);
-		shader->set_uniform_sampler("spec_txt", 1);
+		shader->set_uniform_sampler(1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, m_specular_txt.m_id);
 	}
@@ -31,7 +31,7 @@ void Material::set_uniform(Shader_Program * shader)const
 	if (m_normal_txt.m_id > 0)
 	{
 		shader->set_uniform("norm_txt_active", true);
-		shader->set_uniform_sampler("norm_txt", 2);
+		shader->set_uniform_sampler(2);
 		glBindTexture(GL_TEXTURE_2D, m_normal_txt.m_id);
 		glActiveTexture(GL_TEXTURE2);
 	}

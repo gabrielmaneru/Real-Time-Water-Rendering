@@ -47,8 +47,8 @@ bool c_renderer::init()
 	scene_cam.update();
 
 	// Setup Framebuffers
-	g_buffer.setup(window_manager->get_width(), window_manager->get_height(), 3u);
-	light_buffer.setup(window_manager->get_width(), window_manager->get_height(), 1u);
+	g_buffer.setup(window_manager->get_width(), window_manager->get_height(), { GL_RGBA, GL_RGB, GL_RGBA, GL_RGB, GL_RGBA, GL_RGB });
+	light_buffer.setup(window_manager->get_width(), window_manager->get_height(), { GL_RGBA });
 	return true;
 }
 
@@ -81,23 +81,25 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("P", mat4(1.0f));
 	/**/light_shader->set_uniform("V", mat4(1.0f));
 	/**/light_shader->set_uniform("M", mat4(1.0f));
-
+	/**/
+	/**/
+	/**/light_shader->set_uniform("ViewMtx", scene_cam.m_view);
 	/**/light_shader->set_uniform("light_position", scene->m_objects[1]->m_transform.get_pos());
 	/**/light_shader->set_uniform("la", vec3{ 0.1, 0.1, 0.1 });
 	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
 	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
 	/**/
-	/**/light_shader->set_uniform_sampler("diffuse_txt", 10);
-	/**/light_shader->set_uniform_sampler("position_txt", 11);
-	/**/light_shader->set_uniform_sampler("normal_txt", 12);
+	/**/light_shader->set_uniform_sampler(0);
+	/**/light_shader->set_uniform_sampler(1);
+	/**/light_shader->set_uniform_sampler(2);
 
-	/**/glActiveTexture(GL_TEXTURE10);
+	/**/glActiveTexture(GL_TEXTURE0);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
 	/**/
-	/**/glActiveTexture(GL_TEXTURE11);
+	/**/glActiveTexture(GL_TEXTURE1);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
 	/**/
-	/**/glActiveTexture(GL_TEXTURE12);
+	/**/glActiveTexture(GL_TEXTURE2);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(light_shader);
@@ -116,8 +118,8 @@ void c_renderer::update()
 	/**/texture_shader->set_uniform("V", mat4(1.0f));
 	/**/texture_shader->set_uniform("M", mat4(1.0f));
 	/**/
-	/**/texture_shader->set_uniform_sampler("uniform_texture", 3);
-	/**/glActiveTexture(GL_TEXTURE3);
+	/**/texture_shader->set_uniform_sampler(0);
+	/**/glActiveTexture(GL_TEXTURE0);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(m_txt_cur));
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(texture_shader);
@@ -141,10 +143,18 @@ GLuint c_renderer::get_texture(e_texture ref)
 	{
 	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[0];
-	case c_renderer::e_texture::POSITION:
+	case c_renderer::e_texture::DIFFUSE_rgb:
 		return g_buffer.m_color_texture[1];
-	case c_renderer::e_texture::NORMAL:
+	case c_renderer::e_texture::POSITION:
 		return g_buffer.m_color_texture[2];
+	case c_renderer::e_texture::POSITION_rgb:
+		return g_buffer.m_color_texture[3];
+	case c_renderer::e_texture::NORMAL:
+		return g_buffer.m_color_texture[4];
+	case c_renderer::e_texture::NORMAL_rgb:
+		return g_buffer.m_color_texture[5];
+	case c_renderer::e_texture::DEPTH:
+		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	}

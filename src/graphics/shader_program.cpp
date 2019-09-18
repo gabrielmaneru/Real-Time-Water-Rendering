@@ -81,11 +81,10 @@ void Shader_Program::set_uniform(const char * name, const mat4 & m) const
 		GL_CALL(glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]));
 }
 
-void Shader_Program::set_uniform_sampler(const char * name, const int & val) const
+void Shader_Program::set_uniform_sampler(const int & val) const
 {
-	int loc = uniform_location(name);
-	if (loc >= 0)
-		GL_CALL(glUniform1i(loc, val));
+	if (val >= 0)
+		GL_CALL(glUniform1i(val, val));
 }
 
 bool Shader_Program::create_handle()

@@ -3,7 +3,7 @@
 #include <GL/gl3w.h>
 struct framebuffer
 {
-	void setup(GLsizei width, GLsizei height, size_t txt_count);
+	void setup(GLsizei width, GLsizei height, std::vector<GLint> textures);
 
 	GLsizei m_width;
 	GLsizei m_height;

@@ -5,7 +5,7 @@ in vec3 vBitangent;
 in vec3 vPosition;
 in vec2 vUv;
 
-uniform sampler2D uniform_texture;
+layout (location = 0) uniform sampler2D uniform_texture;
 
 out vec4 out_color;
 

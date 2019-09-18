@@ -5,14 +5,14 @@ in vec3 vBitangent;
 in vec3 vPosition;
 in vec2 vUv;
 
-uniform sampler2D diffuse_txt;
-uniform sampler2D position_txt;
-uniform sampler2D normal_txt;
+layout (location = 0) uniform sampler2D diffuse_txt;
+layout (location = 1) uniform sampler2D position_txt;
+layout (location = 2) uniform sampler2D normal_txt;
 uniform vec3 light_position;
 uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 ls;
-uniform mat4 V;
+uniform mat4 ViewMtx;
 
 layout (location = 0) out vec4 out_color;
 
@@ -29,7 +29,7 @@ void main()
 	vec3 normal_v = normalize(normal_value.rgb);
 	float ns = normal_value.a;
 
-	vec3 light_pos = vec3(V * vec4(light_position, 1.0));
+	vec3 light_pos = vec3(ViewMtx * vec4(light_position, 1.0));
 	vec3 light_v = normalize(light_pos - frag_pos);
 	vec3 view_v = normalize(-frag_pos);
 	vec3 half_v = normalize(view_v + light_v);

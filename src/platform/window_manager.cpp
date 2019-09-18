@@ -16,7 +16,7 @@ bool c_window_manager::init()
 	if (!glfwInit())
 		return false;
 
-	m_window = window::create_window(1920, 1080, "Hydraulic Erosion", false);
+	m_window = window::create_window(1920, 1080, "Base", false);
 
 	if (!m_window) shutdown();
 	return m_window != nullptr;

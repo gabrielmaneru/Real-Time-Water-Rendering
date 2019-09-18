@@ -70,9 +70,10 @@ void c_editor::draw_main_window()
 	ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
 	ImGui::SliderInt("Test", &m_test_var, 0, 10);
 
-	show_image(c_renderer::DIFFUSE);
-	show_image(c_renderer::POSITION);
-	show_image(c_renderer::NORMAL);
+	show_image(c_renderer::DIFFUSE_rgb);
+	show_image(c_renderer::POSITION_rgb);
+	show_image(c_renderer::NORMAL_rgb);
+	show_image(c_renderer::DEPTH);
 	show_image(c_renderer::LIGHT);
 
 	bool chng{ false };
