@@ -12,7 +12,8 @@ uniform vec3 light_position;
 uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 ls;
-uniform mat4 ViewMtx;
+uniform float dt;
+const vec3 cam_pos = vec3(0.0, 0.0, 1.0);
 
 layout (location = 0) out vec4 out_color;
 
@@ -29,9 +30,8 @@ void main()
 	vec3 normal_v = normalize(normal_value.rgb);
 	float ns = normal_value.a;
 
-	vec3 light_pos = vec3(ViewMtx * vec4(light_position, 1.0));
-	vec3 light_v = normalize(light_pos - frag_pos);
-	vec3 view_v = normalize(-frag_pos);
+	vec3 light_v = normalize(light_position - frag_pos);
+	vec3 view_v = normalize(cam_pos - frag_pos);
 	vec3 half_v = normalize(view_v + light_v);
 
 	vec3 final_ambient = la * ka;
@@ -39,4 +39,5 @@ void main()
 	vec3 final_specular= ls * ks * pow(max(dot(normal_v, half_v), 0.0),ns);
 
 	out_color = vec4(final_ambient + final_diffuse + final_specular, 1.0);
+	
 }

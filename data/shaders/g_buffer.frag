@@ -27,7 +27,12 @@ void main()
 {
 	vec3 diffuse;
 	if(diff_txt_active)
-		diffuse = kd * texture(diff_txt, vUv).rgb;
+	{
+		vec4 txt = texture(diff_txt, vUv);
+		if(txt.a < 0.5)
+			discard;
+		diffuse = kd * txt.rgb;
+	}
 	else
 		diffuse = kd;
 	
@@ -41,8 +46,7 @@ void main()
 	if(norm_txt_active)
 	{
 		mat3 TBN = mat3(normalize(vTangent), normalize(vBitangent), normalize(vNormal));
-		normal = TBN * (2.0 * texture(norm_txt, vUv).xyz - 1.0);
-		normal = vNormal;
+		normal = normalize(TBN * (2.0 * texture(norm_txt, vUv).xyz - 1.0));
 	}
 	else
 		normal = normalize(vNormal);

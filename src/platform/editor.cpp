@@ -68,7 +68,7 @@ void c_editor::draw_main_window()
 
 	ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 	ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
-	ImGui::SliderInt("Test", &m_test_var, 0, 10);
+	ImGui::DragFloat("Test", &m_test_var, 1.0f, 0.0f);
 
 	show_image(c_renderer::DIFFUSE_rgb);
 	show_image(c_renderer::POSITION_rgb);
@@ -77,7 +77,7 @@ void c_editor::draw_main_window()
 	show_image(c_renderer::LIGHT);
 
 	bool chng{ false };
-	if (ImGui::InputFloat3("Pos", &scene->m_objects[1]->m_transform.m_tr.m_pos.x))chng = true;
+	if (ImGui::DragFloat3("Pos", &scene->m_objects[1]->m_transform.m_tr.m_pos.x))chng = true;
 	if (ImGui::InputFloat3("Scl", &scene->m_objects[1]->m_transform.m_tr.m_scl.x))chng = true;
 	if (chng)scene->m_objects[1]->m_transform.m_tr.upd();
 	ImGui::End();

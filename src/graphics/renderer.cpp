@@ -2,6 +2,7 @@
 #include "gl_error.h"
 #include <platform/window_manager.h>
 #include <platform/window.h>
+#include <platform/editor.h>
 #include <scene/scene.h>
 #include <utils/generate_noise.h>
 #include <GL/gl3w.h>
@@ -82,24 +83,22 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("V", mat4(1.0f));
 	/**/light_shader->set_uniform("M", mat4(1.0f));
 	/**/
-	/**/
-	/**/light_shader->set_uniform("ViewMtx", scene_cam.m_view);
-	/**/light_shader->set_uniform("light_position", scene->m_objects[1]->m_transform.get_pos());
+	/**/light_shader->set_uniform("light_position", vec3(scene_cam.m_view * scene->m_objects[1]->m_transform.m_tr.get_model() * vec4(0.0f, 0.0f, 0.0f, 1.0f)));
 	/**/light_shader->set_uniform("la", vec3{ 0.1, 0.1, 0.1 });
 	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
 	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
+	/**/light_shader->set_uniform("dt", editor->m_test_var);
 	/**/
-	/**/light_shader->set_uniform_sampler(0);
-	/**/light_shader->set_uniform_sampler(1);
-	/**/light_shader->set_uniform_sampler(2);
-
 	/**/glActiveTexture(GL_TEXTURE0);
+	/**/light_shader->set_uniform_sampler(0);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
 	/**/
 	/**/glActiveTexture(GL_TEXTURE1);
+	/**/light_shader->set_uniform_sampler(1);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
 	/**/
 	/**/glActiveTexture(GL_TEXTURE2);
+	/**/light_shader->set_uniform_sampler(2);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 	/**/
 	/**/m_models[2]->m_meshes[0]->draw(light_shader);

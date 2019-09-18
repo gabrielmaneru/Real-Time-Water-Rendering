@@ -9,7 +9,7 @@ public:
 	void update();
 	void shutdown();
 
-	int m_test_var{2};
+	float m_test_var;
 };
 
 extern c_editor* editor;

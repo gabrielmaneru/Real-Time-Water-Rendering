@@ -32,7 +32,7 @@ class c_renderer
 		NORMAL_rgb,
 		DEPTH,
 		LIGHT
-	}m_txt_cur{DIFFUSE_rgb};
+	}m_txt_cur{ LIGHT };
 
 public:
 	bool init();
