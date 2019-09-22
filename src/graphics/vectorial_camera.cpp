@@ -42,8 +42,8 @@ void vectorial_camera::update()
 		if (m_pitch < -89.0f)
 			m_pitch = -89.0f;
 
-		update_cam_vectors();
 	}
+	update_cam_vectors();
 
 	// Update Projection
 	float aspect = window_manager->get_width() / (float)window_manager->get_height();

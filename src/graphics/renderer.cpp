@@ -6,6 +6,7 @@
 #include <scene/scene.h>
 #include <utils/generate_noise.h>
 #include <GL/gl3w.h>
+#include <imgui/imgui.h>
 #include <iostream>
 #include <algorithm>
 
@@ -46,6 +47,7 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 
 	// Setup Cameras
+	scene_cam.m_eye = { 4,16,44 };
 	scene_cam.update();
 
 	// Setup Framebuffers
@@ -134,6 +136,32 @@ void c_renderer::shutdown()
 	for (auto m : m_models)
 		delete m;
 	m_models.clear();
+}
+
+void c_renderer::drawGUI()
+{
+
+	if (ImGui::TreeNode("Camera"))
+	{
+		ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
+		ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
+		ImGui::TreePop();
+	}
+	
+	std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
+	{
+		const float scale = 2.0f;
+		const ImVec2 rect{ scale*192.f, scale*108.f };
+		GLuint id = renderer->get_texture(txt);
+		ImGui::Image(*reinterpret_cast<ImTextureID*>(&id), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+			renderer->set_texture(txt);
+	};
+	show_image(c_renderer::DIFFUSE_rgb);
+	show_image(c_renderer::POSITION_rgb);
+	show_image(c_renderer::NORMAL_rgb);
+	show_image(c_renderer::DEPTH);
+	show_image(c_renderer::LIGHT);
 }
 
 GLuint c_renderer::get_texture(e_texture ref)

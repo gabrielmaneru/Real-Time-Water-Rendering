@@ -32,12 +32,13 @@ class c_renderer
 		NORMAL_rgb,
 		DEPTH,
 		LIGHT
-	}m_txt_cur{ LIGHT };
+	}m_txt_cur{ NORMAL_rgb };
 
 public:
 	bool init();
 	void update();
 	void shutdown();
+	void drawGUI();
 
 	GLuint get_texture(e_texture ref);
 	void set_texture(e_texture ref) { m_txt_cur = ref; }

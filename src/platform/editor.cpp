@@ -53,33 +53,11 @@ void c_editor::shutdown()
 
 void c_editor::draw_main_window()
 {
-	std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
-	{
-		const float scale = 2.0f;
-		const ImVec2 rect{ scale*192.f, scale*108.f };
-		GLuint id = renderer->get_texture(txt);
-		ImGui::Image(*reinterpret_cast<ImTextureID*>(&id), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
-		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
-			renderer->set_texture(txt);
-	};
+	ImGui::Begin("Options", nullptr);
+	renderer->drawGUI();
+	ImGui::End();
 
-	ImGui::Begin("Base", nullptr, ImGuiWindowFlags_NoMove);
-	ImGui::SetWindowPos(ImVec2{ 0.0f, 0.0f });
-
-	ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
-	ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
-	ImGui::DragFloat("Test", &m_test_var, 1.0f, 0.0f);
-
-	show_image(c_renderer::DIFFUSE_rgb);
-	show_image(c_renderer::POSITION_rgb);
-	show_image(c_renderer::NORMAL_rgb);
-	show_image(c_renderer::DEPTH);
-	show_image(c_renderer::LIGHT);
-
-	bool chng{ false };
-	if (ImGui::DragFloat3("Pos", &scene->m_objects[2]->m_transform.m_tr.m_pos.x))chng = true;
-	if (ImGui::DragFloat3("Rot", &scene->m_objects[2]->m_transform.m_tr.m_rot.x))chng = true;
-	if (ImGui::DragFloat3("Scl", &scene->m_objects[2]->m_transform.m_tr.m_scl.x))chng = true;
-	if (chng)scene->m_objects[2]->m_transform.m_tr.upd();
+	ImGui::Begin("Scene", nullptr);
+	scene->drawGUI();
 	ImGui::End();
 }
