@@ -14,6 +14,8 @@ struct VertexBuffer
 	std::vector<vec2> uv;
 	std::vector<vec3> tangent;
 	std::vector<vec3> bitangent;
+	std::vector<ivec4> bones;
+	std::vector<vec4> wbones;
 };
 
 struct Mesh

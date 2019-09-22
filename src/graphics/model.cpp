@@ -20,7 +20,6 @@ Model::Model(const std::string & path)
 	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }
 
-
 void Model::draw(Shader_Program * shader)const
 {
 	for (auto& mesh : m_meshes)
@@ -110,6 +109,26 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 			indices.push_back(face.mIndices[j]);
 	}
 
+	// Bones
+	for (size_t b = 0; b < mesh->mNumBones; b++)
+	{
+		const aiBone* bone = mesh->mBones[b];
+		for (size_t w = 0; w < bone->mNumWeights; w++)
+		{
+			unsigned id = bone->mWeights[w].mVertexId;
+			float weight = bone->mWeights[w].mWeight;
+			for (size_t i = 0; i < 4u; i++)
+			{
+				if (vertices.bones[id][i] == -1)
+				{
+					vertices.bones[id][i] = (int)b;
+					vertices.wbones[id][i] = weight;
+					break;
+				}
+			}
+		}
+	}
+
 	// Material
 	int material_idx{ default_material };
 	if (scene->HasMaterials() && mesh->mMaterialIndex >= 0)
@@ -174,8 +193,13 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	aiString str;
 	material->GetTexture(type, 0, &str);
 
+	std::string name = str.C_Str();
+	size_t start = name.find_last_of('/') + 1;
+	if (start > name.size()) start = 0;
+	name = "./data/textures/" + name.substr(start);
+
 	Texture texture;
-	texture.loadFromFile(str.C_Str(), type == Texture::e_texture_type::DIFFUSE);
+	texture.loadFromFile(name.c_str(), type == Texture::e_texture_type::DIFFUSE);
 	texture.m_type = static_cast<Texture::e_texture_type>(type);
 	texture.m_path = str.C_Str();
 	return texture;

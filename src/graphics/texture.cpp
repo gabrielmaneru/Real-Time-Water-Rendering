@@ -10,7 +10,7 @@ void Texture::loadFromFile(const char * str, bool gamma_correction)
 
 	// Load textures
 	int nrChannels;
-	unsigned char* data = stbi_load((std::string(".") + str).c_str(), &m_width, &m_height, &nrChannels, 0);
+	unsigned char* data = stbi_load(str, &m_width, &m_height, &nrChannels, 0);
 	
 	if (data)
 	{

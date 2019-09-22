@@ -94,4 +94,6 @@ VertexBuffer::VertexBuffer(size_t s)
 	uv.resize(s);
 	tangent.resize(s);
 	bitangent.resize(s);
+	bones.resize(s, ivec4(-1));
+	wbones.resize(s);
 }

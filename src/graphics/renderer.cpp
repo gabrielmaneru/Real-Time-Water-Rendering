@@ -24,9 +24,9 @@ bool c_renderer::init()
 
 	// Load Programs
 	try {
-		g_buffer_shader = new Shader_Program("../data/shaders/basic.vert", "../data/shaders/g_buffer.frag");
-		light_shader = new Shader_Program("../data/shaders/basic.vert", "../data/shaders/light.frag");
-		texture_shader = new Shader_Program("../data/shaders/basic.vert", "../data/shaders/texture.frag");
+		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
+		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
+		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
@@ -34,13 +34,14 @@ bool c_renderer::init()
 	try
 	{
 		// Basic
-		m_models.push_back(new Model("../data/meshes/cube.obj"));
-		m_models.push_back(new Model("../data/meshes/octohedron.obj"));
-		m_models.push_back(new Model("../data/meshes/quad.obj"));
-		m_models.push_back(new Model("../data/meshes/sphere.obj"));
+		m_models.push_back(new Model("./data/meshes/cube.obj"));
+		m_models.push_back(new Model("./data/meshes/octohedron.obj"));
+		m_models.push_back(new Model("./data/meshes/quad.obj"));
+		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		m_models.push_back(new Model("../data/meshes/sponza.obj"));
+		m_models.push_back(new Model("./data/meshes/sponza.obj"));
+		m_models.push_back(new Model("./data/meshes/phoenix.fbx"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
@@ -87,7 +88,6 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("la", vec3{ 0.1, 0.1, 0.1 });
 	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
 	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
-	/**/light_shader->set_uniform("dt", editor->m_test_var);
 	/**/
 	/**/glActiveTexture(GL_TEXTURE0);
 	/**/light_shader->set_uniform_sampler(0);

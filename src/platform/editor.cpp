@@ -77,8 +77,9 @@ void c_editor::draw_main_window()
 	show_image(c_renderer::LIGHT);
 
 	bool chng{ false };
-	if (ImGui::DragFloat3("Pos", &scene->m_objects[1]->m_transform.m_tr.m_pos.x))chng = true;
-	if (ImGui::InputFloat3("Scl", &scene->m_objects[1]->m_transform.m_tr.m_scl.x))chng = true;
-	if (chng)scene->m_objects[1]->m_transform.m_tr.upd();
+	if (ImGui::DragFloat3("Pos", &scene->m_objects[2]->m_transform.m_tr.m_pos.x))chng = true;
+	if (ImGui::DragFloat3("Rot", &scene->m_objects[2]->m_transform.m_tr.m_rot.x))chng = true;
+	if (ImGui::DragFloat3("Scl", &scene->m_objects[2]->m_transform.m_tr.m_scl.x))chng = true;
+	if (chng)scene->m_objects[2]->m_transform.m_tr.upd();
 	ImGui::End();
 }
