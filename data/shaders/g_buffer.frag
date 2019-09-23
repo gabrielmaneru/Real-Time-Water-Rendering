@@ -45,7 +45,11 @@ void main()
 	vec3 normal;
 	if(norm_txt_active)
 	{
-		mat3 TBN = mat3(normalize(vTangent), normalize(vBitangent), normalize(vNormal));
+		const vec3 T = normalize(vTangent);
+		const vec3 B = normalize(vBitangent);
+		const vec3 N = normalize(vNormal);
+
+		mat3 TBN = mat3(T,B,N);
 		normal = normalize(TBN * (2.0 * texture(norm_txt, vUv).xyz - 1.0));
 	}
 	else

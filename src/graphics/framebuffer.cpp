@@ -12,13 +12,13 @@ void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textur
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo));
 
 	// Diffuse Textures
-	m_color_texture.resize(textures.size());
+	m_color_texture.resize(textures.size()/2);
 	for (GLenum i = 0; i < (GLenum)m_color_texture.size(); i++)
 	{
 		// Create Texture
 		GL_CALL(glGenTextures(1, &m_color_texture[i]));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_color_texture[i]));
-		GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, textures[i], m_width, m_height, 0, textures[i], GL_FLOAT, nullptr));
+		GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, textures[i*2], m_width, m_height, 0, textures[i*2+1], GL_FLOAT, nullptr));
 
 		// Set Parameters
 		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));

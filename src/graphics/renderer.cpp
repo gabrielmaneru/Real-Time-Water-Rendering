@@ -51,8 +51,17 @@ bool c_renderer::init()
 	scene_cam.update();
 
 	// Setup Framebuffers
-	g_buffer.setup(window_manager->get_width(), window_manager->get_height(), { GL_RGBA, GL_RGB, GL_RGBA, GL_RGB, GL_RGBA, GL_RGB });
-	light_buffer.setup(window_manager->get_width(), window_manager->get_height(), { GL_RGBA });
+	g_buffer.setup(window_manager->get_width(), window_manager->get_height(),{
+		GL_RGBA16F, GL_RGBA,
+		GL_RGB16F, GL_RGB,
+		GL_RGBA16F, GL_RGBA,
+		GL_RGB16F, GL_RGB,
+		GL_RGBA16F, GL_RGBA,
+		GL_RGB16F, GL_RGB
+		});
+	light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
+		GL_RGBA16F, GL_RGBA
+		});
 	return true;
 }
 
@@ -86,10 +95,11 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("V", mat4(1.0f));
 	/**/light_shader->set_uniform("M", mat4(1.0f));
 	/**/
-	/**/light_shader->set_uniform("light_position", vec3(scene_cam.m_view * scene->m_objects[1]->m_transform.m_tr.get_model() * vec4(0.0f, 0.0f, 0.0f, 1.0f)));
-	/**/light_shader->set_uniform("la", vec3{ 0.1, 0.1, 0.1 });
-	/**/light_shader->set_uniform("ld", vec3{ 0.8, 0.8, 0.8 });
-	/**/light_shader->set_uniform("ls", vec3{ 1.0, 1.0, 1.0 });
+	/**/light_shader->set_uniform("light_position", vec3(scene_cam.m_view * vec4(scene->m_objects[1]->m_transform.get_pos(), 1.0f)));
+	/**/light_shader->set_uniform("la", la);
+	/**/light_shader->set_uniform("ld", ld);
+	/**/light_shader->set_uniform("ls", ls);
+	/**/light_shader->set_uniform("att_factor", att_factor);
 	/**/
 	/**/glActiveTexture(GL_TEXTURE0);
 	/**/light_shader->set_uniform_sampler(0);
@@ -145,6 +155,14 @@ void c_renderer::drawGUI()
 	{
 		ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 		ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Light"))
+	{
+		ImGui::DragFloat("LA", &la, 0.1f, 0.0f, 1.0f);
+		ImGui::DragFloat3("LD", &ld.x, 0.1f, 0.0f, 1.0f);
+		ImGui::DragFloat3("LS", &ls.x, 0.1f, 0.0f, 1.0f);
+		ImGui::DragFloat3("Att", &att_factor.x, 0.1f, 0.0f, 1.0f);
 		ImGui::TreePop();
 	}
 	

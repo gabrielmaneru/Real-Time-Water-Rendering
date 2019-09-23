@@ -34,6 +34,11 @@ class c_renderer
 		LIGHT
 	}m_txt_cur{ NORMAL_rgb };
 
+	float la = 0.0f;
+	vec3 ld = vec3{ 1.0};
+	vec3 ls = vec3{ 1.0};
+	vec3 att_factor = vec3{ 0.01f, 0.01f, 0.01f };
+
 public:
 	bool init();
 	void update();

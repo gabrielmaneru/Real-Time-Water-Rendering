@@ -9,11 +9,10 @@ layout (location = 0) uniform sampler2D diffuse_txt;
 layout (location = 1) uniform sampler2D position_txt;
 layout (location = 2) uniform sampler2D normal_txt;
 uniform vec3 light_position;
-uniform vec3 la;
+uniform float la;
 uniform vec3 ld;
 uniform vec3 ls;
-uniform float dt;
-const vec3 cam_pos = vec3(0.0, 0.0, 1.0);
+uniform vec3 att_factor;
 
 layout (location = 0) out vec4 out_color;
 
@@ -31,13 +30,16 @@ void main()
 	float ns = normal_value.a;
 
 	vec3 light_v = normalize(light_position - frag_pos);
-	vec3 view_v = normalize(cam_pos - frag_pos);
+	vec3 view_v = normalize(-frag_pos);
 	vec3 half_v = normalize(view_v + light_v);
 
-	vec3 final_ambient = la * ka;
-	vec3 final_diffuse = ld * kd * max(dot(normal_v, light_v), 0.0);
-	vec3 final_specular= ls * ks * pow(max(dot(normal_v, half_v), 0.0),ns);
+	float d = length(light_position - frag_pos);
+	float att = min(1/(att_factor.x + att_factor.y*d + att_factor.z*d*d) , 1.0);
 
-	out_color = vec4(final_ambient + final_diffuse + final_specular, 1.0);
-	
+	float final_ambient = la * ka;
+	vec3 final_diffuse = ld * kd * att * max(dot(normal_v, light_v), 0.0);
+	vec3 final_specular= ls * ks * att * pow(max(dot(normal_v, half_v), 0.0),ns);
+
+	out_color = vec4(vec3(final_ambient) + final_diffuse + final_specular, 1.0);
+
 }
