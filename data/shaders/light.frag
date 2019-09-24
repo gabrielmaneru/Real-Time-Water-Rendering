@@ -13,21 +13,24 @@ uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 ls;
 uniform vec3 att_factor;
+uniform int window_width;
+uniform int window_height;
 
 layout (location = 0) out vec4 out_color;
 
 void main()
 {
-	vec4 diffuse_value = texture(diffuse_txt, vUv);
-	vec4 position_value = texture(position_txt, vUv);
-	vec4 normal_value = texture(normal_txt, vUv);
+	vec2 new_uvs = vec2(gl_FragCoord.x/window_width, gl_FragCoord.y/window_height);
+	vec4 diffuse_value = texture(diffuse_txt, new_uvs);
+	vec4 position_value = texture(position_txt, new_uvs);
+	vec4 normal_value = texture(normal_txt, new_uvs);
 
 	vec3 kd = diffuse_value.rgb;
-	float ks = diffuse_value.a;
+	float ks = diffuse_value.a-1.0;
 	vec3 frag_pos = position_value.rgb;
-	float ka = position_value.a;
+	float ka = position_value.a-1.0;
 	vec3 normal_v = normalize(normal_value.rgb);
-	float ns = normal_value.a;
+	float ns = normal_value.a-1.0;
 
 	vec3 light_v = normalize(l_pos - frag_pos);
 	vec3 view_v = normalize(-frag_pos);

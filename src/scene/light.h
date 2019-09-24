@@ -17,6 +17,5 @@ public:
 	light(transform3d tr = {}, light_data ld={});
 	void draw(Shader_Program*);
 
-	bool debug_draw{false};
 	light_data m_ldata;
 };

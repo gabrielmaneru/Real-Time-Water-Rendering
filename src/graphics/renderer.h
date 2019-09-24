@@ -25,14 +25,11 @@ class c_renderer
 
 	enum e_texture {
 		DIFFUSE,
-		DIFFUSE_rgb,
 		POSITION,
-		POSITION_rgb,
 		NORMAL,
-		NORMAL_rgb,
 		DEPTH,
 		LIGHT
-	}m_txt_cur{ NORMAL_rgb };
+	}m_txt_cur{ LIGHT };
 
 public:
 	bool init();

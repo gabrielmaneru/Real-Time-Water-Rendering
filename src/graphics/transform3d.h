@@ -6,6 +6,7 @@ struct transform3d
 	const vec3& get_pos() { return m_tr.m_pos; }
 	const vec3& get_scl() { return m_tr.m_scl; }
 	const vec3& get_rot() { return m_tr.m_rot; }
+	mat4 get_model() { return m_tr.get_model(); }
 
 	void set_pos(const vec3& v) { m_tr.m_pos = v, m_tr.upd(); }
 	void set_scl(const vec3& v) { m_tr.m_scl = v, m_tr.upd(); }

@@ -17,7 +17,7 @@ bool c_renderer::init()
 	if (gl3wInit())
 		return false;
 	
-	if (!gl3wIsSupported(4, 0))
+	if (!gl3wIsSupported(4, 6))
 		return false;
 	setup_gl_debug();
 	// GL Options
@@ -53,11 +53,8 @@ bool c_renderer::init()
 	// Setup Framebuffers
 	g_buffer.setup(window_manager->get_width(), window_manager->get_height(),{
 		GL_RGBA16F, GL_RGBA,
-		GL_RGB16F, GL_RGB,
 		GL_RGBA16F, GL_RGBA,
-		GL_RGB16F, GL_RGB,
 		GL_RGBA16F, GL_RGBA,
-		GL_RGB16F, GL_RGB
 		});
 	light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 		GL_RGBA16F, GL_RGBA
@@ -91,11 +88,11 @@ void c_renderer::update()
 	/**/GL_CALL(glViewport(0, 0, light_buffer.m_width, light_buffer.m_height));
 	/**/
 	/**/light_shader->use();
-	/**/light_shader->set_uniform("P", mat4(1.0f));
-	/**/light_shader->set_uniform("V", mat4(1.0f));
-	/**/light_shader->set_uniform("M", mat4(1.0f));
+	/**/light_shader->set_uniform("P", scene_cam.m_proj);
+	/**/light_shader->set_uniform("V", scene_cam.m_view);
+	/**/light_shader->set_uniform("window_width", window_manager->get_width());
+	/**/light_shader->set_uniform("window_height", window_manager->get_height());
 	/**/
-	/**/scene->draw_light(light_shader);
 	/**/
 	/**/glActiveTexture(GL_TEXTURE0);
 	/**/light_shader->set_uniform_sampler(0);
@@ -109,7 +106,8 @@ void c_renderer::update()
 	/**/light_shader->set_uniform_sampler(2);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 	/**/
-	/**/m_models[2]->m_meshes[0]->draw(light_shader);
+	/**/scene->draw_light(light_shader);
+	/**///m_models[2]->m_meshes[0]->draw(light_shader);
 	///////////////////////////////////////////////////////////////////////////
 
 
@@ -163,9 +161,9 @@ void c_renderer::drawGUI()
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 			renderer->set_texture(txt);
 	};
-	show_image(c_renderer::DIFFUSE_rgb);
-	show_image(c_renderer::POSITION_rgb);
-	show_image(c_renderer::NORMAL_rgb);
+	show_image(c_renderer::DIFFUSE);
+	show_image(c_renderer::POSITION);
+	show_image(c_renderer::NORMAL);
 	show_image(c_renderer::DEPTH);
 	show_image(c_renderer::LIGHT);
 }
@@ -176,21 +174,16 @@ GLuint c_renderer::get_texture(e_texture ref)
 	{
 	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[0];
-	case c_renderer::e_texture::DIFFUSE_rgb:
-		return g_buffer.m_color_texture[1];
 	case c_renderer::e_texture::POSITION:
-		return g_buffer.m_color_texture[2];
-	case c_renderer::e_texture::POSITION_rgb:
-		return g_buffer.m_color_texture[3];
+		return g_buffer.m_color_texture[1];
 	case c_renderer::e_texture::NORMAL:
-		return g_buffer.m_color_texture[4];
-	case c_renderer::e_texture::NORMAL_rgb:
-		return g_buffer.m_color_texture[5];
+		return g_buffer.m_color_texture[2];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	}
+	return 0;
 }
 
 const Model * c_renderer::get_model(std::string s)

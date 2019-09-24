@@ -17,11 +17,8 @@ uniform vec3 ks;
 uniform float ns;
 
 layout (location = 0) out vec4 attr_diffuse;
-layout (location = 1) out vec3 attr_diffuse_rgb;
-layout (location = 2) out vec4 attr_position;
-layout (location = 3) out vec3 attr_position_rgb;
-layout (location = 4) out vec4 attr_normal;
-layout (location = 5) out vec3 attr_normal_rgb;
+layout (location = 1) out vec4 attr_position;
+layout (location = 2) out vec4 attr_normal;
 
 void main()
 {
@@ -55,10 +52,7 @@ void main()
 	else
 		normal = normalize(vNormal);
 
-	attr_diffuse = vec4(diffuse, specular);
-	attr_diffuse_rgb = diffuse;
-	attr_position = vec4(vPosition, ka.r);
-	attr_position_rgb = vPosition;
-	attr_normal = vec4(normal, ns);
-	attr_normal_rgb = normal;
+	attr_diffuse = vec4(diffuse, 1.0+specular);
+	attr_position = vec4(vPosition, 1.0+ka.r);
+	attr_normal = vec4(normal, 1.0+ns);
 }

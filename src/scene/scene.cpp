@@ -157,6 +157,7 @@ void c_scene::draw_obj(Shader_Program * shader)
 
 void c_scene::draw_light(Shader_Program * shader)
 {
+	shader->set_uniform("la", light_data::m_ambient);
 	for (auto p_li : m_lights)
 		p_li->draw(shader);
 }
@@ -202,7 +203,7 @@ void c_scene::drawGUI()
 		light_data::m_ambient.y = light_data::m_ambient.z = light_data::m_ambient.x;
 
 	ImGui::SliderFloat("AttMax", &light_data::m_att_max, 0.001f, 1.0f);
-
+	ImGui::InputFloat("radius", &scene->m_lights[0]->m_transform.m_tr.m_scl.x);
 	for (int i = 0; i < m_lights.size(); i++)
 	{
 		ImGui::PushID(i);
@@ -210,7 +211,6 @@ void c_scene::drawGUI()
 		if (ImGui::TreeNode("Light"))
 		{
 			scene->m_lights[i]->m_ldata.drawGUI();
-			ImGui::Checkbox("DebugDraw", &scene->m_lights[i]->debug_draw);
 
 			if (ImGui::DragFloat3("Pos", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
 				scene->m_lights[i]->m_transform.m_tr.upd();

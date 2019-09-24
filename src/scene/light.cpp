@@ -3,7 +3,7 @@
 #include <imgui/imgui.h>
 
 vec3 light_data::m_ambient = vec3{ 0.0f };
-float light_data::m_att_max{ 0.001f };
+float light_data::m_att_max{ 0.1f };
 
 void light_data::drawGUI()
 {
@@ -34,15 +34,14 @@ void light::recompute_scale()
 {
 	// Compute radius of max att
 	const vec3& att = m_ldata.m_att_factor;
-	float a = m_ldata.m_att_max*m_ldata.m_att_factor.x - 1;
+	float a = m_ldata.m_att_max*m_ldata.m_att_factor.z;
 	float b = m_ldata.m_att_max*m_ldata.m_att_factor.y;
-	float c = m_ldata.m_att_max*m_ldata.m_att_factor.z;
+	float c = m_ldata.m_att_max*m_ldata.m_att_factor.x - 1;
 
 	const float& att_max = m_ldata.m_att_max;
 	float det = b*b-4*a*c;
 	float r1 = (-b + sqrtf(det)) / (2 * a);
-	float r2 = (-b - sqrtf(det)) / (2 * a);
-	m_transform.set_scl(vec3(r2));
+	m_transform.set_scl(vec3(r1));
 }
 
 light::light(transform3d tr, light_data ld)
@@ -53,13 +52,14 @@ light::light(transform3d tr, light_data ld)
 void light::draw(Shader_Program * shader)
 {
 	shader->set_uniform("l_pos", vec3(renderer->scene_cam.m_view * vec4(m_transform.get_pos(), 1.0f)));
-	shader->set_uniform("la", m_ldata.m_ambient);
 	shader->set_uniform("ld", m_ldata.m_diffuse);
 	shader->set_uniform("ls", m_ldata.m_specular);
 	shader->set_uniform("att_factor", m_ldata.m_att_factor);
-	if (debug_draw && m_model)
+
+	if (m_model)
 	{
 		recompute_scale();
+		shader->set_uniform("M", m_transform.get_model());
 		m_model->draw(shader);
 	}
 }
