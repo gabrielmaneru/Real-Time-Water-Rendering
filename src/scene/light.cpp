@@ -3,7 +3,7 @@
 #include <imgui/imgui.h>
 
 vec3 light_data::m_ambient = vec3{ 0.0f };
-float light_data::m_att_max{ 0.1f };
+float light_data::m_att_max{ 0.05f };
 
 void light_data::drawGUI()
 {
@@ -13,8 +13,8 @@ void light_data::drawGUI()
 	ImGui::Checkbox("", display_break);
 	ImGui::SameLine();
 	if (display_break[0])
-		ImGui::DragFloat3("Diff", &m_diffuse.x, 0.1f, 0.0f, 1.0f);
-	else if (ImGui::DragFloat("Diff", &m_diffuse.x, 0.1f, 0.0f, 1.0f))
+		ImGui::DragFloat3("Diff", &m_diffuse.x, 0.01f, 0.0f, 1.0f);
+	else if (ImGui::DragFloat("Diff", &m_diffuse.x, 0.01f, 0.0f, 1.0f))
 		m_diffuse.y = m_diffuse.z = m_diffuse.x;
 	ImGui::PopID();
 

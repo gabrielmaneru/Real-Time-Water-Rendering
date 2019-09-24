@@ -18,6 +18,7 @@ public:
 	void set_uniform(const char *name, const mat3 & m) const;
 	void set_uniform(const char *name, const mat4 & m) const;
 	void set_uniform_sampler(const int & val) const;
+	void set_uniform_subroutine(unsigned int shader_type, const std::string& value);
 
 private:
 	enum class e_shader_type { VERTEX, FRAGMENT, GEOMETRY };
@@ -26,6 +27,7 @@ private:
 	void link();
 	int uniform_location(const char * name) const;
 
+	std::map<std::string, unsigned int> m_subroutine_values;
 	mutable std::map<std::string, int> m_uniform_location_map{};
 	int m_handle{0};
 	bool m_linked{false};

@@ -87,6 +87,18 @@ void Shader_Program::set_uniform_sampler(const int & val) const
 		GL_CALL(glUniform1i(val, val));
 }
 
+void Shader_Program::set_uniform_subroutine(unsigned int shader_type, const std::string & value)
+{
+	auto it_loc = m_subroutine_values.find(value);
+	if (it_loc == m_subroutine_values.end())
+	{
+		unsigned int new_loc = glGetSubroutineIndex(m_handle, shader_type, value.c_str());
+		m_subroutine_values[value] = new_loc;
+		it_loc = m_subroutine_values.find(value);
+	}
+	glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &it_loc->second);
+}
+
 bool Shader_Program::create_handle()
 {
 	if (m_handle <= 0)

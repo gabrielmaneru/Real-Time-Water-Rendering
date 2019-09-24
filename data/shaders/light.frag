@@ -15,12 +15,17 @@ uniform vec3 ls;
 uniform vec3 att_factor;
 uniform int window_width;
 uniform int window_height;
+subroutine void Render_Type();
+subroutine uniform Render_Type render_pass;
 
 layout (location = 0) out vec4 out_color;
 
-void main()
+
+
+subroutine (Render_Type) void render_diffuse_specular()
 {
 	vec2 new_uvs = vec2(gl_FragCoord.x/window_width, gl_FragCoord.y/window_height);
+	
 	vec4 diffuse_value = texture(diffuse_txt, new_uvs);
 	vec4 position_value = texture(position_txt, new_uvs);
 	vec4 normal_value = texture(normal_txt, new_uvs);
@@ -43,4 +48,22 @@ void main()
 	float is = att * pow(max(dot(normal_v, half_v), 0.0),ns);
 
 	out_color = vec4((id*ld+ka*la)*kd + ls * ks * is, 1.0);
+}
+
+subroutine (Render_Type) void render_ambient()
+{
+	vec2 new_uvs = vec2(gl_FragCoord.x/window_width, gl_FragCoord.y/window_height);
+	
+	vec4 diffuse_value = texture(diffuse_txt, new_uvs);
+	vec4 position_value = texture(position_txt, new_uvs);
+	
+	vec3 kd = diffuse_value.rgb;
+	float ka = position_value.a-1.0;
+
+	out_color = vec4((ka*la)*kd, 1.0);
+}
+
+void main()
+{
+	render_pass();
 }

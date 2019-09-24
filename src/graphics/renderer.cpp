@@ -19,6 +19,7 @@ bool c_renderer::init()
 	
 	if (!gl3wIsSupported(4, 6))
 		return false;
+
 	setup_gl_debug();
 	// GL Options
 	GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -27,6 +28,7 @@ bool c_renderer::init()
 	try {
 		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
+		
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -45,7 +47,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/phoenix.fbx"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
-
+	
 	// Setup Cameras
 	scene_cam.m_eye = { 4,16,44 };
 	scene_cam.update();
@@ -88,12 +90,16 @@ void c_renderer::update()
 	/**/GL_CALL(glViewport(0, 0, light_buffer.m_width, light_buffer.m_height));
 	/**/
 	/**/light_shader->use();
+	/**/light_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "render_ambient");
+
+
 	/**/light_shader->set_uniform("P", scene_cam.m_proj);
 	/**/light_shader->set_uniform("V", scene_cam.m_view);
 	/**/light_shader->set_uniform("window_width", window_manager->get_width());
 	/**/light_shader->set_uniform("window_height", window_manager->get_height());
 	/**/
 	/**/
+	/**///m_models[2]->m_meshes[0]->draw(light_shader);
 	/**/glActiveTexture(GL_TEXTURE0);
 	/**/light_shader->set_uniform_sampler(0);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
@@ -106,8 +112,8 @@ void c_renderer::update()
 	/**/light_shader->set_uniform_sampler(2);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 	/**/
+	/**/light_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "render_diffuse_specular");
 	/**/scene->draw_light(light_shader);
-	/**///m_models[2]->m_meshes[0]->draw(light_shader);
 	///////////////////////////////////////////////////////////////////////////
 
 
