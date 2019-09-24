@@ -1,6 +1,6 @@
 #pragma once
 #include <glm/glm.h>
-constexpr struct {
+const struct {
 	vec3 eye{ 0,0,10 };
 	vec3 front{ 0,0,-1 };
 	vec3 up{ 0,1,0 };

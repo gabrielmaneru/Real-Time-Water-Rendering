@@ -117,7 +117,7 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 		{
 			unsigned id = bone->mWeights[w].mVertexId;
 			float weight = bone->mWeights[w].mWeight;
-			for (size_t i = 0; i < 4u; i++)
+			for (vec4::length_type i = 0; i < 4u; i++)
 			{
 				if (vertices.bones[id][i] == -1)
 				{
