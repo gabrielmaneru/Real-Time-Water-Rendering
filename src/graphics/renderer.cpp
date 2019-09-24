@@ -79,7 +79,7 @@ void c_renderer::update()
 	/**/g_buffer_shader->use();
 	/**/g_buffer_shader->set_uniform("P", scene_cam.m_proj);
 	/**/g_buffer_shader->set_uniform("V", scene_cam.m_view);
-	/**/scene->draw(g_buffer_shader);
+	/**/scene->draw_obj(g_buffer_shader);
 	///////////////////////////////////////////////////////////////////////////
 
 
@@ -95,11 +95,7 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("V", mat4(1.0f));
 	/**/light_shader->set_uniform("M", mat4(1.0f));
 	/**/
-	/**/light_shader->set_uniform("light_position", vec3(scene_cam.m_view * vec4(scene->m_objects[1]->m_transform.get_pos(), 1.0f)));
-	/**/light_shader->set_uniform("la", la);
-	/**/light_shader->set_uniform("ld", ld);
-	/**/light_shader->set_uniform("ls", ls);
-	/**/light_shader->set_uniform("att_factor", att_factor);
+	/**/scene->draw_light(light_shader);
 	/**/
 	/**/glActiveTexture(GL_TEXTURE0);
 	/**/light_shader->set_uniform_sampler(0);
@@ -155,14 +151,6 @@ void c_renderer::drawGUI()
 	{
 		ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 		ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode("Light"))
-	{
-		ImGui::DragFloat("LA", &la, 0.1f, 0.0f, 1.0f);
-		ImGui::DragFloat3("LD", &ld.x, 0.1f, 0.0f, 1.0f);
-		ImGui::DragFloat3("LS", &ls.x, 0.1f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Att", &att_factor.x, 0.1f, 0.0f, 1.0f);
 		ImGui::TreePop();
 	}
 	

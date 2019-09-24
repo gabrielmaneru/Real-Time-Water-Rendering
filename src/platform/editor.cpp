@@ -53,11 +53,11 @@ void c_editor::shutdown()
 
 void c_editor::draw_main_window()
 {
-	ImGui::Begin("Options", nullptr);
+	ImGui::Begin("Options", nullptr, ImGuiWindowFlags_NoMove);
 	renderer->drawGUI();
 	ImGui::End();
 
-	ImGui::Begin("Scene", nullptr);
+	ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoMove);
 	scene->drawGUI();
 	ImGui::End();
 }

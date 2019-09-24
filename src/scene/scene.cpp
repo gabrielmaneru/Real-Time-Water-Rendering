@@ -135,17 +135,30 @@ bool c_scene::load_scene(std::string path)
 }
 bool c_scene::init()
 {
-	return load_scene(m_scene_name);
+	if (!load_scene(m_scene_name))
+		return false;
+
+	transform3d tr;
+	tr.set_pos({ 23.0f, 3.0f, -90.0f });
+	tr.set_scl(vec3{.5f });
+	m_lights.push_back(new light(tr, light_data{}));
+	return true;
 }
 
 void c_scene::update()
 {
 }
 
-void c_scene::draw(Shader_Program * shader)
+void c_scene::draw_obj(Shader_Program * shader)
 {
 	for (auto p_obj : m_objects)
 		p_obj->draw(shader);
+}
+
+void c_scene::draw_light(Shader_Program * shader)
+{
+	for (auto p_li : m_lights)
+		p_li->draw(shader);
 }
 
 void c_scene::shutdown()
@@ -157,6 +170,7 @@ void c_scene::shutdown()
 
 void c_scene::drawGUI()
 {
+	ImGui::Text("Objects");
 	for (int i = 0; i < m_objects.size(); i++)
 	{
 		ImGui::PushID(i);
@@ -171,6 +185,35 @@ void c_scene::drawGUI()
 			if (ImGui::DragFloat3("Rot", &scene->m_objects[i]->m_transform.m_tr.m_rot.x))chng = true;
 			if (ImGui::DragFloat3("Scl", &scene->m_objects[i]->m_transform.m_tr.m_scl.x, .1f, .001f))chng = true;
 			if (chng)scene->m_objects[i]->m_transform.m_tr.upd();
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+	}
+
+
+	ImGui::NewLine();
+	ImGui::Text("Lights");
+	static bool display_break{ false };
+	ImGui::Checkbox("", &display_break);
+	ImGui::SameLine();
+	if (display_break)
+		ImGui::DragFloat3("Ambi", &light_data::m_ambient.x, 0.01f, 0.0f, 1.0f);
+	else if (ImGui::DragFloat("Ambi", &light_data::m_ambient.x, 0.01f, 0.0f, 1.0f))
+		light_data::m_ambient.y = light_data::m_ambient.z = light_data::m_ambient.x;
+
+	ImGui::SliderFloat("AttMax", &light_data::m_att_max, 0.001f, 1.0f);
+
+	for (int i = 0; i < m_lights.size(); i++)
+	{
+		ImGui::PushID(i);
+
+		if (ImGui::TreeNode("Light"))
+		{
+			scene->m_lights[i]->m_ldata.drawGUI();
+			ImGui::Checkbox("DebugDraw", &scene->m_lights[i]->debug_draw);
+
+			if (ImGui::DragFloat3("Pos", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
+				scene->m_lights[i]->m_transform.m_tr.upd();
 			ImGui::TreePop();
 		}
 		ImGui::PopID();

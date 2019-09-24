@@ -8,8 +8,8 @@ in vec2 vUv;
 layout (location = 0) uniform sampler2D diffuse_txt;
 layout (location = 1) uniform sampler2D position_txt;
 layout (location = 2) uniform sampler2D normal_txt;
-uniform vec3 light_position;
-uniform float la;
+uniform vec3 l_pos;
+uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 ls;
 uniform vec3 att_factor;
@@ -29,17 +29,15 @@ void main()
 	vec3 normal_v = normalize(normal_value.rgb);
 	float ns = normal_value.a;
 
-	vec3 light_v = normalize(light_position - frag_pos);
+	vec3 light_v = normalize(l_pos - frag_pos);
 	vec3 view_v = normalize(-frag_pos);
 	vec3 half_v = normalize(view_v + light_v);
 
-	float d = length(light_position - frag_pos);
+	float d = length(l_pos - frag_pos);
 	float att = min(1/(att_factor.x + att_factor.y*d + att_factor.z*d*d) , 1.0);
 
-	float final_ambient = la * ka;
-	vec3 final_diffuse = ld * kd * att * max(dot(normal_v, light_v), 0.0);
-	vec3 final_specular= ls * ks * att * pow(max(dot(normal_v, half_v), 0.0),ns);
+	float id = att * max(dot(normal_v, light_v), 0.0);
+	float is = att * pow(max(dot(normal_v, half_v), 0.0),ns);
 
-	out_color = vec4(vec3(final_ambient) + final_diffuse + final_specular, 1.0);
-
+	out_color = vec4((id*ld+ka*la)*kd + ls * ks * is, 1.0);
 }

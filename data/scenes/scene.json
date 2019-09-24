@@ -23,27 +23,6 @@
             }
         },
 		{
-            "mesh": "sphere",
-            "translation": 
-            {
-                "x": 3.0,
-                "y": 30.0,
-                "z": -90.0
-            },
-            "rotate": 
-            {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-            },
-            "scale": 
-            {
-                "x": 0.5,
-                "y": 0.5,
-                "z": 0.5
-            }
-        },
-		{
             "mesh": "phoenix",
             "translation": 
             {

@@ -34,11 +34,6 @@ class c_renderer
 		LIGHT
 	}m_txt_cur{ NORMAL_rgb };
 
-	float la = 0.0f;
-	vec3 ld = vec3{ 1.0};
-	vec3 ls = vec3{ 1.0};
-	vec3 att_factor = vec3{ 0.01f, 0.01f, 0.01f };
-
 public:
 	bool init();
 	void update();
@@ -50,8 +45,6 @@ public:
 	const Model* get_model(std::string s);
 
 	friend class c_editor;
-	friend struct generator;
-	friend class eroder;
-	friend struct MeshReference;
+	friend class light;
 };
 extern c_renderer* renderer;
