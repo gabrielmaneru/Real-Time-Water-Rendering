@@ -17,12 +17,13 @@ bool c_renderer::init()
 	if (gl3wInit())
 		return false;
 	
-	if (!gl3wIsSupported(4, 0))
+	if (!gl3wIsSupported(4, 6))
 		return false;
 
-	setup_gl_debug();
 	// GL Options
-	GL_CALL(glEnable(GL_DEPTH_TEST));
+	setup_gl_debug();
+	//glCullFace(GL_FRONT);
+	glBlendFunc(GL_ONE, GL_ONE);
 
 	// Load Programs
 	try {
@@ -59,7 +60,7 @@ bool c_renderer::init()
 		});
 	light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 		GL_RGBA16F, GL_RGBA
-		});
+		},g_buffer.m_depth_texture);
 	return true;
 }
 
@@ -77,7 +78,9 @@ void c_renderer::update()
 	/**/g_buffer_shader->use();
 	/**/g_buffer_shader->set_uniform("P", scene_cam.m_proj);
 	/**/g_buffer_shader->set_uniform("V", scene_cam.m_view);
+	/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 	/**/scene->draw_obj(g_buffer_shader);
+	/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 	///////////////////////////////////////////////////////////////////////////
 
 
@@ -85,8 +88,9 @@ void c_renderer::update()
 	// Light Pass	///////////////////////////////////////////////////////////
 	/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
 	/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-	/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+	/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 	/**/GL_CALL(glViewport(0, 0, light_buffer.m_width, light_buffer.m_height));
+	/**/glDepthMask(GL_FALSE);
 	/**/
 	/**/light_shader->use();
 	/**/// Render Ambient
@@ -111,7 +115,14 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("V", scene_cam.m_view);
 	/**/light_shader->set_uniform("window_width", window_manager->get_width());
 	/**/light_shader->set_uniform("window_height", window_manager->get_height());
+	/**/GL_CALL(glEnable(GL_BLEND));
+	/**/GL_CALL(glEnable(GL_DEPTH_TEST));
+	/**///glEnable(GL_CULL_FACE);
 	/**/scene->draw_light(light_shader);
+	/**///glDisable(GL_CULL_FACE);
+	/**/GL_CALL(glDisable(GL_DEPTH_TEST));
+	/**/GL_CALL(glDepthMask(GL_TRUE));
+	/**/GL_CALL(glDisable(GL_BLEND));
 	///////////////////////////////////////////////////////////////////////////
 
 
@@ -131,7 +142,9 @@ void c_renderer::update()
 	/**/glActiveTexture(GL_TEXTURE0);
 	/**/glBindTexture(GL_TEXTURE_2D, get_texture(m_txt_cur));
 	/**/
+	/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 	/**/m_models[2]->m_meshes[0]->draw(texture_shader);
+	/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 	///////////////////////////////////////////////////////////////////////////
 }
 

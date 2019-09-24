@@ -2,7 +2,7 @@
 #include <GL/gl3w.h>
 #include "gl_error.h"
 
-void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textures)
+void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textures, GLuint depth)
 {
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	m_width = width;
@@ -39,17 +39,22 @@ void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textur
 
 	// Depth Texture
 	{
-		// Create Texture
-		GL_CALL(glGenTextures(1, &m_depth_texture));
-		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_depth_texture));
-		GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
+		if (depth == 0)
+		{
+			// Create Texture
+			GL_CALL(glGenTextures(1, &m_depth_texture));
+			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_depth_texture));
+			GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
 
-		// Set Parameters
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
-		GL_CALL(glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor));
+			// Set Parameters
+			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
+			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
+			GL_CALL(glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor));
+		}
+		else
+			m_depth_texture = depth;
 
 		// Attach
 		GL_CALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_depth_texture, 0));
