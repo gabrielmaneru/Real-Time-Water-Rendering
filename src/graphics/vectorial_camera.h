@@ -10,8 +10,8 @@ public:
 		float pitch = def_cam.pitch);
 	void update()override;
 
-	float m_fov{ glm::pi<float>() / 4 };
-	float m_near{ 1.f };
+	float m_fov{ 90.0f };
+	float m_near{ .1f };
 	float m_far{ 1000.0f };
 
 private:

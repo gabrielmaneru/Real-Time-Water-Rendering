@@ -27,7 +27,6 @@ bool c_editor::init()
 	ImGui::GetStyle().Colors[2] = ImVec4{ 1.0f, 1.0f, 1.0f, 0.6f };
 	ImGui::GetStyle().Colors[10] = ImVec4{ 0.8f, 0.0f, 0.2f, 1.0f };
 	ImGui::GetStyle().Colors[11] = ImVec4{ 0.8f, 0.0f, 0.2f, 1.0f };
-
 	return true;
 }
 
@@ -46,6 +45,7 @@ void c_editor::update()
 void c_editor::shutdown()
 {
 	// Exit ImGui
+	ImGui::GetIO().IniFilename = NULL;
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

@@ -47,7 +47,7 @@ void vectorial_camera::update()
 
 	// Update Projection
 	float aspect = window_manager->get_width() / (float)window_manager->get_height();
-	m_proj = glm::perspective(m_fov, aspect, m_near, m_far);
+	m_proj = glm::perspective(glm::radians(m_fov), aspect, m_near, m_far);
 }
 
 void vectorial_camera::update_cam_vectors()

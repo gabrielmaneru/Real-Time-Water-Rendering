@@ -30,6 +30,11 @@ class c_renderer
 		DEPTH,
 		LIGHT
 	}m_txt_cur{ LIGHT };
+	
+	struct Options
+	{
+		bool render_lights{false};
+	}m_render_options;
 
 public:
 	bool init();
@@ -42,6 +47,7 @@ public:
 	const Model* get_model(std::string s);
 
 	friend class c_editor;
+	friend class c_scene;
 	friend class light;
 };
 extern c_renderer* renderer;

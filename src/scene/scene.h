@@ -13,8 +13,9 @@ class c_scene
 public:
 	bool init();
 	void update();
-	void draw_obj(Shader_Program*);
-	void draw_light(Shader_Program*);
+	void draw_objs(Shader_Program*);
+	void draw_lights(Shader_Program*);
+	void draw_debug_lights(Shader_Program*);
 	void shutdown();
 	void drawGUI();
 

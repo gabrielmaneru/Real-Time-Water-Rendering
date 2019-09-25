@@ -13,7 +13,7 @@ class Model
 {
 public:
 	Model(const std::string&);
-	void draw(Shader_Program *)const;
+	void draw(Shader_Program *, bool use_mat = true)const;
 
 	std::string m_name;
 	std::vector<Mesh*> m_meshes;

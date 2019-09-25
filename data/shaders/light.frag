@@ -9,7 +9,6 @@ layout (location = 0) uniform sampler2D diffuse_txt;
 layout (location = 1) uniform sampler2D position_txt;
 layout (location = 2) uniform sampler2D normal_txt;
 uniform vec3 l_pos;
-uniform float l_rad;
 uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 ls;
@@ -47,7 +46,6 @@ void render_diffuse_specular()
 	vec3 kd = diffuse_value.rgb;
 	float ks = diffuse_value.a-1.0;
 	vec3 frag_pos = position_value.rgb;
-	float ka = position_value.a-1.0;
 	vec3 normal_v = normalize(normal_value.rgb);
 	float ns = normal_value.a-1.0;
 
@@ -58,8 +56,7 @@ void render_diffuse_specular()
 	float d = length(l_pos - frag_pos);
 	
 	float att = min(1/(att_factor.x + att_factor.y*d + att_factor.z*d*d) , 1.0);
-	att *=1-(d/l_rad);
-	att = clamp(att, 0, 1);
+	
 	float id = att * max(dot(normal_v, light_v), 0.0);
 	float is = att * pow(max(dot(normal_v, half_v), 0.0),ns);
 

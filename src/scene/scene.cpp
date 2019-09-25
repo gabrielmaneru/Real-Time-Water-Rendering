@@ -3,6 +3,7 @@
 #include <sstream>
 #include <imgui/imgui.h>
 #include <utils/math_utils.h>
+#include <graphics/renderer.h>
 c_scene * scene = new c_scene;
 bool c_scene::load_scene(std::string path)
 {
@@ -138,14 +139,21 @@ bool c_scene::init()
 {
 	if (!load_scene(m_scene_name))
 		return false;
+
 	transform3d tr;
 	tr.set_scl(vec3{ .5f });
-	int num_lights = 200;
+	int num_lights = 20;
 	light_data ld;
 	for (int i = 0; i < num_lights; i++)
 	{
-		tr.set_pos({ random_float(10.f, 50.f), random_float(3.f, 20.f),random_float(-150.f, 150.f) });
-		ld.m_diffuse ={ random_float(0.f, 1.f), random_float(0.f, 1.f),random_float(0.f, 1.f) };
+		tr.set_pos({ random_float(17.5f, 32.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
+		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
+		m_lights.push_back(new light(tr, ld));
+	}
+	for (int i = 0; i < num_lights; i++)
+	{
+		tr.set_pos({ random_float(-27.5f, -12.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
+		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
 		m_lights.push_back(new light(tr, ld));
 	}
 	return true;
@@ -155,17 +163,30 @@ void c_scene::update()
 {
 }
 
-void c_scene::draw_obj(Shader_Program * shader)
+void c_scene::draw_objs(Shader_Program * shader)
 {
 	for (auto p_obj : m_objects)
 		p_obj->draw(shader);
 }
 
-void c_scene::draw_light(Shader_Program * shader)
+void c_scene::draw_lights(Shader_Program * shader)
 {
 	shader->set_uniform("la", light_data::m_ambient);
 	for (auto p_li : m_lights)
 		p_li->draw(shader);
+}
+
+void c_scene::draw_debug_lights(Shader_Program * shader)
+{
+	transform3d tr;
+	tr.set_scl(vec3{ 0.5f });
+
+	for (auto p_li : m_lights)
+	{
+		tr.set_pos(p_li->m_transform.get_pos());
+		shader->set_uniform("M", tr.get_model());
+		renderer->get_model("sphere")->draw(shader);
+	}
 }
 
 void c_scene::shutdown()
@@ -177,41 +198,80 @@ void c_scene::shutdown()
 
 void c_scene::drawGUI()
 {
-	ImGui::Text("Objects");
-	for (int i = 0; i < m_objects.size(); i++)
+	ImGui::Text("# Objects #");
+	if (ImGui::TreeNode("Scene Options"))
 	{
-		ImGui::PushID(i);
-		std::string tree_name = m_objects[i]->m_model
-			? m_objects[i]->m_model->m_name
-			: "Unknown Object";
-
-		if (ImGui::TreeNode(tree_name.c_str()))
+		if (ImGui::Button("Reload"))
+			load_scene(m_scene_name);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Objects List"))
+	{
+		if (ImGui::Button("Create"))
+			m_objects.push_back(new scene_object{ "cube" });
+		for (int i = 0; i < m_objects.size(); i++)
 		{
-			bool chng{ false };
-			if (ImGui::DragFloat3("Pos", &scene->m_objects[i]->m_transform.m_tr.m_pos.x, .1f))chng = true;
-			if (ImGui::DragFloat3("Rot", &scene->m_objects[i]->m_transform.m_tr.m_rot.x))chng = true;
-			if (ImGui::DragFloat3("Scl", &scene->m_objects[i]->m_transform.m_tr.m_scl.x, .1f, .001f))chng = true;
-			if (chng)scene->m_objects[i]->m_transform.m_tr.upd();
-			ImGui::TreePop();
+			ImGui::PushID(i);
+			std::string tree_name = m_objects[i]->m_model
+				? m_objects[i]->m_model->m_name
+				: "Unknown";
+
+			if (ImGui::TreeNode(tree_name.c_str()))
+			{
+				const char* current = m_objects[i]->m_model ? m_objects[i]->m_model->m_name.c_str() : "Unknown";
+				if (ImGui::BeginCombo("Mesh", current))
+				{
+					for (size_t n = 0; n < renderer->m_models.size(); n++)
+					{
+						bool is_selected = (m_objects[i]->m_model == renderer->m_models[n]);
+						if (ImGui::Selectable(renderer->m_models[n]->m_name.c_str(), is_selected))
+							m_objects[i]->m_model = renderer->m_models[n];
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				bool chng{ false };
+				if (ImGui::DragFloat3("Position", &m_objects[i]->m_transform.m_tr.m_pos.x, .1f))chng = true;
+				if (ImGui::DragFloat3("Rotation", &m_objects[i]->m_transform.m_tr.m_rot.x))chng = true;
+				if (ImGui::DragFloat3("Scale", &m_objects[i]->m_transform.m_tr.m_scl.x, .1f, .001f, 99999999.f))chng = true;
+				if (chng)m_objects[i]->m_transform.m_tr.upd();
+				if (ImGui::Button("Delete"))
+				{
+					delete m_objects[i];
+					m_objects.erase(m_objects.begin()+i);
+					i--;
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
 		}
-		ImGui::PopID();
+		ImGui::TreePop();
 	}
 
 
 	ImGui::NewLine();
-	ImGui::Text("Lights");
-	static bool display_break{ false };
-	ImGui::Checkbox("", &display_break);
-	ImGui::SameLine();
-	if (display_break)
-		ImGui::DragFloat3("Ambi", &light_data::m_ambient.x, 0.01f, 0.0f, 1.0f);
-	else if (ImGui::DragFloat("Ambi", &light_data::m_ambient.x, 0.01f, 0.0f, 1.0f))
-		light_data::m_ambient.y = light_data::m_ambient.z = light_data::m_ambient.x;
-
-	ImGui::SliderFloat("AttMax", &light_data::m_att_max, 0.001f, 1.0f);
-	ImGui::InputFloat("radius", &scene->m_lights[0]->m_transform.m_tr.m_scl.x);
-	if (ImGui::TreeNode("LightList"))
+	ImGui::Text("# Lights #");
+	if (ImGui::TreeNode("Global Options"))
 	{
+		ImGui::PushID(5);
+		static bool display_break{ false };
+		ImGui::Checkbox("", &display_break);
+		ImGui::SameLine();
+		if (display_break)
+			ImGui::DragFloat3("Ambient", &light_data::m_ambient.x, 0.01f, 0.0f, 1.0f);
+		else if (ImGui::DragFloat("Ambient", &light_data::m_ambient.x, 0.01f, 0.0f, 1.0f))
+			light_data::m_ambient.y = light_data::m_ambient.z = light_data::m_ambient.x;
+
+		ImGui::SliderFloat("AttMax", &light_data::m_att_max, 0.001f, 1.0f);
+		ImGui::PopID();
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("Lights List"))
+	{
+		if (ImGui::Button("Create"))
+			m_lights.push_back(new light);
 		for (int i = 0; i < m_lights.size(); i++)
 		{
 			ImGui::PushID(i);
@@ -220,8 +280,14 @@ void c_scene::drawGUI()
 			{
 				scene->m_lights[i]->m_ldata.drawGUI();
 
-				if (ImGui::DragFloat3("Pos", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
-					scene->m_lights[i]->m_transform.m_tr.upd();
+				if (ImGui::DragFloat3("Position", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
+					scene->m_lights[i]->m_transform.m_tr.upd(); if (ImGui::Button("Delete"))
+				if (ImGui::Button("Delete"))
+				{
+					delete m_lights[i];
+					m_lights.erase(m_lights.begin() + i);
+					i--;
+				}
 				ImGui::TreePop();
 			}
 			ImGui::PopID();

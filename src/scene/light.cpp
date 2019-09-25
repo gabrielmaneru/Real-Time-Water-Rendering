@@ -52,7 +52,6 @@ light::light(transform3d tr, light_data ld)
 void light::draw(Shader_Program * shader)
 {
 	shader->set_uniform("l_pos", vec3(renderer->scene_cam.m_view * vec4(m_transform.get_pos(), 1.0f)));
-	shader->set_uniform("l_rad", m_transform.get_pos().x);
 	shader->set_uniform("ld", m_ldata.m_diffuse);
 	shader->set_uniform("ls", m_ldata.m_specular);
 	shader->set_uniform("att_factor", m_ldata.m_att_factor);
@@ -61,6 +60,6 @@ void light::draw(Shader_Program * shader)
 	{
 		recompute_scale();
 		shader->set_uniform("M", m_transform.get_model());
-		m_model->draw(shader);
+		m_model->draw(shader, false);
 	}
 }

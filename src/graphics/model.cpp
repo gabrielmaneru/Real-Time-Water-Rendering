@@ -20,14 +20,17 @@ Model::Model(const std::string & path)
 	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }
 
-void Model::draw(Shader_Program * shader)const
+void Model::draw(Shader_Program * shader, bool use_mat)const
 {
 	for (auto& mesh : m_meshes)
 	{
-		if (mesh->m_material_idx == default_material)
-			m_def_material.set_uniform(shader);
-		else
-			m_materials[mesh->m_material_idx].set_uniform(shader);
+		if (use_mat)
+		{
+			if (mesh->m_material_idx == default_material)
+				m_def_material.set_uniform(shader);
+			else
+				m_materials[mesh->m_material_idx].set_uniform(shader);
+		}
 		mesh->draw(shader);
 	}
 }

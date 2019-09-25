@@ -80,7 +80,9 @@ void c_renderer::update()
 	/**/g_buffer_shader->set_uniform("P", scene_cam.m_proj);
 	/**/g_buffer_shader->set_uniform("V", scene_cam.m_view);
 	/**/GL_CALL(glEnable(GL_DEPTH_TEST));
-	/**/scene->draw_obj(g_buffer_shader);
+	/**/scene->draw_objs(g_buffer_shader);
+	/**/if (m_render_options.render_lights)
+	/**/	scene->draw_debug_lights(g_buffer_shader);
 	/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 	///////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +122,7 @@ void c_renderer::update()
 	/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 	/**/glDepthFunc(GL_GREATER);
 	/**/glEnable(GL_CULL_FACE);
-	/**/scene->draw_light(light_shader);
+	/**/scene->draw_lights(light_shader);
 	/**/glDisable(GL_CULL_FACE);
 	/**/glDepthFunc(GL_LESS);
 	/**/GL_CALL(glDisable(GL_DEPTH_TEST));
@@ -164,28 +166,38 @@ void c_renderer::shutdown()
 
 void c_renderer::drawGUI()
 {
-
 	if (ImGui::TreeNode("Camera"))
 	{
 		ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 		ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
+		ImGui::SliderFloat("Fov", &renderer->scene_cam.m_fov, 30.0f, 150.f);
 		ImGui::TreePop();
 	}
 	
-	std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
+	if (ImGui::TreeNode("Deferred Buffers"))
 	{
-		const float scale = 2.0f;
-		const ImVec2 rect{ scale*192.f, scale*108.f };
-		GLuint id = renderer->get_texture(txt);
-		ImGui::Image(*reinterpret_cast<ImTextureID*>(&id), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
-		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
-			renderer->set_texture(txt);
-	};
-	show_image(c_renderer::DIFFUSE);
-	show_image(c_renderer::POSITION);
-	show_image(c_renderer::NORMAL);
-	show_image(c_renderer::DEPTH);
-	show_image(c_renderer::LIGHT);
+		std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
+		{
+			const float scale = 2.0f;
+			const ImVec2 rect{ scale*192.f, scale*108.f };
+			GLuint id = renderer->get_texture(txt);
+			ImGui::Image(*reinterpret_cast<ImTextureID*>(&id), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+				renderer->set_texture(txt);
+		};
+		show_image(c_renderer::DIFFUSE);
+		show_image(c_renderer::POSITION);
+		show_image(c_renderer::NORMAL);
+		show_image(c_renderer::DEPTH);
+		show_image(c_renderer::LIGHT);
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("RenderOptions"))
+	{
+		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
+		ImGui::TreePop();
+	}
 }
 
 GLuint c_renderer::get_texture(e_texture ref)
