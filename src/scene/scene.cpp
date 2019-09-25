@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <imgui/imgui.h>
+#include <utils/math_utils.h>
 c_scene * scene = new c_scene;
 bool c_scene::load_scene(std::string path)
 {
@@ -137,11 +138,16 @@ bool c_scene::init()
 {
 	if (!load_scene(m_scene_name))
 		return false;
-
 	transform3d tr;
-	tr.set_pos({ 23.0f, 3.0f, -90.0f });
-	tr.set_scl(vec3{.5f });
-	m_lights.push_back(new light(tr, light_data{}));
+	tr.set_scl(vec3{ .5f });
+	int num_lights = 200;
+	light_data ld;
+	for (int i = 0; i < num_lights; i++)
+	{
+		tr.set_pos({ random_float(10.f, 50.f), random_float(3.f, 20.f),random_float(-150.f, 150.f) });
+		ld.m_diffuse ={ random_float(0.f, 1.f), random_float(0.f, 1.f),random_float(0.f, 1.f) };
+		m_lights.push_back(new light(tr, ld));
+	}
 	return true;
 }
 
@@ -204,18 +210,22 @@ void c_scene::drawGUI()
 
 	ImGui::SliderFloat("AttMax", &light_data::m_att_max, 0.001f, 1.0f);
 	ImGui::InputFloat("radius", &scene->m_lights[0]->m_transform.m_tr.m_scl.x);
-	for (int i = 0; i < m_lights.size(); i++)
+	if (ImGui::TreeNode("LightList"))
 	{
-		ImGui::PushID(i);
-
-		if (ImGui::TreeNode("Light"))
+		for (int i = 0; i < m_lights.size(); i++)
 		{
-			scene->m_lights[i]->m_ldata.drawGUI();
+			ImGui::PushID(i);
 
-			if (ImGui::DragFloat3("Pos", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
-				scene->m_lights[i]->m_transform.m_tr.upd();
-			ImGui::TreePop();
+			if (ImGui::TreeNode("Light"))
+			{
+				scene->m_lights[i]->m_ldata.drawGUI();
+
+				if (ImGui::DragFloat3("Pos", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
+					scene->m_lights[i]->m_transform.m_tr.upd();
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
 		}
-		ImGui::PopID();
+		ImGui::TreePop();
 	}
 }

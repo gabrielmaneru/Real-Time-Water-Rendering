@@ -6,7 +6,7 @@ struct light_data
 	static float m_att_max;
 	vec3 m_diffuse{1.0f};
 	vec3 m_specular{0.8f};
-	vec3 m_att_factor{0.05f};
+	vec3 m_att_factor{.0f, .05f, .02f};
 	void drawGUI();
 };
 

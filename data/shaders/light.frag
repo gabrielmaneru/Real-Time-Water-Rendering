@@ -56,14 +56,14 @@ void render_diffuse_specular()
 	vec3 half_v = normalize(view_v + light_v);
 
 	float d = length(l_pos - frag_pos);
-	if (d > l_rad)
-		discard;
+	
 	float att = min(1/(att_factor.x + att_factor.y*d + att_factor.z*d*d) , 1.0);
-
+	att *=1-(d/l_rad);
+	att = clamp(att, 0, 1);
 	float id = att * max(dot(normal_v, light_v), 0.0);
 	float is = att * pow(max(dot(normal_v, half_v), 0.0),ns);
 
-	out_color = vec4((id*ld+ka*la)*kd + ls * ks * is, 1.0);
+	out_color = vec4((id*ld)*kd + ls * ks * is, 1.0);
 }
 
 void main()

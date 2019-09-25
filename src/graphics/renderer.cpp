@@ -22,8 +22,9 @@ bool c_renderer::init()
 
 	// GL Options
 	setup_gl_debug();
-	//glCullFace(GL_FRONT);
+	glCullFace(GL_FRONT);
 	glBlendFunc(GL_ONE, GL_ONE);
+	glBlendEquation(GL_FUNC_ADD);
 
 	// Load Programs
 	try {
@@ -117,9 +118,11 @@ void c_renderer::update()
 	/**/light_shader->set_uniform("window_height", window_manager->get_height());
 	/**/GL_CALL(glEnable(GL_BLEND));
 	/**/GL_CALL(glEnable(GL_DEPTH_TEST));
-	/**///glEnable(GL_CULL_FACE);
+	/**/glDepthFunc(GL_GREATER);
+	/**/glEnable(GL_CULL_FACE);
 	/**/scene->draw_light(light_shader);
-	/**///glDisable(GL_CULL_FACE);
+	/**/glDisable(GL_CULL_FACE);
+	/**/glDepthFunc(GL_LESS);
 	/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 	/**/GL_CALL(glDepthMask(GL_TRUE));
 	/**/GL_CALL(glDisable(GL_BLEND));

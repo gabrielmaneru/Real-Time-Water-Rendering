@@ -16,3 +16,4 @@ R map(T value, T in_min, T in_max, R out_min, R out_max)
 }
 int round_float(const float & value);
 int floor_float(const float & value);
+float random_float(float min, float max);
