@@ -8,4 +8,5 @@ public:
 	const Model * m_model{nullptr};
 	renderable(const transform3d& tr, const Model* p_M)
 		: m_transform(tr), m_model(p_M) {}
+	virtual ~renderable() = default;
 };

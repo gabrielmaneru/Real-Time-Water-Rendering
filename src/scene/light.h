@@ -15,6 +15,7 @@ class light : public scene_object
 	void recompute_scale();
 public:
 	light(transform3d tr = {}, light_data ld={});
+	virtual ~light() = default;
 	void draw(Shader_Program*);
 
 	float time{0.0f};

@@ -3,6 +3,7 @@
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 vectorial_camera::vectorial_camera(vec3 eye, vec3 front, vec3 up, float yaw, float pitch)
 	:camera(eye, front, up), m_yaw(yaw), m_pitch(pitch)
@@ -25,17 +26,32 @@ void vectorial_camera::update()
 void vectorial_camera::use_target(const scene_object * target)
 {
 	m_target = target;
+
+	vec3 delta = m_target->m_transform.get_pos() - m_eye;
+	m_dist = glm::length(delta);
+	delta = -normalize(delta);
+	m_beta = glm::asin(delta.y);
+	m_alpha = glm::asin(delta.z);
+	if (delta.x < 0.0f)
+		m_alpha += 2 * (glm::pi<float>()*0.5f - m_alpha);
 }
 
 void vectorial_camera::release_target()
 {
+	vec3 delta = normalize(m_target->m_transform.get_pos() - m_eye);
 	m_target = nullptr;
+
+	m_pitch = glm::degrees(glm::asin(delta.y));
+	m_yaw = glm::degrees(glm::asin(delta.z));
+	if (delta.x < 0.0f)
+		m_yaw += 2 * (90 - m_yaw);
 }
 
+constexpr float MOUSE_SENSITIVITY{ 0.25f };
+constexpr float MOUSE_SPEED{ 0.5f };
+constexpr float ROTATION_SPEED{ 0.005f };
 void vectorial_camera::update_free_mode()
 {
-	constexpr float MOUSE_SENSITIVITY{ 0.25f };
-	constexpr float MOUSE_SPEED{ 0.5f };
 
 	// Check for Mouse Imput
 	if (window::mouse_but_right_pressed)
@@ -71,6 +87,30 @@ void vectorial_camera::update_free_mode()
 
 void vectorial_camera::update_target_mode()
 {
+	vec3 delta = normalize(m_target->m_transform.get_pos() - m_eye);
+	std::cout << glm::asin(delta.z) << std::endl;
+	float speed = ROTATION_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 10.0f : 1.0f);
+	if (window_manager->is_key_down(GLFW_KEY_A))
+		m_alpha += speed;
+	if (window_manager->is_key_down(GLFW_KEY_D))
+		m_alpha -= speed;
+	if (window_manager->is_key_down(GLFW_KEY_W))
+		m_beta += speed;
+	if (window_manager->is_key_down(GLFW_KEY_S))
+		m_beta -= speed;
+	if (window_manager->is_key_down(GLFW_KEY_E))
+		m_dist *= 1 + speed;
+	if (window_manager->is_key_down(GLFW_KEY_Q))
+		m_dist *= 1 - speed;
+
+	m_beta = glm::clamp(m_beta, glm::pi<float>() * -.45f, glm::pi<float>() * .45f);
+	m_dist = glm::clamp(m_dist, m_near, m_far * 0.5f);
+	m_eye = m_target->m_transform.get_pos();
+	m_eye += vec3(	m_dist * cosf(m_beta) * cosf(m_alpha),
+					m_dist * sinf(m_beta),
+					m_dist * cosf(m_beta) * sinf(m_alpha) );
+
+
 	update_cam_vectors(glm::normalize(m_target->m_transform.get_pos() - m_eye));
 }
 

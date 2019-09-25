@@ -171,15 +171,15 @@ void c_renderer::drawGUI()
 		ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 		ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
 		ImGui::SliderFloat("Fov", &renderer->scene_cam.m_fov, 30.0f, 150.f);
-		if (scene_cam.m_target)
+		if (auto target = scene_cam.get_target())
 		{
-			std::string name = scene_cam.m_target->m_model
-				? scene_cam.m_target->m_model->m_name
+			std::string name = target->m_model
+				? target->m_model->m_name
 				: "Unknown";
 			ImGui::Text(("Target: "+name).c_str());
 			ImGui::SameLine();
 			if (ImGui::Button("Release"))
-				scene_cam.m_target = nullptr;
+				scene_cam.release_target();
 		}
 		else
 		{
@@ -188,7 +188,7 @@ void c_renderer::drawGUI()
 				for (size_t n = 0; n < scene->m_objects.size(); n++)
 				{
 					if (ImGui::Selectable(scene->m_objects[n]->m_model->m_name.c_str(), false))
-						scene_cam.m_target = scene->m_objects[n];
+						scene_cam.use_target(scene->m_objects[n]);
 				}
 				ImGui::EndCombo();
 			}

@@ -12,6 +12,7 @@ public:
 	void update()override;
 	void use_target(const scene_object *);
 	void release_target();
+	const scene_object * get_target() { return m_target; }
 
 	float m_fov{ 90.0f };
 	float m_near{ .1f };
@@ -27,9 +28,9 @@ private:
 	
 	// Target Mode
 	const scene_object * m_target{ nullptr };
-	float alpha = { 0.0f };
-	float beta = { 0.0f };
-	float dist = { 0.0f };
+	float m_alpha = { 0.0f };
+	float m_beta = { 0.0f };
+	float m_dist = { 0.0f };
 
 	// Free Mode
 	float m_yaw = 0.0f;
