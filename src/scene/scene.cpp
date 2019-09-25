@@ -150,17 +150,33 @@ bool c_scene::init()
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
 		m_lights.push_back(new light(tr, ld));
 	}
+
 	for (int i = 0; i < num_lights; i++)
 	{
 		tr.set_pos({ random_float(-27.5f, -12.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
 		m_lights.push_back(new light(tr, ld));
 	}
+	for (auto& l : m_lights)
+		l->time = random_float(0.0f, glm::pi<float>());
 	return true;
 }
 
 void c_scene::update()
 {
+	if (m_animated_scene)
+	{
+		for (auto& l : m_lights)
+		{
+			vec3 pos = l->m_transform.get_pos();
+			pos.y += 0.5f*sin(l->time);
+			l->time += 1/60.f;
+			pos.z += 1.0f;
+			if (pos.z > 94.f)
+				pos.z -= 200.f;
+			l->m_transform.set_pos(pos);
+		}
+	}
 }
 
 void c_scene::draw_objs(Shader_Program * shader)
@@ -203,6 +219,7 @@ void c_scene::drawGUI()
 	{
 		if (ImGui::Button("Reload"))
 			load_scene(m_scene_name);
+		ImGui::Checkbox("Animate Scene", &m_animated_scene);
 		ImGui::TreePop();
 	}
 	if (ImGui::TreeNode("Objects List"))

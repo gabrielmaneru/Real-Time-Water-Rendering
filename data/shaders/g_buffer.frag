@@ -28,14 +28,14 @@ void main()
 		vec4 txt = texture(diff_txt, vUv);
 		if(txt.a < 0.5)
 			discard;
-		diffuse = kd * txt.rgb;
+		diffuse = txt.rgb;
 	}
 	else
 		diffuse = kd;
 	
 	float specular;
 	if(spec_txt_active)
-		specular = ks.r * texture(spec_txt, vUv).r;
+		specular = texture(spec_txt, vUv).r;
 	else
 		specular = ks.r;
 

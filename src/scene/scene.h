@@ -8,6 +8,8 @@ class c_scene
 	std::vector<scene_object*> m_objects;
 	std::vector<light*> m_lights;
 	std::string m_scene_name{"scene"};
+	bool m_animated_scene{false};
+
 	bool load_scene(std::string);
 
 public:
