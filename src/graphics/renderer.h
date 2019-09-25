@@ -1,3 +1,12 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	renderer.h
+Purpose: OpenGl renderer
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #pragma once
 #include "shader_program.h"
 #include "vectorial_camera.h"
@@ -8,7 +17,6 @@
 class c_renderer
 {
 	// Shaders
-	Shader_Program* color_shader;
 	Shader_Program* g_buffer_shader;
 	Shader_Program* light_shader;
 	Shader_Program* texture_shader;

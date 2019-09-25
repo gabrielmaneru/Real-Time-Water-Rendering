@@ -1,3 +1,12 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	raw_mesh.cpp
+Purpose: Basic mesh handler
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "raw_mesh.h"
 #include "gl_error.h"
 #include <GL/gl3w.h>

@@ -27,7 +27,10 @@ void render_ambient()
 	
 	vec4 diffuse_value = texture(diffuse_txt, new_uvs);
 	vec4 position_value = texture(position_txt, new_uvs);
-	
+	vec4 normal_value = texture(normal_txt, new_uvs);
+	if(normal_value.xyz == vec3(0,0,0))
+		discard;
+
 	vec3 kd = diffuse_value.rgb;
 	float ka = position_value.a-1.0;
 
@@ -42,6 +45,8 @@ void render_diffuse_specular()
 	vec4 diffuse_value = texture(diffuse_txt, new_uvs);
 	vec4 position_value = texture(position_txt, new_uvs);
 	vec4 normal_value = texture(normal_txt, new_uvs);
+	if(normal_value.xyz == vec3(0,0,0))
+		discard;
 
 	vec3 kd = diffuse_value.rgb;
 	float ks = diffuse_value.a-1.0;

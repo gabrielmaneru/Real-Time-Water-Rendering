@@ -1,3 +1,12 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	shader_program.cpp
+Purpose: Program/Shader Interface
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "shader_program.h"
 #include <gl/gl3w.h>
 #include "gl_error.h"
@@ -7,20 +16,18 @@
 
 Shader_Program::Shader_Program(const std::string & vtx, const std::string & frag)
 {
-	if(create_handle())
-		if (compile_shader(vtx, e_shader_type::VERTEX))
-			if (compile_shader(frag, e_shader_type::FRAGMENT))
-				link();
-	if (!m_linked)
-		throw std::string("Compile Error");
+	paths[0] = vtx;
+	paths[2] = frag;
+	if (create_handle())
+		compile_program();
 }
 Shader_Program::Shader_Program(const std::string & vtx, const std::string & geo, const std::string & frag)
 {
+	paths[0] = vtx;
+	paths[1] = geo;
+	paths[2] = frag;
 	if (create_handle())
-		if (compile_shader(vtx, e_shader_type::VERTEX))
-			if (compile_shader(geo, e_shader_type::GEOMETRY))
-				if (compile_shader(frag, e_shader_type::FRAGMENT))
-					link();
+		compile_program();
 }
 Shader_Program::~Shader_Program()
 {
@@ -28,9 +35,26 @@ Shader_Program::~Shader_Program()
 		GL_CALL(glDeleteProgram(m_handle));
 }
 
+bool Shader_Program::is_valid()const
+{
+	return m_handle > 0 && m_linked;
+}
+
+void Shader_Program::recompile()
+{
+	try {
+		//GL_CALL(glDeleteProgram(m_handle));
+		//m_handle = 0;
+		//m_linked = false;
+		//create_handle();
+		compile_program();
+	}
+	catch (const std::string & log) { std::cout << log; }
+}
+
 void Shader_Program::use() const
 {
-	if (m_handle > 0 && m_linked)
+	if (is_valid())
 		GL_CALL(glUseProgram(m_handle));
 }
 
@@ -111,6 +135,16 @@ bool Shader_Program::create_handle()
 		}
 	}
 	return true;
+}
+
+void Shader_Program::compile_program()
+{
+	if (compile_shader(paths[0], e_shader_type::VERTEX))
+		if (paths[1].size()==0 || compile_shader(paths[1], e_shader_type::GEOMETRY))
+			if (compile_shader(paths[2], e_shader_type::FRAGMENT))
+				link();
+	if (!is_valid())
+		throw std::string("Compile Error");
 }
 
 bool Shader_Program::compile_shader(const std::string & filename, const e_shader_type & type)

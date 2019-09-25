@@ -1,3 +1,12 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	transform3d.cpp
+Purpose: Transform Component
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "transform3d.h"
 
 mat4 transform3d::Transform::get_model() const

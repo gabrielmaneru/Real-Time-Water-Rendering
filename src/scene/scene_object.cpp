@@ -1,3 +1,11 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	scene_object.cpp
+Purpose: Object base class
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
 #include "scene_object.h"
 #include "graphics/renderer.h"
 scene_object::scene_object(std::string mesh, transform3d tr)

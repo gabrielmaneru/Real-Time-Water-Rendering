@@ -1,9 +1,17 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	vectorial_camera.h
+Purpose: Perspective camera controlled using vectors
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "vectorial_camera.h"
 #include <scene/scene_object.h>
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 vectorial_camera::vectorial_camera(vec3 eye, vec3 front, vec3 up, float yaw, float pitch)
 	:camera(eye, front, up), m_yaw(yaw), m_pitch(pitch)
@@ -87,8 +95,6 @@ void vectorial_camera::update_free_mode()
 
 void vectorial_camera::update_target_mode()
 {
-	vec3 delta = normalize(m_target->m_transform.get_pos() - m_eye);
-	std::cout << glm::asin(delta.z) << std::endl;
 	float speed = ROTATION_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 10.0f : 1.0f);
 	if (window_manager->is_key_down(GLFW_KEY_A))
 		m_alpha += speed;
@@ -109,7 +115,6 @@ void vectorial_camera::update_target_mode()
 	m_eye += vec3(	m_dist * cosf(m_beta) * cosf(m_alpha),
 					m_dist * sinf(m_beta),
 					m_dist * cosf(m_beta) * sinf(m_alpha) );
-
 
 	update_cam_vectors(glm::normalize(m_target->m_transform.get_pos() - m_eye));
 }

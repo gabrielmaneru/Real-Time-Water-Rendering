@@ -1,6 +1,14 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	window_manager.h
+Purpose: Window Manager
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "window_manager.h"
 #include "window.h"
-//#include <GL\gl3w.h>
 #include <GLFW\glfw3.h>
 
 c_window_manager * window_manager = new c_window_manager;
@@ -16,7 +24,7 @@ bool c_window_manager::init()
 	if (!glfwInit())
 		return false;
 
-	m_window = window::create_window(1280, 720, "Base", false);
+	m_window = window::create_window(1920, 1080, "Framework", false);
 
 	if (!m_window) shutdown();
 	return m_window != nullptr;

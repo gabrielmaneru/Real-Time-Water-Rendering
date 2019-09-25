@@ -1,3 +1,11 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	editor.cpp
+Purpose: Window
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
 
 #include "editor.h"
 #include "window_manager.h"
@@ -45,7 +53,6 @@ void c_editor::update()
 void c_editor::shutdown()
 {
 	// Exit ImGui
-	ImGui::GetIO().IniFilename = NULL;
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

@@ -1,3 +1,12 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	light.cpp
+Purpose: Light base class
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "light.h"
 #include <graphics/renderer.h>
 #include <imgui/imgui.h>

@@ -1,5 +1,13 @@
-#pragma once
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	window_manager.h
+Purpose: Window Manager
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
 
+#pragma once
 struct window;
 
 class c_window_manager

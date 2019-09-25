@@ -11,5 +11,8 @@ out vec4 out_color;
 
 void main()
 {
-	out_color = vec4(texture2D(uniform_texture, vUv).rgb, 1.0);
+	vec4 texel = texture2D(uniform_texture, vUv);
+	if(texel == vec4(0,0,0,0))
+		discard;
+	out_color = vec4(texel.rgb, 1.0);
 }

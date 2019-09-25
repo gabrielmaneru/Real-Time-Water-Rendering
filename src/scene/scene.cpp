@@ -1,3 +1,12 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	scene.h
+Purpose: Scene Manager
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
+
 #include "scene.h"
 #include <fstream>
 #include <sstream>
@@ -89,8 +98,6 @@ bool c_scene::load_scene(std::string path)
 				return false;
 			}
 
-			// Clean Scene
-			m_objects.clear();
 
 			// Create Objects
 			{
@@ -135,6 +142,7 @@ bool c_scene::load_scene(std::string path)
 	}
 	return false;
 }
+
 bool c_scene::init()
 {
 	if (!load_scene(m_scene_name))
@@ -143,11 +151,18 @@ bool c_scene::init()
 	transform3d tr;
 	tr.set_scl(vec3{ .5f });
 	int num_lights = 20;
+	{
+		light_data ld;
+		ld.m_att_factor = { 0.f,0.001f,0.001f };
+		tr.set_pos({ 5,22,7 });
+		m_lights.push_back(new light(tr, ld));
+	}
 	light_data ld;
 	for (int i = 0; i < num_lights; i++)
 	{
 		tr.set_pos({ random_float(17.5f, 32.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
+		ld.m_specular = ld.m_diffuse;
 		m_lights.push_back(new light(tr, ld));
 	}
 
@@ -211,6 +226,9 @@ void c_scene::shutdown()
 	for (auto p_obj : m_objects)
 		delete p_obj;
 	m_objects.clear();
+	for (auto p_li : m_lights)
+		delete p_li;
+	m_lights.clear();
 }
 
 void c_scene::drawGUI()
@@ -219,7 +237,10 @@ void c_scene::drawGUI()
 	if (ImGui::TreeNode("Scene Options"))
 	{
 		if (ImGui::Button("Reload"))
-			load_scene(m_scene_name);
+		{
+			shutdown();
+			init();
+		}
 		ImGui::Checkbox("Animate Scene", &m_animated_scene);
 		ImGui::TreePop();
 	}
@@ -300,7 +321,7 @@ void c_scene::drawGUI()
 				scene->m_lights[i]->m_ldata.drawGUI();
 
 				if (ImGui::DragFloat3("Position", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
-					scene->m_lights[i]->m_transform.m_tr.upd(); if (ImGui::Button("Delete"))
+					scene->m_lights[i]->m_transform.m_tr.upd();
 				if (ImGui::Button("Delete"))
 				{
 					delete m_lights[i];
