@@ -155,6 +155,7 @@ bool c_scene::init()
 	{
 		tr.set_pos({ random_float(-27.5f, -12.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
+		ld.m_specular = ld.m_diffuse;
 		m_lights.push_back(new light(tr, ld));
 	}
 	for (auto& l : m_lights)
