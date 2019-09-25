@@ -1,4 +1,5 @@
 #include "vectorial_camera.h"
+#include <scene/scene_object.h>
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <GLFW/glfw3.h>
@@ -10,6 +11,28 @@ vectorial_camera::vectorial_camera(vec3 eye, vec3 front, vec3 up, float yaw, flo
 }
 
 void vectorial_camera::update()
+{
+	if (m_target)
+		update_target_mode();
+	else
+		update_free_mode();
+
+	// Update Projection
+	float aspect = window_manager->get_width() / (float)window_manager->get_height();
+	m_proj = glm::perspective(glm::radians(m_fov), aspect, m_near, m_far);
+}
+
+void vectorial_camera::use_target(const scene_object * target)
+{
+	m_target = target;
+}
+
+void vectorial_camera::release_target()
+{
+	m_target = nullptr;
+}
+
+void vectorial_camera::update_free_mode()
 {
 	constexpr float MOUSE_SENSITIVITY{ 0.25f };
 	constexpr float MOUSE_SPEED{ 0.5f };
@@ -44,10 +67,11 @@ void vectorial_camera::update()
 
 	}
 	update_cam_vectors();
+}
 
-	// Update Projection
-	float aspect = window_manager->get_width() / (float)window_manager->get_height();
-	m_proj = glm::perspective(glm::radians(m_fov), aspect, m_near, m_far);
+void vectorial_camera::update_target_mode()
+{
+	update_cam_vectors(glm::normalize(m_target->m_transform.get_pos() - m_eye));
 }
 
 void vectorial_camera::update_cam_vectors()
@@ -57,6 +81,18 @@ void vectorial_camera::update_cam_vectors()
 	front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 	front.y = sin(glm::radians(m_pitch));
 	front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+	m_front = glm::normalize(front);
+
+	// Recompute Right and Up
+	m_right = glm::normalize(glm::cross(m_front, m_worldup));
+	m_up = glm::normalize(glm::cross(m_right, m_front));
+
+	// Update View
+	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
+}
+
+void vectorial_camera::update_cam_vectors(vec3 front)
+{
 	m_front = glm::normalize(front);
 
 	// Recompute Right and Up

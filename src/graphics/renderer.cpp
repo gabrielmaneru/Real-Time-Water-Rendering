@@ -171,6 +171,28 @@ void c_renderer::drawGUI()
 		ImGui::SliderFloat("Near", &renderer->scene_cam.m_near, 0.001f, renderer->scene_cam.m_far);
 		ImGui::SliderFloat("Far", &renderer->scene_cam.m_far, renderer->scene_cam.m_near, 1000.f);
 		ImGui::SliderFloat("Fov", &renderer->scene_cam.m_fov, 30.0f, 150.f);
+		if (scene_cam.m_target)
+		{
+			std::string name = scene_cam.m_target->m_model
+				? scene_cam.m_target->m_model->m_name
+				: "Unknown";
+			ImGui::Text(("Target: "+name).c_str());
+			ImGui::SameLine();
+			if (ImGui::Button("Release"))
+				scene_cam.m_target = nullptr;
+		}
+		else
+		{
+			if (ImGui::BeginCombo("Target", "Select Obj"))
+			{
+				for (size_t n = 0; n < scene->m_objects.size(); n++)
+				{
+					if (ImGui::Selectable(scene->m_objects[n]->m_model->m_name.c_str(), false))
+						scene_cam.m_target = scene->m_objects[n];
+				}
+				ImGui::EndCombo();
+			}
+		}
 		ImGui::TreePop();
 	}
 	
@@ -179,7 +201,7 @@ void c_renderer::drawGUI()
 		std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
 		{
 			const float scale = 2.0f;
-			const ImVec2 rect{ scale*192.f, scale*108.f };
+			const ImVec2 rect{ scale*128.f, scale*72.f };
 			GLuint id = renderer->get_texture(txt);
 			ImGui::Image(*reinterpret_cast<ImTextureID*>(&id), rect, ImVec2{ 0.f, 1.f }, ImVec2{ 1.f, 0.f });
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))

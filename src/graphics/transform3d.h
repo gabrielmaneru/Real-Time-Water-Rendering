@@ -3,10 +3,10 @@
 #include <glm/glm.h>
 struct transform3d
 {
-	const vec3& get_pos() { return m_tr.m_pos; }
-	const vec3& get_scl() { return m_tr.m_scl; }
-	const vec3& get_rot() { return m_tr.m_rot; }
-	mat4 get_model() { return m_tr.get_model(); }
+	const vec3& get_pos()const { return m_tr.m_pos; }
+	const vec3& get_scl()const { return m_tr.m_scl; }
+	const vec3& get_rot()const { return m_tr.m_rot; }
+	mat4 get_model()const { return m_tr.get_model(); }
 
 	void set_pos(const vec3& v) { m_tr.m_pos = v, m_tr.upd(); }
 	void set_scl(const vec3& v) { m_tr.m_scl = v, m_tr.upd(); }

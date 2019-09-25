@@ -248,6 +248,7 @@ void c_scene::drawGUI()
 							ImGui::SetItemDefaultFocus();
 					}
 					ImGui::EndCombo();
+					
 				}
 				bool chng{ false };
 				if (ImGui::DragFloat3("Position", &m_objects[i]->m_transform.m_tr.m_pos.x, .1f))chng = true;
