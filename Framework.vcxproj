@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{BA1F5A5B-CD6E-4A65-9C30-FDC0E8CAB8BD}</ProjectGuid>
     <RootNamespace>base</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <ProjectName>Framework</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -141,7 +141,9 @@
   <ItemGroup>
     <ClCompile Include="dependencies\include\glm\detail\glm.cpp" />
     <ClCompile Include="dependencies\include\GL\gl3w.c" />
+    <ClCompile Include="dependencies\include\imgui\ImCurveEdit.cpp" />
     <ClCompile Include="dependencies\include\imgui\imgui.cpp" />
+    <ClCompile Include="dependencies\include\imgui\ImGuizmo.cpp" />
     <ClCompile Include="dependencies\include\imgui\imgui_demo.cpp" />
     <ClCompile Include="dependencies\include\imgui\imgui_draw.cpp" />
     <ClCompile Include="dependencies\include\imgui\imgui_impl_glfw.cpp" />
@@ -487,7 +489,9 @@
     <ClInclude Include="dependencies\include\GL\gl3w.h" />
     <ClInclude Include="dependencies\include\GL\glcorearb.h" />
     <ClInclude Include="dependencies\include\imgui\imconfig.h" />
+    <ClInclude Include="dependencies\include\imgui\ImCurveEdit.h" />
     <ClInclude Include="dependencies\include\imgui\imgui.h" />
+    <ClInclude Include="dependencies\include\imgui\ImGuizmo.h" />
     <ClInclude Include="dependencies\include\imgui\imgui_impl_glfw.h" />
     <ClInclude Include="dependencies\include\imgui\imgui_impl_opengl3.h" />
     <ClInclude Include="dependencies\include\imgui\imgui_internal.h" />

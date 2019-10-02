@@ -9,15 +9,19 @@ Author: Gabriel Mañeru - gabriel.m
 
 #pragma once
 #include <string>
+class scene_object;
 class c_editor
 {
 	void draw_main_window();
+	void draw_selected_window();
+	void selector();
 
 public:
 	bool init();
 	void update();
 	void shutdown();
 
+	scene_object * m_selected{ nullptr };
 	float m_test_var;
 };
 
