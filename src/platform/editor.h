@@ -15,6 +15,7 @@ class c_editor
 	void draw_main_window();
 	void draw_selected_window();
 	void selector();
+	void select_object();
 
 public:
 	bool init();

@@ -9,12 +9,16 @@ Author: Gabriel Mañeru - gabriel.m
 
 #include "session.h"
 #include <Windows.h>
+#ifdef _DEBUG
+int main()
+#else
 int CALLBACK WinMain(
 	__in  HINSTANCE hInstance,
 	__in  HINSTANCE hPrevInstance,
 	__in  LPSTR lpCmdLine,
 	__in  int nCmdShow
 )
+#endif
 {
 	if (!session::init())
 		return 1;

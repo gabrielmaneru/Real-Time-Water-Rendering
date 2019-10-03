@@ -13,6 +13,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "ortho_camera.h"
 #include "model.h"
 #include "framebuffer.h"
+#include <glm/glm.h>
 
 class c_renderer
 {
@@ -35,6 +36,7 @@ class c_renderer
 		DIFFUSE,
 		POSITION,
 		NORMAL,
+		SELECTION,
 		DEPTH,
 		LIGHT
 	}m_txt_cur{ LIGHT };
@@ -43,6 +45,9 @@ class c_renderer
 	{
 		bool render_lights{false};
 	}m_render_options;
+
+	std::pair<size_t,size_t> m_selection_calls{0u,0u};
+	void update_max_draw_call_count();
 
 public:
 	bool init();
@@ -53,6 +58,7 @@ public:
 	GLuint get_texture(e_texture ref);
 	void set_texture(e_texture ref) { m_txt_cur = ref; }
 	const Model* get_model(std::string s);
+	vec3 compute_selection_color();
 
 	friend class c_editor;
 	friend class c_scene;

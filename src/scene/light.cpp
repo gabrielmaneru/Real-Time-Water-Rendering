@@ -50,7 +50,7 @@ void light::recompute_scale()
 	const float& att_max = m_ldata.m_att_max;
 	float det = b*b-4*a*c;
 	float r1 = (-b + sqrtf(det)) / (2 * a);
-	m_transform.set_scl(vec3(r1));
+	m_transform.set_scl(r1);
 }
 
 light::light(transform3d tr, light_data ld)

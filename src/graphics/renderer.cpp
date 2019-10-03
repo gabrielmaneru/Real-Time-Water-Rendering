@@ -21,6 +21,34 @@ Author: Gabriel Mañeru - gabriel.m
 
 c_renderer* renderer = new c_renderer;
 
+void c_renderer::update_max_draw_call_count()
+{
+	m_selection_calls = { 0u, scene->m_objects.size() };
+	if (m_render_options.render_lights)
+		m_selection_calls.second += scene->m_lights.size();
+}
+
+vec3 c_renderer::compute_selection_color()
+{
+	float scalar = static_cast<float>(m_selection_calls.first++) / static_cast<float>(m_selection_calls.second)*360.f;
+	float val = fmod(scalar, 60.f)/60.f;
+
+	vec3 color;
+	if		(scalar < 60.f)
+		color = { 1.0f, val, 0.0f };
+	else if (scalar < 120.f)
+		color = { 1.f-val, 1.0f, 0.0f };
+	else if (scalar < 180.f)
+		color = { 0.0f, 1.f, val };
+	else if (scalar < 240.f)
+		color = { 0.0f, 1.f-val, 1.0f};
+	else if (scalar < 300.f)
+		color = { val, 0.0f, 1.0f };
+	else
+		color = { 1.0f, 0.0f, 1.f-val };
+	return color;
+}
+
 bool c_renderer::init()
 {
 	if (gl3wInit())
@@ -71,12 +99,13 @@ void c_renderer::update()
 	||  window_manager->get_height() != g_buffer.m_height)
 	{
 		g_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
-			GL_RGBA16F, GL_RGBA,
-			GL_RGBA16F, GL_RGBA,
-			GL_RGBA16F, GL_RGBA,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT
 			});
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
-			GL_RGBA16F, GL_RGBA
+			GL_RGBA16F, GL_RGBA, GL_FLOAT
 			}, g_buffer.m_depth_texture);
 	}
 
@@ -95,6 +124,7 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("P", scene_cam.m_proj);
 		/**/g_buffer_shader->set_uniform("V", scene_cam.m_view);
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/update_max_draw_call_count();
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/if (m_render_options.render_lights)
 			/**/	scene->draw_debug_lights(g_buffer_shader);
@@ -233,6 +263,7 @@ void c_renderer::drawGUI()
 		show_image(c_renderer::DIFFUSE);
 		show_image(c_renderer::POSITION);
 		show_image(c_renderer::NORMAL);
+		show_image(c_renderer::SELECTION);
 		show_image(c_renderer::DEPTH);
 		show_image(c_renderer::LIGHT);
 		ImGui::TreePop();
@@ -254,12 +285,14 @@ GLuint c_renderer::get_texture(e_texture ref)
 {
 	switch (ref)
 	{
-	case c_renderer::e_texture::DIFFUSE:
+	case c_renderer::e_texture::SELECTION:
 		return g_buffer.m_color_texture[0];
-	case c_renderer::e_texture::POSITION:
+	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[1];
+	case c_renderer::e_texture::POSITION:
+		return g_buffer.m_color_texture[2]; 
 	case c_renderer::e_texture::NORMAL:
-		return g_buffer.m_color_texture[2];
+		return g_buffer.m_color_texture[3];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::LIGHT:

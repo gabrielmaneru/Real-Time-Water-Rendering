@@ -123,11 +123,9 @@ bool c_scene::load_scene(std::string path)
 					rot.y = (float)std::atof(obj.substr(obj.find_first_of('y') + 2, obj.find_first_of('z') - obj.find_first_of('y') - 3).c_str());
 					rot.z = (float)std::atof(obj.substr(obj.find_first_of('z') + 2, obj.find_first_of('}') - obj.find_first_of('z') - 2).c_str());
 
-					vec3 scl{ -1.0 };
+					float scl{ -1.0 };
 					obj = obj.substr(obj.find("scale"));
-					scl.x = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
-					scl.y = (float)std::atof(obj.substr(obj.find_first_of('y') + 2, obj.find_first_of('z') - obj.find_first_of('y') - 3).c_str());
-					scl.z = (float)std::atof(obj.substr(obj.find_first_of('z') + 2, obj.find_first_of('}') - obj.find_first_of('z') - 2).c_str());
+					scl = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
 
 					transform3d tr;
 					tr.set_tr(pos, scl, rot);
@@ -149,7 +147,7 @@ bool c_scene::init()
 		return false;
 
 	transform3d tr;
-	tr.set_scl(vec3{ .5f });
+	tr.set_scl(.5f);
 	int num_lights = 20;
 	{
 		light_data ld;
@@ -211,12 +209,13 @@ void c_scene::draw_lights(Shader_Program * shader)
 void c_scene::draw_debug_lights(Shader_Program * shader)
 {
 	transform3d tr;
-	tr.set_scl(vec3{ 0.5f });
+	tr.set_scl(.5f);
 
 	for (auto p_li : m_lights)
 	{
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
+		shader->set_uniform("selection_color", renderer->compute_selection_color());
 		renderer->get_model("sphere")->draw(shader);
 	}
 }
@@ -274,7 +273,7 @@ void c_scene::drawGUI()
 				bool chng{ false };
 				if (ImGui::DragFloat3("Position", &m_objects[i]->m_transform.m_tr.m_pos.x, .1f))chng = true;
 				if (ImGui::DragFloat3("Rotation", &m_objects[i]->m_transform.m_tr.m_rot.x))chng = true;
-				if (ImGui::DragFloat3("Scale", &m_objects[i]->m_transform.m_tr.m_scl.x, .1f, .001f, 99999999.f))chng = true;
+				if (ImGui::DragFloat("Scale", &m_objects[i]->m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 				if (chng)m_objects[i]->m_transform.m_tr.upd();
 				if (ImGui::Button("Delete"))
 				{

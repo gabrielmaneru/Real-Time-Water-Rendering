@@ -15,6 +15,7 @@ struct window
 {
 	static window * create_window(int width, int height, const char * title, bool fullscreen);
 	void update_window();
+	std::pair<int, int> get_mouse_pos();
 
 	GLFWwindow * m_window;
 	int m_width;

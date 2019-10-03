@@ -18,6 +18,8 @@ Author: Gabriel Mañeru - gabriel.m
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <imgui/ImGuizmo.h>
+#include <GL/gl3w.h>
+#include <graphics/gl_error.h>
 
 c_editor* editor = new c_editor;
 
@@ -128,7 +130,7 @@ void c_editor::draw_selected_window()
 	bool chng{ false };
 	if (ImGui::DragFloat3("Position", &m_selected->m_transform.m_tr.m_pos.x, .1f)) chng = true;
 	if (ImGui::DragFloat3("Rotation", &m_selected->m_transform.m_tr.m_rot.x)) chng = true;
-	if (ImGui::DragFloat3("Scale", &m_selected->m_transform.m_tr.m_scl.x, .1f, .001f, 9999.f)) chng = true;
+	if (ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f)) chng = true;
 	if (chng) m_selected->m_transform.m_tr.upd();
 	if (ImGui::Button("Delete"))
 	{
@@ -154,10 +156,22 @@ void c_editor::draw_selected_window()
 		NULL, m_snap ? &m_cur_step : NULL);
 
 	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+
 	ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
-	m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
-	m_selected->m_transform.m_tr.m_rot = vec3(matrixRotation[0], matrixRotation[1], matrixRotation[2]);
-	m_selected->m_transform.m_tr.m_scl = vec3(matrixScale[0], matrixScale[1], matrixScale[2]);
+	switch (m_operation)
+	{
+	case ImGuizmo::TRANSLATE:
+		m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
+		break;
+	case ImGuizmo::ROTATE:
+		m_selected->m_transform.m_tr.m_rot = vec3(matrixRotation[0], matrixRotation[1], matrixRotation[2]);
+		break;
+	case ImGuizmo::SCALE:
+		vec3 diff = vec3(matrixScale[0], matrixScale[1], matrixScale[2]) - vec3(m_selected->m_transform.m_tr.m_scl);
+		if (glm::abs(diff.x) > .0f)
+			m_selected->m_transform.m_tr.m_scl = matrixScale[0];
+		break;
+	}
 	m_selected->m_transform.m_tr.upd();
 	ImGui::End();
 }
@@ -165,11 +179,50 @@ void c_editor::draw_selected_window()
 void c_editor::selector()
 {
 	if (m_selected)
-	{
 		draw_selected_window();
-	}
-	else
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && window::mouse_but_left_triggered)
+		select_object();
+}
+
+void c_editor::select_object()
+{
+	glFlush();
+	glFinish();
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderer->g_buffer.m_fbo);
+
+	vec4 data;
+	auto wpos = window_manager->m_window->get_mouse_pos();
+	glReadPixels(wpos.first, window_manager->get_height() - wpos.second, 1, 1, GL_RGBA, GL_FLOAT, &data.x);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	if (data.a == 0.f)
 	{
-		m_selected = scene->m_objects[1];
+		m_selected = false;
+		return;
 	}
+
+	float scalar;
+	if		(data.r == 1.f && data.g < 1.f && data.b == 0.f)
+		scalar = data.g;
+	else if (data.r > 0.f && data.g == 1.f && data.b == 0.f)
+		scalar = 60.f*(1.f-data.r) + 60.f;
+	else if (data.r == 0.f && data.g == 1.f && data.b < 1.f)
+		scalar = 60.f*data.b + 120.f;
+	else if (data.r == 0.f && data.g > 0.f && data.b == 1.f)
+		scalar = 60.f*(1.f-data.g) + 180.f;
+	else if (data.r < 1.f && data.g == 0.f && data.b == 1.f)
+		scalar = 60.f*data.r + 240.f;
+	else if (data.r == 1.f && data.g == 0.f && data.b > 0.f)
+		scalar = 60.0f*(1.f-data.b) + 300.f;
+
+	scalar /= 360.f;
+	scalar *= static_cast<float>(renderer->m_selection_calls.second);
+	scalar = floorf(scalar + 0.5f);
+	size_t idx = static_cast<size_t>(scalar);
+	if (idx < scene->m_objects.size())
+		m_selected = scene->m_objects[idx];
+	else
+		m_selected = scene->m_lights[idx - scene->m_objects.size()];
 }

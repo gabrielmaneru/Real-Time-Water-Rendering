@@ -86,3 +86,10 @@ void window::update_window()
 	if (h > 0)
 		m_width = w, m_height = h;
 }
+
+std::pair<int, int> window::get_mouse_pos()
+{
+	double x, y;
+	glfwGetCursorPos(m_window, &x, &y);
+	return {static_cast<int>(x),static_cast<int>(y)};
+}
