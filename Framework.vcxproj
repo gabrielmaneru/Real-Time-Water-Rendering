@@ -151,6 +151,7 @@
     <ClCompile Include="dependencies\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\core\session.cpp" />
     <ClCompile Include="src\core\main.cpp" />
+    <ClCompile Include="src\graphics\camera.cpp" />
     <ClCompile Include="src\graphics\framebuffer.cpp" />
     <ClCompile Include="src\graphics\gl_error.cpp" />
     <ClCompile Include="src\graphics\material.cpp" />
@@ -529,6 +530,7 @@
     <None Include="data\shaders\light.frag" />
     <None Include="data\shaders\g_buffer.frag" />
     <None Include="data\shaders\texture.frag" />
+    <None Include="data\shaders\blur.frag" />
     <None Include="dependencies\include\assimp\color4.inl" />
     <None Include="dependencies\include\assimp\material.inl" />
     <None Include="dependencies\include\assimp\matrix3x3.inl" />

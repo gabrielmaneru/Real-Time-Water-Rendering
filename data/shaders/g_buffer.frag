@@ -5,9 +5,9 @@ in vec3 vBitangent;
 in vec3 vPosition;
 in vec2 vUv;
 
-layout (location = 0) uniform sampler2D diff_txt;
-layout (location = 1) uniform sampler2D spec_txt;
-layout (location = 2) uniform sampler2D norm_txt;
+layout (binding = 0) uniform sampler2D diff_txt;
+layout (binding = 1) uniform sampler2D spec_txt;
+layout (binding = 2) uniform sampler2D norm_txt;
 uniform bool diff_txt_active;
 uniform bool spec_txt_active;
 uniform bool norm_txt_active;

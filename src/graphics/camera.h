@@ -9,6 +9,7 @@ Author: Gabriel Mañeru - gabriel.m
 
 #pragma once
 #include <glm/glm.h>
+class Shader_Program;
 constexpr struct {
 	vec3 eye{ 0,0,10 };
 	vec3 front{ 0,0,-1 };
@@ -27,6 +28,7 @@ protected:
 
 public:
 	virtual void update() = 0;
+	void set_uniforms(Shader_Program*);
 
 	vec3 m_eye;
 	vec3 m_front;

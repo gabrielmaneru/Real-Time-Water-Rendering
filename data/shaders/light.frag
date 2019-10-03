@@ -5,9 +5,9 @@ in vec3 vBitangent;
 in vec3 vPosition;
 in vec2 vUv;
 
-layout (location = 0) uniform sampler2D diffuse_txt;
-layout (location = 1) uniform sampler2D position_txt;
-layout (location = 2) uniform sampler2D normal_txt;
+layout (binding = 0) uniform sampler2D diffuse_txt;
+layout (binding = 1) uniform sampler2D position_txt;
+layout (binding = 2) uniform sampler2D normal_txt;
 uniform vec3 l_pos;
 uniform vec3 la;
 uniform vec3 ld;
@@ -18,7 +18,7 @@ uniform int window_height;
 subroutine void Render_Type();
 subroutine uniform Render_Type render_pass;
 
-layout (location = 0) out vec4 out_color;
+out vec3 out_color;
 
 subroutine (Render_Type)
 void render_ambient()
@@ -34,7 +34,7 @@ void render_ambient()
 	vec3 kd = diffuse_value.rgb;
 	float ka = position_value.a-1.0;
 
-	out_color = vec4((ka*la)*kd, 1.0);
+	out_color = (ka*la)*kd;
 }
 
 subroutine (Render_Type)
@@ -65,7 +65,7 @@ void render_diffuse_specular()
 	float id = att * max(dot(normal_v, light_v), 0.0);
 	float is = att * pow(max(dot(normal_v, half_v), 0.0),ns);
 
-	out_color = vec4((id*ld)*kd + ls * ks * is, 1.0);
+	out_color = (id*ld)*kd + ls * ks * is;
 }
 
 void main()

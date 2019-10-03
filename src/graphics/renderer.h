@@ -20,10 +20,12 @@ class c_renderer
 	// Shaders
 	Shader_Program* g_buffer_shader;
 	Shader_Program* light_shader;
+	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
 
 	// Cameras
 	vectorial_camera scene_cam{};
+	ortho_camera ortho_cam{};
 
 	// Meshes
 	std::vector<Model*> m_models;
@@ -31,6 +33,7 @@ class c_renderer
 	// Framebuffer
 	framebuffer g_buffer;
 	framebuffer light_buffer;
+	framebuffer blur_buffer;
 
 	enum e_texture {
 		DIFFUSE,
@@ -38,12 +41,19 @@ class c_renderer
 		NORMAL,
 		SELECTION,
 		DEPTH,
-		LIGHT
+		LIGHT,
+		BLUR_FACTOR,
+		BLUR_RESULT
 	}m_txt_cur{ LIGHT };
 	
 	struct Options
 	{
-		bool render_lights{false};
+		bool render_lights{ false };
+
+		bool do_antialiasing{ true };
+		float aa_coef_normal{ 0.01f };
+		float aa_coef_depth{ 1.0f };
+		float aa_depth_power{ 50.0f };
 	}m_render_options;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
