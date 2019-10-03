@@ -207,12 +207,12 @@ void c_renderer::update()
 		/**/// Blur
 		/**/glFlush();
 		/**/glFinish();
-		/**/GL_CALL(glDisable(GL_BLEND));
 		/**/blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_blur");
 		/**/ortho_cam.set_uniforms(blur_shader);
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_FACTOR));
-		/**///m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/GL_CALL(glDisable(GL_BLEND));
 		///////////////////////////////////////////////////////////////////////////
 	}
 

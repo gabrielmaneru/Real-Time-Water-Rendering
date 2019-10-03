@@ -60,14 +60,16 @@ void do_sobel_edge_detection()
 //-------------------------------------------------------------------
 
 
+
 //--Sobel-Edge-Detection---------------------------------------------
 subroutine (Execution_Type)
 void do_blur()
 {
-	blur_factor = texture2D(texture1, vUv).r;
 	final_color = vec3(texture2D(texture1, vUv).r);
 }
 //-------------------------------------------------------------------
+
+
 
 void main()
 {
