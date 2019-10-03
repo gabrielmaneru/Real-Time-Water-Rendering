@@ -249,7 +249,7 @@ void c_renderer::drawGUI()
 		ImGui::TreePop();
 	}
 	
-	if (ImGui::TreeNode("Deferred Buffers"))
+	if (ImGui::TreeNode("Buffers"))
 	{
 		std::function<void(c_renderer::e_texture)> show_image = [&](c_renderer::e_texture txt)
 		{
@@ -260,23 +260,36 @@ void c_renderer::drawGUI()
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 				renderer->set_texture(txt);
 		};
-		show_image(c_renderer::DIFFUSE);
-		show_image(c_renderer::POSITION);
-		show_image(c_renderer::NORMAL);
-		show_image(c_renderer::SELECTION);
-		show_image(c_renderer::DEPTH);
-		show_image(c_renderer::LIGHT);
+		if (ImGui::TreeNode("G-Buffer"))
+		{
+			show_image(c_renderer::DIFFUSE);
+			show_image(c_renderer::POSITION);
+			show_image(c_renderer::NORMAL);
+			show_image(c_renderer::DEPTH);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Selection"))
+		{
+			show_image(c_renderer::SELECTION);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Light"))
+		{
+			show_image(c_renderer::LIGHT);
+			ImGui::TreePop();
+		}
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNode("RenderOptions"))
 	{
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
-		//if (ImGui::Button("Recompile Shaders"))
-		//{
-		//	g_buffer_shader->recompile();
-		//	light_shader->recompile();
-		//}
+		if (ImGui::Button("Recompile Shaders"))
+		{
+			Shader_Program ** sh[]{ &g_buffer_shader, &light_shader, &texture_shader };
+			for (Shader_Program ** s : sh)
+				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
+		}
 		ImGui::TreePop();
 	}
 }

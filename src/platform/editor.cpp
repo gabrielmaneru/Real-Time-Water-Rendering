@@ -20,6 +20,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <imgui/ImGuizmo.h>
 #include <GL/gl3w.h>
 #include <graphics/gl_error.h>
+#include <GLFW/glfw3.h>
 
 c_editor* editor = new c_editor;
 
@@ -167,9 +168,7 @@ void c_editor::draw_selected_window()
 		m_selected->m_transform.m_tr.m_rot = vec3(matrixRotation[0], matrixRotation[1], matrixRotation[2]);
 		break;
 	case ImGuizmo::SCALE:
-		vec3 diff = vec3(matrixScale[0], matrixScale[1], matrixScale[2]) - vec3(m_selected->m_transform.m_tr.m_scl);
-		if (glm::abs(diff.x) > .0f)
-			m_selected->m_transform.m_tr.m_scl = matrixScale[0];
+		m_selected->m_transform.m_tr.m_scl = (matrixScale[0] + matrixScale[1] + matrixScale[2]) / 3.0f;
 		break;
 	}
 	m_selected->m_transform.m_tr.upd();
@@ -180,7 +179,7 @@ void c_editor::selector()
 {
 	if (m_selected)
 		draw_selected_window();
-	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && window::mouse_but_left_triggered)
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) && window::mouse_but_left_triggered)
 		select_object();
 }
 
