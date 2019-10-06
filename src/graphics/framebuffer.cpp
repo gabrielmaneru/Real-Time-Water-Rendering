@@ -13,7 +13,6 @@ Author: Gabriel Mañeru - gabriel.m
 
 void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textures, GLuint depth)
 {
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	m_width = width;
 	m_height = height;
 
@@ -21,20 +20,19 @@ void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textur
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo));
 
 	// Diffuse Textures
-	m_color_texture.resize(textures.size()/3);
+	m_color_texture.resize(textures.size()/4);
 	for (GLenum i = 0; i < (GLenum)m_color_texture.size(); i++)
 	{
 		// Create Texture
 		GL_CALL(glGenTextures(1, &m_color_texture[i]));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_color_texture[i]));
-		GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, textures[i * 3], m_width, m_height, 0, textures[i * 3 + 1], textures[i * 3 + 2], nullptr));
+		GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, textures[i * 4], m_width, m_height, 0, textures[i * 4 + 1], textures[i * 4 + 2], nullptr));
 
 		// Set Parameters
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textures[i * 4 + 3]));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textures[i * 4 + 3]));
 		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
 		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
-		GL_CALL(glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor));
 
 		// Attach
 		GL_CALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, m_color_texture[i], 0));
@@ -60,7 +58,6 @@ void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textur
 			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
 			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
 			GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
-			GL_CALL(glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor));
 		}
 		else
 			m_depth_texture = depth;

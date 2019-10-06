@@ -25,7 +25,7 @@ public:
 
 	float m_fov{ 90.0f };
 	float m_near{ .1f };
-	float m_far{ 1000.0f };
+	float m_far{ 500.0f };
 
 private:
 	void update_free_mode();

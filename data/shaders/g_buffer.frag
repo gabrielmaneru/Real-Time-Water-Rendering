@@ -16,12 +16,19 @@ uniform vec3 kd;
 uniform vec3 ks;
 uniform float ns;
 uniform vec3 selection_color;
+uniform float near;
+uniform float far;
 
 layout (location = 0) out vec4 attr_selection;
 layout (location = 1) out vec4 attr_diffuse;
 layout (location = 2) out vec4 attr_position;
 layout (location = 3) out vec4 attr_normal;
 
+float LinearizeDepth(float depth) 
+{
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * near * far) / (far + near - z * (far - near));	
+}
 void main()
 {
 	vec3 diffuse;
@@ -58,4 +65,6 @@ void main()
 	attr_position = vec4(vPosition, 1.0+ka.r);
 	attr_normal = vec4(normal, 1.0+ns);
 	attr_selection = vec4(selection_color, 1.0);
+    gl_FragDepth= (near * far) / (far - near + vPosition.z);
+	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
 }

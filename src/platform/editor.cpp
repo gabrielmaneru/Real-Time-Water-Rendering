@@ -204,7 +204,7 @@ void c_editor::select_object()
 
 	float scalar;
 	if		(data.r == 1.f && data.g < 1.f && data.b == 0.f)
-		scalar = data.g;
+		scalar = 60.f*data.g;
 	else if (data.r > 0.f && data.g == 1.f && data.b == 0.f)
 		scalar = 60.f*(1.f-data.r) + 60.f;
 	else if (data.r == 0.f && data.g == 1.f && data.b < 1.f)

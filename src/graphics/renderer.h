@@ -33,6 +33,7 @@ class c_renderer
 	// Framebuffer
 	framebuffer g_buffer;
 	framebuffer light_buffer;
+	framebuffer blur_control_buffer;
 	framebuffer blur_buffer;
 
 	enum e_texture {
@@ -42,18 +43,19 @@ class c_renderer
 		SELECTION,
 		DEPTH,
 		LIGHT,
-		BLUR_FACTOR,
+		BLUR_CONTROL,
+		BLUR_ALL,
 		BLUR_RESULT
-	}m_txt_cur{ LIGHT };
+	}m_txt_cur{ BLUR_RESULT };
 	
 	struct Options
 	{
 		bool render_lights{ false };
 
 		bool do_antialiasing{ true };
-		float aa_coef_normal{ 0.01f };
-		float aa_coef_depth{ 1.0f };
-		float aa_depth_power{ 50.0f };
+		float aa_coef_normal{ 0.05f };
+		float aa_coef_depth{ 0.25f };
+		int aa_sigma{ 5 };
 	}m_render_options;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
