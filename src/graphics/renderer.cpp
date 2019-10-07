@@ -108,8 +108,10 @@ void c_renderer::update()
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST
 			}, g_buffer.m_depth_texture);
-		blur_control_buffer.setup(window_manager->get_width()/2, window_manager->get_height()/2, {
-			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR,
+		blur_control_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
+			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR
+			});
+		bloom_buffer.setup(window_manager->get_width()/2, window_manager->get_height()/2, {
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR
 			});
 		blur_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
@@ -124,8 +126,8 @@ void c_renderer::update()
 	{
 		// G_Buffer Pass	///////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
-		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glViewport(0, 0, g_buffer.m_width, g_buffer.m_height));
 		/**/
 		/**/g_buffer_shader->use();
@@ -147,7 +149,6 @@ void c_renderer::update()
 	{
 		// Light Pass	///////////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
-		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, light_buffer.m_width, light_buffer.m_height));
 		/**/glDepthMask(GL_FALSE);
@@ -186,8 +187,7 @@ void c_renderer::update()
 	{
 		// Blur Pass	///////////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, blur_control_buffer.m_fbo));
-		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
+		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, blur_control_buffer.m_width, blur_control_buffer.m_height));
 		/**/blur_shader->use();
 		/**/ortho_cam.set_uniforms(blur_shader);
@@ -195,41 +195,67 @@ void c_renderer::update()
 		/**/
 		/**/// Sobel Edge Detection
 		/**/if (m_render_options.do_antialiasing)
-		/**/{
-		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_sobel_edge_detection");
+			/**/ {
+			/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_sobel_edge_detection");
+			/**/	blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
+			/**/	blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
+			/**/	blur_shader->set_uniform("coef_normal", m_render_options.aa_coef_normal);
+			/**/	blur_shader->set_uniform("coef_depth", m_render_options.aa_coef_depth);
+			/**/	glActiveTexture(GL_TEXTURE0);
+			/**/	glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
+			/**/	glActiveTexture(GL_TEXTURE1);
+			/**/	glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
+			/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+			/**/
+		}
+		/**/
+		/**/// Bloom Filter
+		/**/if (m_render_options.do_bloom)
+		/**/ {
+		/**/	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, blur_buffer.m_fbo));
+		/**/	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/	GL_CALL(glViewport(0, 0, blur_buffer.m_width, blur_buffer.m_height));
+		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_bloom");
+		/**/	blur_shader->set_uniform("bloom_coef", m_render_options.bl_coef);
+		/**/	glActiveTexture(GL_TEXTURE0);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/	glFlush;
+		/**/	glFinish;
+		/**/	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, bloom_buffer.m_fbo));
+		/**/	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/	GL_CALL(glViewport(0, 0, bloom_buffer.m_width, bloom_buffer.m_height));
+		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_bloom_blur");
 		/**/	blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
 		/**/	blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
-		/**/	blur_shader->set_uniform("coef_normal", m_render_options.aa_coef_normal);
-		/**/	blur_shader->set_uniform("coef_depth", m_render_options.aa_coef_depth);
 		/**/	blur_shader->set_uniform("sigma", m_render_options.aa_sigma);
 		/**/	glActiveTexture(GL_TEXTURE0);
-		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
-		/**/	glActiveTexture(GL_TEXTURE1);
-		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_RESULT));
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
 		/**/}
-		/**/
-		/**/// Blur
-		/**/blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_gaussian_blur");
-		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
-		/**/m_models[2]->m_meshes[0]->draw(blur_shader);
-		/**/GL_CALL(glDisable(GL_BLEND));
+		/**/else
+		/**/{
+		/**/	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, bloom_buffer.m_fbo));
+		/**/	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/}
 		/**/
 		/**/// Final Blur
 		/**/glFlush;
 		/**/glFinish;
+		/**/GL_CALL(glDisable(GL_BLEND));
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, blur_buffer.m_fbo));
-		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, blur_buffer.m_width, blur_buffer.m_height));
 		/**/blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_final_blur");
+		/**/blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
+		/**/blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
+		/**/blur_shader->set_uniform("sigma", m_render_options.aa_sigma);
 		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_CONTROL));
-		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_ALL));
-		/**/glActiveTexture(GL_TEXTURE2);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/glActiveTexture(GL_TEXTURE1);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_CONTROL));
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLOOM));
 		/**/m_models[2]->m_meshes[0]->draw(blur_shader);
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -333,7 +359,7 @@ void c_renderer::drawGUI()
 		if (ImGui::TreeNode("Blur"))
 		{
 			show_image(c_renderer::BLUR_CONTROL);
-			show_image(c_renderer::BLUR_ALL);
+			show_image(c_renderer::BLOOM);
 			show_image(c_renderer::BLUR_RESULT);
 			ImGui::TreePop();
 		}
@@ -355,6 +381,12 @@ void c_renderer::drawGUI()
 			ImGui::SliderFloat("Normal Coefficient", &m_render_options.aa_coef_normal, 0.0f, 1.0f);
 			ImGui::SliderFloat("Depth Coefficient", &m_render_options.aa_coef_depth, 0.0f, 1.0f);
 			ImGui::SliderInt("Gaussian Sigma", &m_render_options.aa_sigma, 1, 5);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Bloom"))
+		{
+			ImGui::Checkbox("Do Bloom", &m_render_options.do_bloom);
+			ImGui::SliderFloat("Brightness Threshold", &m_render_options.bl_coef, 0.0f, 2.0f);
 			ImGui::TreePop();
 		}
 		ImGui::TreePop();
@@ -379,8 +411,8 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return light_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_CONTROL:
 		return blur_control_buffer.m_color_texture[0];
-	case c_renderer::e_texture::BLUR_ALL:
-		return blur_control_buffer.m_color_texture[1];
+	case c_renderer::e_texture::BLOOM:
+		return bloom_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_RESULT:
 		return blur_buffer.m_color_texture[0];
 	}

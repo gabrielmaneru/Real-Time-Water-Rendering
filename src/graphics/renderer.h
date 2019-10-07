@@ -34,6 +34,7 @@ class c_renderer
 	framebuffer g_buffer;
 	framebuffer light_buffer;
 	framebuffer blur_control_buffer;
+	framebuffer bloom_buffer;
 	framebuffer blur_buffer;
 
 	enum e_texture {
@@ -44,7 +45,7 @@ class c_renderer
 		DEPTH,
 		LIGHT,
 		BLUR_CONTROL,
-		BLUR_ALL,
+		BLOOM,
 		BLUR_RESULT
 	}m_txt_cur{ BLUR_RESULT };
 	
@@ -56,6 +57,9 @@ class c_renderer
 		float aa_coef_normal{ 0.05f };
 		float aa_coef_depth{ 0.25f };
 		int aa_sigma{ 5 };
+
+		bool do_bloom{ true };
+		float bl_coef{ 1.f };
 	}m_render_options;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
