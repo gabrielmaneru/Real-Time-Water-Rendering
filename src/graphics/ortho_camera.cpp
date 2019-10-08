@@ -14,4 +14,5 @@ ortho_camera::ortho_camera(vec3 eye, vec3 front, vec3 up)
 {
 	m_view = mat4(1.0f);
 	m_proj = mat4(1.0f);
+	save_prev();
 }

@@ -3,6 +3,7 @@ in vec3 vNormal;
 in vec3 vTangent;
 in vec3 vBitangent;
 in vec3 vPosition;
+in float vMotion;
 in vec2 vUv;
 
 layout (binding = 0) uniform sampler2D uniform_texture;

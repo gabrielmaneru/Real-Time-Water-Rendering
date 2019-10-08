@@ -29,6 +29,7 @@ protected:
 public:
 	virtual void update() = 0;
 	void set_uniforms(Shader_Program*);
+	void save_prev() { m_view_prev = m_view; }
 
 	vec3 m_eye;
 	vec3 m_front;
@@ -36,4 +37,5 @@ public:
 
 	mat4 m_proj;
 	mat4 m_view;
+	mat4 m_view_prev;
 };

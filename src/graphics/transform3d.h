@@ -33,9 +33,12 @@ struct transform3d
 		float m_scl{ 1 };
 		vec3 m_rot{ 0,0,0 };
 		mutable mat4 m_model;
+		mutable mat4 m_prev_model;
 		void upd() { should_update = true; }
 		mutable bool should_update = true;
 		mat4 get_model()const;
+		void save_prev()const { m_prev_model = m_model; }
+		mat4 get_prev_model()const { return m_prev_model; };
 		mat4 parent = mat4{ 1.0f };
 	} m_tr;
 };

@@ -58,7 +58,7 @@ bool c_renderer::init()
 		return false;
 
 	// GL Options
-	//setup_gl_debug();
+	setup_gl_debug();
 	glCullFace(GL_FRONT);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glBlendEquation(GL_FUNC_ADD);
@@ -120,6 +120,7 @@ void c_renderer::update()
 	}
 
 	// Camera Update
+	scene_cam.save_prev();
 	scene_cam.update();
 
 	if (g_buffer_shader->is_valid())
@@ -134,6 +135,7 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
+		/**/g_buffer_shader->set_uniform("mb_camera_motion", m_render_options.mb_camera_blur);
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/update_max_draw_call_count();
 		/**/scene->draw_objs(g_buffer_shader);
@@ -195,19 +197,38 @@ void c_renderer::update()
 		/**/
 		/**/// Sobel Edge Detection
 		/**/if (m_render_options.do_antialiasing)
-			/**/ {
-			/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_sobel_edge_detection");
-			/**/	blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
-			/**/	blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
-			/**/	blur_shader->set_uniform("coef_normal", m_render_options.aa_coef_normal);
-			/**/	blur_shader->set_uniform("coef_depth", m_render_options.aa_coef_depth);
-			/**/	glActiveTexture(GL_TEXTURE0);
-			/**/	glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
-			/**/	glActiveTexture(GL_TEXTURE1);
-			/**/	glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
-			/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
-			/**/
-		}
+		/**/ {
+		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_sobel_edge_detection");
+		/**/	blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
+		/**/	blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
+		/**/	blur_shader->set_uniform("coef_normal", m_render_options.aa_coef_normal);
+		/**/	blur_shader->set_uniform("coef_depth", m_render_options.aa_coef_depth);
+		/**/	glActiveTexture(GL_TEXTURE0);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
+		/**/	glActiveTexture(GL_TEXTURE1);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
+		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/}
+		/**/
+		/**/// Depth of Field
+		/**/if (m_render_options.do_depth_of_field)
+		/**/ {
+		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_depth_of_field");
+		/**/	blur_shader->set_uniform("focal_distance", m_render_options.df_plane_focus);
+		/**/	blur_shader->set_uniform("aperture", m_render_options.df_aperture);
+		/**/	glActiveTexture(GL_TEXTURE0);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
+		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/}
+		/**/
+		/**/// Motion Blur
+		/**/if (m_render_options.do_motion_blur)
+		/**/ {
+		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_motion_blur");
+		/**/	glActiveTexture(GL_TEXTURE0);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(SELECTION));
+		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/}
 		/**/
 		/**/// Bloom Filter
 		/**/if (m_render_options.do_bloom)
@@ -381,6 +402,19 @@ void c_renderer::drawGUI()
 			ImGui::SliderFloat("Normal Coefficient", &m_render_options.aa_coef_normal, 0.0f, 1.0f);
 			ImGui::SliderFloat("Depth Coefficient", &m_render_options.aa_coef_depth, 0.0f, 1.0f);
 			ImGui::SliderInt("Gaussian Sigma", &m_render_options.aa_sigma, 1, 5);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Depth of Field"))
+		{
+			ImGui::Checkbox("Do Depth of Field", &m_render_options.do_depth_of_field);
+			ImGui::DragFloat("Plane in Focus", &m_render_options.df_plane_focus, 1.0f, 0.0f, 999.f);
+			ImGui::DragFloat("Aperture", &m_render_options.df_aperture, 1.0f, 0.0f, 999.f);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Motion Blur"))
+		{
+			ImGui::Checkbox("Do Motion Blur", &m_render_options.do_motion_blur);
+			ImGui::Checkbox("Camera Motion Blur", &m_render_options.mb_camera_blur);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Bloom"))

@@ -9,6 +9,7 @@ Author: Gabriel Mañeru - gabriel.m
 
 #include "light.h"
 #include <graphics/renderer.h>
+#include <graphics/transform3d.h>
 #include <imgui/imgui.h>
 
 vec3 light_data::m_ambient = vec3{ 0.1f };
@@ -69,6 +70,7 @@ void light::draw(Shader_Program * shader)
 	{
 		recompute_scale();
 		shader->set_uniform("M", m_transform.get_model());
+		shader->set_uniform("M_prev", m_transform.get_model());
 		m_model->draw(shader, false);
 	}
 }

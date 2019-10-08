@@ -83,96 +83,99 @@ void c_editor::draw_selected_window()
 	static ImGuizmo::OPERATION m_operation{ ImGuizmo::TRANSLATE };
 	static ImGuizmo::MODE m_mode{ ImGuizmo::WORLD };
 	static bool m_snap{ false };
-
-	ImGui::Begin("Object", nullptr);
-	if (ImGui::RadioButton("Translate", m_operation == ImGuizmo::TRANSLATE))
-		m_operation = ImGuizmo::TRANSLATE;
-	ImGui::SameLine();
-	if (ImGui::RadioButton("Rotate", m_operation == ImGuizmo::ROTATE))
-		m_operation = ImGuizmo::ROTATE;
-	ImGui::SameLine();
-	if (ImGui::RadioButton("Scale", m_operation == ImGuizmo::SCALE))
-		m_operation = ImGuizmo::SCALE;
-
-	ImGui::Checkbox("", &m_snap);
-	ImGui::SameLine();
-	static vec3 m_snap_step{1.0f};
-	float m_cur_step;
-	switch (m_operation)
+	bool opened = true;
+	if (ImGui::Begin("Object", &opened, 0))
 	{
-	case ImGuizmo::TRANSLATE:
-		ImGui::InputFloat3("Snap", &m_snap_step.x);
-		m_cur_step = m_snap_step.x;
-		break;
-	case ImGuizmo::ROTATE:
-		ImGui::InputFloat("Angle Snap", &m_snap_step.y);
-		m_cur_step = m_snap_step.y;
-		break;
-	case ImGuizmo::SCALE:
-		ImGui::InputFloat("Scale Snap", &m_snap_step.z);
-		m_cur_step = m_snap_step.z;
-		break;
-	}
+		if (ImGui::RadioButton("Translate", m_operation == ImGuizmo::TRANSLATE))
+			m_operation = ImGuizmo::TRANSLATE;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Rotate", m_operation == ImGuizmo::ROTATE))
+			m_operation = ImGuizmo::ROTATE;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Scale", m_operation == ImGuizmo::SCALE))
+			m_operation = ImGuizmo::SCALE;
 
-	const char* current = m_selected->m_model ? m_selected->m_model->m_name.c_str() : "Unknown";
-	if (ImGui::BeginCombo("Mesh", current))
-	{
-		for (size_t n = 0; n < renderer->m_models.size(); n++)
+		ImGui::Checkbox("", &m_snap);
+		ImGui::SameLine();
+		static vec3 m_snap_step{1.0f};
+		float m_cur_step;
+		switch (m_operation)
 		{
-			bool is_selected = (m_selected->m_model == renderer->m_models[n]);
-			if (ImGui::Selectable(renderer->m_models[n]->m_name.c_str(), is_selected))
-				m_selected->m_model = renderer->m_models[n];
-			if (is_selected)
-				ImGui::SetItemDefaultFocus();
+		case ImGuizmo::TRANSLATE:
+			ImGui::InputFloat3("Snap", &m_snap_step.x);
+			m_cur_step = m_snap_step.x;
+			break;
+		case ImGuizmo::ROTATE:
+			ImGui::InputFloat("Angle Snap", &m_snap_step.y);
+			m_cur_step = m_snap_step.y;
+			break;
+		case ImGuizmo::SCALE:
+			ImGui::InputFloat("Scale Snap", &m_snap_step.z);
+			m_cur_step = m_snap_step.z;
+			break;
 		}
-		ImGui::EndCombo();
 
-	}
-	bool chng{ false };
-	if (ImGui::DragFloat3("Position", &m_selected->m_transform.m_tr.m_pos.x, .1f)) chng = true;
-	if (ImGui::DragFloat3("Rotation", &m_selected->m_transform.m_tr.m_rot.x)) chng = true;
-	if (ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f)) chng = true;
-	if (chng) m_selected->m_transform.m_tr.upd();
-	if (ImGui::Button("Delete"))
-	{
-		for (size_t i = 0; i < scene->m_objects.size(); i++)
-			if (scene->m_objects[i] == m_selected)
+		const char* current = m_selected->m_model ? m_selected->m_model->m_name.c_str() : "Unknown";
+		if (ImGui::BeginCombo("Mesh", current))
+		{
+			for (size_t n = 0; n < renderer->m_models.size(); n++)
 			{
-				scene->m_objects.erase(scene->m_objects.begin() + i);
-				delete m_selected;
-				m_selected = nullptr;
-				ImGui::End();
-				return;
+				bool is_selected = (m_selected->m_model == renderer->m_models[n]);
+				if (ImGui::Selectable(renderer->m_models[n]->m_name.c_str(), is_selected))
+					m_selected->m_model = renderer->m_models[n];
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
 			}
+			ImGui::EndCombo();
+
+		}
+		
+		if (ImGui::Button("Delete"))
+		{
+			for (size_t i = 0; i < scene->m_objects.size(); i++)
+				if (scene->m_objects[i] == m_selected)
+				{
+					scene->m_objects.erase(scene->m_objects.begin() + i);
+					delete m_selected;
+					m_selected = nullptr;
+					ImGui::End();
+					return;
+				}
+		}
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+		mat4 model = m_selected->m_transform.m_tr.m_model;
+		ImGuizmo::BeginFrame();
+		ImGuizmo::Manipulate(
+			&renderer->scene_cam.m_view[0][0],
+			&renderer->scene_cam.m_proj[0][0],
+			m_operation, m_mode, &model[0][0],
+			NULL, m_snap ? &m_cur_step : NULL);
+
+		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+
+		ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
+		switch (m_operation)
+		{
+		case ImGuizmo::TRANSLATE:
+			m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
+			break;
+		case ImGuizmo::ROTATE:
+			m_selected->m_transform.m_tr.m_rot = vec3(matrixRotation[0], matrixRotation[1], matrixRotation[2]);
+			break;
+		case ImGuizmo::SCALE:
+			m_selected->m_transform.m_tr.m_scl = (matrixScale[0] + matrixScale[1] + matrixScale[2]) / 3.0f;
+			break;
+		}
+		ImGui::DragFloat3("Position", &m_selected->m_transform.m_tr.m_pos.x, .1f);
+		ImGui::DragFloat3("Rotation", &m_selected->m_transform.m_tr.m_rot.x);
+		ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f);
+		m_selected->m_transform.m_tr.upd();
 	}
-
-	ImGuiIO& io = ImGui::GetIO();
-	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-	mat4 model = m_selected->m_transform.get_model();
-	ImGuizmo::BeginFrame();
-	ImGuizmo::Manipulate(
-		&renderer->scene_cam.m_view[0][0],
-		&renderer->scene_cam.m_proj[0][0],
-		m_operation, m_mode, &model[0][0],
-		NULL, m_snap ? &m_cur_step : NULL);
-
-	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-
-	ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
-	switch (m_operation)
-	{
-	case ImGuizmo::TRANSLATE:
-		m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
-		break;
-	case ImGuizmo::ROTATE:
-		m_selected->m_transform.m_tr.m_rot = vec3(matrixRotation[0], matrixRotation[1], matrixRotation[2]);
-		break;
-	case ImGuizmo::SCALE:
-		m_selected->m_transform.m_tr.m_scl = (matrixScale[0] + matrixScale[1] + matrixScale[2]) / 3.0f;
-		break;
-	}
-	m_selected->m_transform.m_tr.upd();
 	ImGui::End();
+	if (opened == false)
+		m_selected = nullptr;
 }
 
 void c_editor::selector()

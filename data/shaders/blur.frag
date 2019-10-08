@@ -3,6 +3,7 @@ in vec3 vNormal;
 in vec3 vTangent;
 in vec3 vBitangent;
 in vec3 vPosition;
+in float vMotion;
 in vec2 vUv;
 
 layout (binding = 0) uniform sampler2D texture1;
@@ -130,7 +131,34 @@ void do_sobel_edge_detection()
 	float sobel_d = sqrt(sobel_d_h * sobel_d_h + sobel_d_v * sobel_d_v);
 	sobel_d = 1.0f-pow(1.0f-sobel_d,20);	
 
-	attr_1.x = clamp(sobel_n * coef_normal + sobel_d * coef_depth, 0.0, 1.0);
+	attr_1.r = clamp(sobel_n * coef_normal + sobel_d * coef_depth, 0.0, 1.0);
+}
+//-------------------------------------------------------------------
+
+
+
+//--Depth-of-Field---------------------------------------------------
+uniform float focal_distance;
+uniform float aperture;
+
+subroutine (Execution_Type)
+void do_depth_of_field()
+{
+	vec3 frag_pos=texture2D(texture1, vUv).rgb;
+	float z_dist = -frag_pos.z;
+	float diff = abs(z_dist - focal_distance)/aperture;
+
+	attr_1.g=diff;
+}
+//-------------------------------------------------------------------
+
+
+
+//--Motion-Blur------------------------------------------------------
+subroutine (Execution_Type)
+void do_motion_blur()
+{
+	attr_1.b = texture2D(texture1, vUv).a-1.0f;
 }
 //-------------------------------------------------------------------
 
@@ -163,8 +191,8 @@ subroutine (Execution_Type)
 void do_final_blur()
 {
 	vec3 sum = blur_3();
-	attr_1 = mix(texture2D(texture1, vUv).rgb, sum, texture2D(texture2, vUv).r);
-	attr_1 = texture2D(texture1, vUv).rgb + texture2D(texture3, vUv).rgb;
+	attr_1 = mix(texture2D(texture1, vUv).rgb, sum, clamp(length(texture2D(texture2, vUv).rgb),0,1));
+	attr_1 += texture2D(texture3, vUv).rgb;
 }
 //-------------------------------------------------------------------
 

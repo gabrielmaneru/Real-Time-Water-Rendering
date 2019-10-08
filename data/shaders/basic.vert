@@ -6,18 +6,27 @@ layout (location = 3) in vec3 attr_tan;
 layout (location = 4) in vec3 attr_bit;
 
 uniform mat4 M;
+uniform mat4 M_prev;
 uniform mat4 V;
+uniform mat4 V_prev;
 uniform mat4 P;
+uniform bool mb_camera_motion = false;
 
 out vec3 vNormal;
 out vec3 vTangent;
 out vec3 vBitangent;
 out vec3 vPosition;
+out float vMotion;
 out vec2 vUv;
 
 void main()
 {
 	mat4 MV = V*M;
+	mat4 MVP_prev;
+	if(mb_camera_motion)
+		MVP_prev=P*V_prev*M_prev;
+	else
+		MVP_prev=P*V*M_prev;
 	mat3 normalMtx = inverse(transpose(mat3(MV)));
 
 	vNormal = normalize(normalMtx * attr_norm);
@@ -27,4 +36,6 @@ void main()
 	vUv = attr_uvs;
 
 	gl_Position = P*MV* vec4(attr_pos, 1.0);
+	vec4 prev_pos = MVP_prev*vec4(attr_pos, 1.0);
+	vMotion = length(gl_Position.xy - prev_pos.xy);
 }

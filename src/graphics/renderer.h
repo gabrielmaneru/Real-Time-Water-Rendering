@@ -58,6 +58,13 @@ class c_renderer
 		float aa_coef_depth{ 0.25f };
 		int aa_sigma{ 5 };
 
+		bool do_depth_of_field{ false };
+		float df_plane_focus{ 45.f };
+		float df_aperture{ 45.f };
+
+		bool do_motion_blur{ true };
+		bool mb_camera_blur{ false };
+
 		bool do_bloom{ true };
 		float bl_coef{ 1.f };
 	}m_render_options;

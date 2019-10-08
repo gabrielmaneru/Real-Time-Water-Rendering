@@ -3,6 +3,7 @@ in vec3 vNormal;
 in vec3 vTangent;
 in vec3 vBitangent;
 in vec3 vPosition;
+in float vMotion;
 in vec2 vUv;
 
 layout (binding = 0) uniform sampler2D diff_txt;
@@ -64,7 +65,7 @@ void main()
 	attr_diffuse = vec4(diffuse, 1.0+specular);
 	attr_position = vec4(vPosition, 1.0+ka.r);
 	attr_normal = vec4(normal, 1.0+ns);
-	attr_selection = vec4(selection_color, 1.0);
+	attr_selection = vec4(selection_color, 1.0+vMotion);
     gl_FragDepth= (near * far) / (far - near + vPosition.z);
 	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
 }

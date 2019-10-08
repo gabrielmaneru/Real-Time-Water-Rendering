@@ -215,6 +215,7 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 	{
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
+		shader->set_uniform("M_prev", tr.get_model());
 		shader->set_uniform("selection_color", renderer->compute_selection_color());
 		renderer->get_model("sphere")->draw(shader);
 	}
@@ -317,10 +318,10 @@ void c_scene::drawGUI()
 
 			if (ImGui::TreeNode("Light"))
 			{
-				scene->m_lights[i]->m_ldata.drawGUI();
-
 				if (ImGui::DragFloat3("Position", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
 					scene->m_lights[i]->m_transform.m_tr.upd();
+				scene->m_lights[i]->m_ldata.drawGUI();
+
 				if (ImGui::Button("Delete"))
 				{
 					delete m_lights[i];
