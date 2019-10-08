@@ -22,6 +22,7 @@ class c_renderer
 	Shader_Program* light_shader;
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
+	Shader_Program* color_shader;
 
 	// Cameras
 	vectorial_camera scene_cam{};
@@ -32,6 +33,7 @@ class c_renderer
 
 	// Framebuffer
 	framebuffer g_buffer;
+	framebuffer selection_buffer;
 	framebuffer light_buffer;
 	framebuffer blur_control_buffer;
 	framebuffer bloom_buffer;
@@ -61,6 +63,7 @@ class c_renderer
 		bool do_depth_of_field{ false };
 		float df_plane_focus{ 45.f };
 		float df_aperture{ 45.f };
+		bool df_auto_focus{ false };
 
 		bool do_motion_blur{ true };
 		bool mb_camera_blur{ false };

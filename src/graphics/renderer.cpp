@@ -68,7 +68,8 @@ bool c_renderer::init()
 		g_buffer_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
 		light_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
-		texture_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
+		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
+		color_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/color.frag");
 	}
 	catch (const std::string & log) { std::cout << log; }
 
@@ -102,7 +103,9 @@ void c_renderer::update()
 		g_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
-			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
+			});
+		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
 			});
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
@@ -135,12 +138,35 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
-		/**/g_buffer_shader->set_uniform("mb_camera_motion", m_render_options.mb_camera_blur);
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
-		/**/update_max_draw_call_count();
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
+		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
+		///////////////////////////////////////////////////////////////////////////
+	}
+	if (color_shader->is_valid())
+	{
+		// Selection Pass	///////////////////////////////////////////////////////
+		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, selection_buffer.m_fbo));
+		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+		/**/GL_CALL(glViewport(0, 0, selection_buffer.m_width, selection_buffer.m_height));
+		/**/color_shader->use();
+		/**/scene_cam.set_uniforms(color_shader);
+		/**/color_shader->set_uniform("mb_camera_motion", m_render_options.mb_camera_blur);
+		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/update_max_draw_call_count();
+		/**/for (auto p_obj : scene->m_objects)
+		/**/{
+		/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
+		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
+		/**/	color_shader->set_uniform("color", compute_selection_color());
+		/**/	if (p_obj->m_model != nullptr)
+		/**/		p_obj->m_model->draw(color_shader);
+		/**/}
+		/**/if (m_render_options.render_lights)
+		/**/	scene->draw_debug_lights(color_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -409,6 +435,21 @@ void c_renderer::drawGUI()
 			ImGui::Checkbox("Do Depth of Field", &m_render_options.do_depth_of_field);
 			ImGui::DragFloat("Plane in Focus", &m_render_options.df_plane_focus, 1.0f, 0.0f, 999.f);
 			ImGui::DragFloat("Aperture", &m_render_options.df_aperture, 1.0f, 0.0f, 999.f);
+			ImGui::Checkbox("Auto Focus", &m_render_options.df_auto_focus);
+			if (m_render_options.df_auto_focus)
+			{
+				glFlush();
+				glFinish();
+				glPixelStorei(GL_PACK_ALIGNMENT, 1);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+				glBindFramebuffer(GL_FRAMEBUFFER, renderer->g_buffer.m_fbo);
+
+				vec4 data;
+				auto wpos = window_manager->m_window->get_mouse_pos();
+				glReadPixels(window_manager->get_width()/2, window_manager->get_height()/2, 1, 1, GL_RGBA, GL_FLOAT, &data.x);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				m_render_options.df_plane_focus = -data.z;
+			}
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Motion Blur"))
@@ -431,16 +472,16 @@ GLuint c_renderer::get_texture(e_texture ref)
 {
 	switch (ref)
 	{
-	case c_renderer::e_texture::SELECTION:
-		return g_buffer.m_color_texture[0];
+	case c_renderer::e_texture::POSITION:
+		return g_buffer.m_color_texture[0]; 
 	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[1];
-	case c_renderer::e_texture::POSITION:
-		return g_buffer.m_color_texture[2]; 
 	case c_renderer::e_texture::NORMAL:
-		return g_buffer.m_color_texture[3];
+		return g_buffer.m_color_texture[2];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
+	case c_renderer::e_texture::SELECTION:
+		return selection_buffer.m_color_texture[0];
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_CONTROL:

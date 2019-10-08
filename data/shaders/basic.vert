@@ -36,6 +36,8 @@ void main()
 	vUv = attr_uvs;
 
 	gl_Position = P*MV* vec4(attr_pos, 1.0);
-	vec4 prev_pos = MVP_prev*vec4(attr_pos, 1.0);
-	vMotion = length(gl_Position.xy - prev_pos.xy);
+	vec2 pos = gl_Position.xy;
+	vec4 Prev_Pos = MVP_prev*vec4(attr_pos, 1.0);
+	vec2 prev_pos = Prev_Pos.xy;
+	vMotion = length(pos-prev_pos);
 }

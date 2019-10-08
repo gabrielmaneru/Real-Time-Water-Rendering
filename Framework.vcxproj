@@ -527,6 +527,7 @@
   <ItemGroup>
     <None Include="data\scenes\scene.json" />
     <None Include="data\shaders\basic.vert" />
+    <None Include="data\shaders\color.frag" />
     <None Include="data\shaders\light.frag" />
     <None Include="data\shaders\g_buffer.frag" />
     <None Include="data\shaders\texture.frag" />

@@ -26,6 +26,8 @@ public:
 	float m_fov{ 90.0f };
 	float m_near{ .1f };
 	float m_far{ 500.0f };
+	float m_yaw = 0.0f;
+	float m_pitch = 0.0f;
 
 private:
 	void update_free_mode();
@@ -40,8 +42,4 @@ private:
 	float m_alpha = { 0.0f };
 	float m_beta = { 0.0f };
 	float m_dist = { 0.0f };
-
-	// Free Mode
-	float m_yaw = 0.0f;
-	float m_pitch = 0.0f;
 };

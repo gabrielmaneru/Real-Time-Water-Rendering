@@ -192,7 +192,7 @@ void c_editor::select_object()
 	glFinish();
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glBindFramebuffer(GL_FRAMEBUFFER, renderer->g_buffer.m_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderer->selection_buffer.m_fbo);
 
 	vec4 data;
 	auto wpos = window_manager->m_window->get_mouse_pos();

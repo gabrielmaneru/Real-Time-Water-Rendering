@@ -190,6 +190,8 @@ void c_scene::update()
 				pos.z -= 200.f;
 			l->m_transform.set_pos(pos);
 		}
+		renderer->scene_cam.m_eye.y += 0.1f*cos(10*m_lights[0]->time);
+		renderer->scene_cam.m_yaw += 0.1f*sin(10*m_lights[0]->time);
 	}
 }
 
@@ -215,7 +217,6 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 	{
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
-		shader->set_uniform("M_prev", tr.get_model());
 		shader->set_uniform("selection_color", renderer->compute_selection_color());
 		renderer->get_model("sphere")->draw(shader);
 	}
