@@ -63,6 +63,6 @@ void main()
 	attr_diffuse = vec4(diffuse, 1.0+specular);
 	attr_position = vec4(vPosition, 1.0+ka.r);
 	attr_normal = vec4(normal, 1.0+ns);
-    gl_FragDepth= (near * far) / (far - near + vPosition.z);
+    gl_FragDepth = (near * far) / (far - near + vPosition.z);
 	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
 }
