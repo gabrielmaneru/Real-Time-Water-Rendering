@@ -18,7 +18,7 @@ class c_scene
 	std::vector<light*> m_lights;
 	std::string m_scene_name{"scene"};
 	bool m_animated_scene{false};
-
+	int m_num_lights = 40;
 	bool load_scene(std::string);
 
 public:

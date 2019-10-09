@@ -48,7 +48,6 @@ void light::recompute_scale()
 	float b = m_ldata.m_att_max*m_ldata.m_att_factor.y;
 	float c = m_ldata.m_att_max*m_ldata.m_att_factor.x - 1;
 
-	const float& att_max = m_ldata.m_att_max;
 	float det = b*b-4*a*c;
 	float r1 = (-b + sqrtf(det)) / (2 * a);
 	m_transform.set_scl(r1);

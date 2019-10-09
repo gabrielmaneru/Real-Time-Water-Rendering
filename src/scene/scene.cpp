@@ -148,7 +148,6 @@ bool c_scene::init()
 
 	transform3d tr;
 	tr.set_scl(.5f);
-	int num_lights = 20;
 	{
 		light_data ld;
 		ld.m_att_factor = { 0.f,0.001f,0.001f };
@@ -156,7 +155,7 @@ bool c_scene::init()
 		m_lights.push_back(new light(tr, ld));
 	}
 	light_data ld;
-	for (int i = 0; i < num_lights; i++)
+	for (int i = 0; i < m_num_lights/2; i++)
 	{
 		tr.set_pos({ random_float(17.5f, 32.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
@@ -164,7 +163,7 @@ bool c_scene::init()
 		m_lights.push_back(new light(tr, ld));
 	}
 
-	for (int i = 0; i < num_lights; i++)
+	for (int i = 0; i < m_num_lights/2; i++)
 	{
 		tr.set_pos({ random_float(-27.5f, -12.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
@@ -190,8 +189,6 @@ void c_scene::update()
 				pos.z -= 200.f;
 			l->m_transform.set_pos(pos);
 		}
-		renderer->scene_cam.m_eye.y += 0.1f*cos(10*m_lights[0]->time);
-		renderer->scene_cam.m_yaw += 0.1f*sin(10*m_lights[0]->time);
 	}
 }
 
@@ -243,6 +240,25 @@ void c_scene::drawGUI()
 			init();
 		}
 		ImGui::Checkbox("Animate Scene", &m_animated_scene);
+		ImGui::InputInt("Num Lights", &m_num_lights);
+		if ((m_lights.size() > 1) && ImGui::TreeNode("Change ALL Light Values"))
+		{
+			vec3 m_diffuse = m_lights[1]->m_ldata.m_diffuse;
+			vec3 m_specular=m_lights[1]->m_ldata.m_specular;
+			vec3 m_att_factor = m_lights[1]->m_ldata.m_att_factor;
+			if (ImGui::InputFloat3("ALL Diffuse", &m_diffuse.x))
+				for (auto l : m_lights)
+					l->m_ldata.m_diffuse = m_diffuse;
+			if (ImGui::InputFloat3("ALL Specular", &m_specular.x))
+				for (auto l : m_lights)
+					l->m_ldata.m_specular = m_specular;
+			if (ImGui::InputFloat3("ALL AttFactor", &m_att_factor.x))
+				for (auto l : m_lights)
+					l->m_ldata.m_att_factor = m_att_factor;
+
+
+			ImGui::TreePop();
+		}
 		ImGui::TreePop();
 	}
 	if (ImGui::TreeNode("Objects List"))

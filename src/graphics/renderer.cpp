@@ -316,16 +316,23 @@ void c_renderer::update()
 		/**/GL_CALL(glClearColor(0.50f, 0.75f, 0.93f, 1.0f));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
-		/**/
 		/**/texture_shader->use();
 		/**/ortho_cam.set_uniforms(texture_shader);
-		/**/
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(m_txt_cur));
-		/**/
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
+		/**/if (m_render_options.df_auto_focus)
+		/**/{
+		/**/	color_shader->use();
+		/**/	ortho_cam.set_uniforms(color_shader);
+		/**/	color_shader->set_uniform("M", glm::scale(mat4(1.0f), vec3(0.005f)));
+		/**/	color_shader->set_uniform("color", vec3(0, 0, 0));
+		/**/	GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/	m_models[3]->m_meshes[0]->draw(color_shader);
+		/**/	GL_CALL(glDisable(GL_DEPTH_TEST));
+		/**/}
 		///////////////////////////////////////////////////////////////////////////
 	}
 }
