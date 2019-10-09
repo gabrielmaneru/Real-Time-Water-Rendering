@@ -64,6 +64,7 @@ void light::draw(Shader_Program * shader)
 	shader->set_uniform("ld", m_ldata.m_diffuse);
 	shader->set_uniform("ls", m_ldata.m_specular);
 	shader->set_uniform("att_factor", m_ldata.m_att_factor);
+	shader->set_uniform("rad", m_transform.m_tr.m_scl);
 
 	if (m_model)
 	{

@@ -14,8 +14,7 @@ Options:
 	-Possibility to Target an Object and rotate around
 	using spherical coordinates.
 
-	- Double-click Buffer textures to change the
-	current displayed image.
+	- Double-click Buffer textures to change the current displayed image.
 	-Selection is a debug image for object picking.
 	-The Blur factor is divided in rgb components for AA/DoF/MB
 	
@@ -31,6 +30,13 @@ Options:
 Scene:
 	-Reloading
 	-Animating Lights
-	-Add lights on the wall ()
+	-Add lights randomly (All the random lights are spawned randomly on the two center walls,
+	that might affect the number of lights/performance rate)
+	-Change values of ALL lights easily for debugging purposes
 	-Add/Remove Objects/Lights
 	-Edit Objects/Lights
+
+
+Known Issues:
+	-Couldn't play arround and found the correct values for the attenuation for you to not
+	see any of the light sphere's border
