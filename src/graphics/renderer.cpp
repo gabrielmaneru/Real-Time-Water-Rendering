@@ -62,6 +62,7 @@ bool c_renderer::init()
 	glCullFace(GL_FRONT);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glBlendEquation(GL_FUNC_ADD);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Load Programs
 	try {
@@ -131,7 +132,6 @@ void c_renderer::update()
 		// G_Buffer Pass	///////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glViewport(0, 0, g_buffer.m_width, g_buffer.m_height));
 		/**/
 		/**/g_buffer_shader->use();
@@ -150,7 +150,6 @@ void c_renderer::update()
 		// Selection Pass	///////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, selection_buffer.m_fbo));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glViewport(0, 0, selection_buffer.m_width, selection_buffer.m_height));
 		/**/color_shader->use();
 		/**/scene_cam.set_uniforms(color_shader);
@@ -315,6 +314,7 @@ void c_renderer::update()
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 		/**/GL_CALL(glClearColor(0.50f, 0.75f, 0.93f, 1.0f));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 		/**/GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
 		/**/texture_shader->use();
 		/**/ortho_cam.set_uniforms(texture_shader);
