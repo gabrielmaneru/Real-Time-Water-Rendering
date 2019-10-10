@@ -14,6 +14,7 @@ uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 ls;
 uniform vec3 att_factor;
+uniform float rad;
 uniform int window_width;
 uniform int window_height;
 subroutine void Render_Type();
@@ -60,7 +61,7 @@ void render_diffuse_specular()
 	vec3 half_v = normalize(view_v + light_v);
 
 	float d = length(l_pos - frag_pos);
-	
+	if(d>rad) discard;
 	float att = min(1/(att_factor.x + att_factor.y*d + att_factor.z*d*d) , 1.0);
 	
 	float id = att * max(dot(normal_v, light_v), 0.0);
