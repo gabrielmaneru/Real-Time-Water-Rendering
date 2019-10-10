@@ -4,6 +4,8 @@ layout (location = 1) in vec3 attr_norm;
 layout (location = 2) in vec2 attr_uvs;
 layout (location = 3) in vec3 attr_tan;
 layout (location = 4) in vec3 attr_bit;
+layout (location = 5) in vec4 attr_wbones;
+layout (location = 6) in ivec4 attr_bones;
 
 uniform mat4 M;
 uniform mat4 M_prev;
@@ -11,6 +13,10 @@ uniform mat4 V;
 uniform mat4 V_prev;
 uniform mat4 P;
 uniform bool mb_camera_motion = false;
+
+const int MAX_BONES=50;
+uniform mat4 bones[MAX_BONES];
+uniform int num_bones;
 
 out vec3 vNormal;
 out vec3 vTangent;
@@ -21,7 +27,12 @@ out vec2 vUv;
 
 void main()
 {
-	mat4 MV = V*M;
+	mat4 B = mat4(1.0);
+	if(attr_bones.x > -1) B = B * (bones[attr_bones.x] * attr_wbones.x);
+	if(attr_bones.y > -1) B = B * (bones[attr_bones.y] * attr_wbones.y);
+	if(attr_bones.z > -1) B = B * (bones[attr_bones.z] * attr_wbones.z);
+	if(attr_bones.w > -1) B = B * (bones[attr_bones.w] * attr_wbones.w);
+	mat4 MV = V*M*B;
 	mat4 MVP_prev;
 	if(mb_camera_motion)
 		MVP_prev=P*V_prev*M_prev;

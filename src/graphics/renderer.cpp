@@ -84,8 +84,8 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 		m_models.push_back(new Model("./data/meshes/phoenix.fbx"));
+		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	

@@ -23,8 +23,8 @@ struct VertexBuffer
 	std::vector<vec2> uv;
 	std::vector<vec3> tangent;
 	std::vector<vec3> bitangent;
-	std::vector<ivec4> bones;
 	std::vector<vec4> wbones;
+	std::vector<ivec4> bones;
 };
 
 struct Mesh
@@ -50,8 +50,11 @@ private:
 	GLuint m_uvbuffer{ 0 };
 	GLuint m_tangentbuffer{ 0 };
 	GLuint m_bitangentbuffer{ 0 };
+	GLuint m_wbonesbuffer{ 0 };
+	GLuint m_bonesbuffer{ 0 };
 	GLuint m_indexbuffer{ 0 };
 
 	std::vector<GLuint> m_indices;
 	std::vector<Texture> m_textures;
+	std::vector<mat4> m_bones;
 };

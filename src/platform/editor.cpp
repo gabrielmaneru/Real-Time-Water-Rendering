@@ -154,22 +154,24 @@ void c_editor::draw_selected_window()
 			NULL, m_snap ? &m_cur_step : NULL);
 
 		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-
 		ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
+		vec3 eu_angles{ matrixRotation[0], matrixRotation[1], matrixRotation[2] };
 		switch (m_operation)
 		{
 		case ImGuizmo::TRANSLATE:
 			m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
 			break;
 		case ImGuizmo::ROTATE:
-			m_selected->m_transform.m_tr.m_rot = vec3(matrixRotation[0], matrixRotation[1], matrixRotation[2]);
+			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
 			break;
 		case ImGuizmo::SCALE:
 			m_selected->m_transform.m_tr.m_scl = (matrixScale[0] + matrixScale[1] + matrixScale[2]) / 3.0f;
 			break;
 		}
 		ImGui::DragFloat3("Position", &m_selected->m_transform.m_tr.m_pos.x, .1f);
-		ImGui::DragFloat3("Rotation", &m_selected->m_transform.m_tr.m_rot.x);
+		
+		if (ImGui::DragFloat3("Rotation", &eu_angles.x))
+			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
 		ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f);
 		m_selected->m_transform.m_tr.upd();
 	}

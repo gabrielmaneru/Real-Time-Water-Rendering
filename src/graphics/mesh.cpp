@@ -26,6 +26,8 @@ Mesh::~Mesh()
 	glDeleteBuffers(1, &m_uvbuffer);
 	glDeleteBuffers(1, &m_tangentbuffer);
 	glDeleteBuffers(1, &m_bitangentbuffer);
+	glDeleteBuffers(1, &m_wbonesbuffer);
+	glDeleteBuffers(1, &m_bonesbuffer);
 	glDeleteVertexArrays(1, &m_VAO);
 }
 
@@ -39,6 +41,8 @@ void Mesh::load()
 	glGenBuffers(1, &m_uvbuffer);
 	glGenBuffers(1, &m_tangentbuffer);
 	glGenBuffers(1, &m_bitangentbuffer);
+	glGenBuffers(1, &m_wbonesbuffer);
+	glGenBuffers(1, &m_bonesbuffer);
 	glGenBuffers(1, &m_indexbuffer);
 
 	// Vertex positions
@@ -72,6 +76,18 @@ void Mesh::load()
 	GL_CALL(glEnableVertexAttribArray(4));
 	GL_CALL(glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0));
 
+	// WBones
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_wbonesbuffer));
+	GL_CALL(glBufferData(GL_ARRAY_BUFFER, m_vertices.wbones.size() * sizeof(vec4), m_vertices.wbones.data(), GL_STATIC_DRAW));
+	GL_CALL(glEnableVertexAttribArray(5));
+	GL_CALL(glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 0, (void*)0));
+
+	// Bones
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_bonesbuffer));
+	GL_CALL(glBufferData(GL_ARRAY_BUFFER, m_vertices.bones.size() * sizeof(ivec4), m_vertices.bones.data(), GL_STATIC_DRAW));
+	GL_CALL(glEnableVertexAttribArray(6));
+	GL_CALL(glVertexAttribPointer(6, 4, GL_INT, GL_FALSE, 0, (void*)0));
+
 	// Indices
 	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexbuffer));
 	GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint), m_indices.data(), GL_STATIC_DRAW));
@@ -82,6 +98,19 @@ void Mesh::load()
 
 void Mesh::draw(Shader_Program* shader)const
 {
+	// Bones
+	if (m_bones.size())
+	{
+		for (int i = 0; i < m_bones.size(); i++)
+		{
+			std::string call("bones[" + std::to_string(i) + "]");
+			shader->set_uniform(call.c_str(), m_bones[i]);
+		}
+		shader->set_uniform("num_bones", (int)m_bones.size());
+	}
+	else
+		shader->set_uniform("num_bones", 0);
+
 	// Draw mesh
 	GL_CALL(glBindVertexArray(m_VAO));
 	switch (m_primitive)

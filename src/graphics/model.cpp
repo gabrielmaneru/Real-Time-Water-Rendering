@@ -75,6 +75,7 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 {
 	VertexBuffer vertices{ mesh->mNumVertices };
 	std::vector<GLuint> indices;
+	std::vector<mat4> bones;
 
 	// Vertex
 	for (size_t i = 0; i < mesh->mNumVertices; i++)
@@ -133,12 +134,19 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 			{
 				if (vertices.bones[id][i] == -1)
 				{
-					vertices.bones[id][i] = (int)b;
+					//vertices.bones[id][i] = (int)b;
 					vertices.wbones[id][i] = weight;
 					break;
 				}
 			}
 		}
+		mat4 bone_mat = mat4(
+			bone->mOffsetMatrix.a1, bone->mOffsetMatrix.a2, bone->mOffsetMatrix.a3, bone->mOffsetMatrix.a4,
+			bone->mOffsetMatrix.b1, bone->mOffsetMatrix.b2, bone->mOffsetMatrix.b3, bone->mOffsetMatrix.b4,
+			bone->mOffsetMatrix.c1, bone->mOffsetMatrix.c2, bone->mOffsetMatrix.c3, bone->mOffsetMatrix.c4,
+			bone->mOffsetMatrix.d1, bone->mOffsetMatrix.d2, bone->mOffsetMatrix.d3, bone->mOffsetMatrix.d4
+		);
+		bones.push_back(bone_mat);
 	}
 
 	// Material

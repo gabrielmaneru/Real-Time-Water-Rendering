@@ -128,7 +128,7 @@ bool c_scene::load_scene(std::string path)
 					scl = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
 
 					transform3d tr;
-					tr.set_tr(pos, scl, rot);
+					tr.set_tr(pos, scl, normalize(quat(glm::radians(rot))));
 					
 					m_objects.push_back(new scene_object(mesh_name, tr));
 				}
@@ -290,7 +290,12 @@ void c_scene::drawGUI()
 				}
 				bool chng{ false };
 				if (ImGui::DragFloat3("Position", &m_objects[i]->m_transform.m_tr.m_pos.x, .1f))chng = true;
-				if (ImGui::DragFloat3("Rotation", &m_objects[i]->m_transform.m_tr.m_rot.x))chng = true;
+				vec3 eu_angles = degrees(glm::eulerAngles(m_objects[i]->m_transform.m_tr.m_rot));
+				if (ImGui::DragFloat3("Rotation", &eu_angles.x))
+				{
+					m_objects[i]->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
+					chng = true;
+				}
 				if (ImGui::DragFloat("Scale", &m_objects[i]->m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 				if (chng)m_objects[i]->m_transform.m_tr.upd();
 				if (ImGui::Button("Delete"))
