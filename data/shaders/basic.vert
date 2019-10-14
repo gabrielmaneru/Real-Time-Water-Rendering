@@ -27,11 +27,10 @@ out vec2 vUv;
 
 void main()
 {
-	mat4 B = mat4(1.0);
-	if(attr_bones.x > -1) B = B * (bones[attr_bones.x] * attr_wbones.x);
-	if(attr_bones.y > -1) B = B * (bones[attr_bones.y] * attr_wbones.y);
-	if(attr_bones.z > -1) B = B * (bones[attr_bones.z] * attr_wbones.z);
-	if(attr_bones.w > -1) B = B * (bones[attr_bones.w] * attr_wbones.w);
+	mat4 B = bones[attr_bones[0]] * attr_wbones[0];
+	B     += bones[attr_bones[1]] * attr_wbones[1];
+	B     += bones[attr_bones[2]] * attr_wbones[2];
+	B     += bones[attr_bones[3]] * attr_wbones[3];
 	mat4 MV = V*M*B;
 	mat4 MVP_prev;
 	if(mb_camera_motion)

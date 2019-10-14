@@ -22,6 +22,15 @@ const Material Model::m_def_material
 	{},
 	{}
 };
+mat4 to_glm(aiMatrix4x4 m)
+{
+	return mat4{
+		m.a1, m.a2, m.a3, m.a4,
+		m.b1, m.b2, m.b3, m.b4,
+		m.c1, m.c2, m.c3, m.c4,
+		m.d1, m.d2, m.d3, m.d4
+	};
+}
 
 Model::Model(const std::string & path)
 {
@@ -73,9 +82,11 @@ void Model::processNode(aiNode * node, const aiScene * scn)
 
 Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 {
-	VertexBuffer vertices{ mesh->mNumVertices };
-	std::vector<GLuint> indices;
-	std::vector<mat4> bones;
+	Mesh* m_mesh = new Mesh(mesh->mNumVertices);
+	auto quad = mesh->mPrimitiveTypes & aiPrimitiveType::aiPrimitiveType_POLYGON;
+	m_mesh->m_primitive = (quad > 0) ? Mesh::e_prim::quad : Mesh::e_prim::tri;
+
+	VertexBuffer& vertices = m_mesh->m_vertices;
 
 	// Vertex
 	for (size_t i = 0; i < mesh->mNumVertices; i++)
@@ -119,13 +130,20 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 	{
 		const aiFace& face = mesh->mFaces[i];
 		for (size_t j = 0; j < face.mNumIndices; j++)
-			indices.push_back(face.mIndices[j]);
+			m_mesh->m_indices.push_back(face.mIndices[j]);
 	}
 
 	// Bones
 	for (size_t b = 0; b < mesh->mNumBones; b++)
 	{
 		const aiBone* bone = mesh->mBones[b];
+		std::string bone_name = bone->mName.data;
+		m_mesh->m_bone_mapping[bone_name] = b;
+
+		BoneData bdata;
+		bdata.m_offset = to_glm(bone->mOffsetMatrix);
+		m_mesh->m_bones.push_back(bdata);
+
 		for (size_t w = 0; w < bone->mNumWeights; w++)
 		{
 			unsigned id = bone->mWeights[w].mVertexId;
@@ -134,30 +152,20 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 			{
 				if (vertices.bones[id][i] == -1)
 				{
-					//vertices.bones[id][i] = (int)b;
+					vertices.bones[id][i] = (int)b;
 					vertices.wbones[id][i] = weight;
 					break;
 				}
 			}
 		}
-		mat4 bone_mat = mat4(
-			bone->mOffsetMatrix.a1, bone->mOffsetMatrix.a2, bone->mOffsetMatrix.a3, bone->mOffsetMatrix.a4,
-			bone->mOffsetMatrix.b1, bone->mOffsetMatrix.b2, bone->mOffsetMatrix.b3, bone->mOffsetMatrix.b4,
-			bone->mOffsetMatrix.c1, bone->mOffsetMatrix.c2, bone->mOffsetMatrix.c3, bone->mOffsetMatrix.c4,
-			bone->mOffsetMatrix.d1, bone->mOffsetMatrix.d2, bone->mOffsetMatrix.d3, bone->mOffsetMatrix.d4
-		);
-		bones.push_back(bone_mat);
 	}
 
 	// Material
-	int material_idx{ default_material };
+	m_mesh->m_material_idx = { default_material };
 	if (scene->HasMaterials() && mesh->mMaterialIndex >= 0)
-		material_idx = processMaterial(scene->mMaterials[mesh->mMaterialIndex]);
-
-	auto quad = mesh->mPrimitiveTypes & aiPrimitiveType::aiPrimitiveType_POLYGON;
-
-	return new Mesh(vertices, indices, material_idx,
-		(quad > 0) ? Mesh::e_prim::quad : Mesh::e_prim::tri);
+		m_mesh->m_material_idx = processMaterial(scene->mMaterials[mesh->mMaterialIndex]);
+	m_mesh->load();
+	return m_mesh;
 }
 
 int Model::processMaterial(aiMaterial * material)
@@ -165,7 +173,7 @@ int Model::processMaterial(aiMaterial * material)
 	// Get Material Name
 	aiString name_;
 	material->Get(AI_MATKEY_NAME, name_);
-	std::string name{ name_.C_Str() };
+	std::string name{ name_.data };
 
 	// Check Default Material
 	if (name == "DefaultMaterial")
@@ -202,6 +210,8 @@ int Model::processMaterial(aiMaterial * material)
 	mat.m_diffuse_txt = loadMaterialTexture(material, aiTextureType_DIFFUSE);
 	mat.m_specular_txt = loadMaterialTexture(material, aiTextureType_SPECULAR);
 	mat.m_normal_txt = loadMaterialTexture(material, aiTextureType_HEIGHT);
+	if(mat.m_normal_txt.m_id == 0)
+		mat.m_normal_txt = loadMaterialTexture(material, aiTextureType_NORMALS);
 	return idx;
 }
 
@@ -216,6 +226,11 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	std::string name = str.C_Str();
 	size_t start = name.find_last_of('/') + 1;
 	if (start > name.size()) start = 0;
+	if(start == 0)
+	{
+		start = name.find_last_of('\\') + 1;
+		if (start > name.size()) start = 0;
+	}
 	name = "./data/textures/" + name.substr(start);
 
 	Texture texture;

@@ -10,14 +10,6 @@ Author: Gabriel Mañeru - gabriel.m
 #include "mesh.h"
 #include "gl_error.h"
 
-Mesh::Mesh(const VertexBuffer& vertices, const std::vector<GLuint>& indices, int material_idx, Mesh::e_prim primitive)
-	: m_vertices(vertices), m_primitive(primitive)
-{
-	m_indices = indices;
-	m_material_idx = material_idx;
-
-	load();
-}
 
 Mesh::~Mesh()
 {
@@ -104,7 +96,7 @@ void Mesh::draw(Shader_Program* shader)const
 		for (int i = 0; i < m_bones.size(); i++)
 		{
 			std::string call("bones[" + std::to_string(i) + "]");
-			shader->set_uniform(call.c_str(), m_bones[i]);
+			shader->set_uniform(call.c_str(), m_bones[i].m_offset);
 		}
 		shader->set_uniform("num_bones", (int)m_bones.size());
 	}
@@ -133,5 +125,5 @@ VertexBuffer::VertexBuffer(size_t s)
 	tangent.resize(s);
 	bitangent.resize(s);
 	bones.resize(s, ivec4(-1));
-	wbones.resize(s);
+	wbones.resize(s, vec4(0.0f));
 }

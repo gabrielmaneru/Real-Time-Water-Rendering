@@ -84,6 +84,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
+		m_models.push_back(new Model("./data/meshes/iona.fbx"));
 		m_models.push_back(new Model("./data/meshes/phoenix.fbx"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
@@ -142,6 +143,24 @@ void c_renderer::update()
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
+		/**/if (m_render_options.render_bones)
+			{
+				transform3d tr;
+				tr.set_scl(.5f);
+
+				for (auto p_li : scene->m_objects)
+					if (const Model* mod = p_li->m_model)
+					{
+						tr.set_pos(p_li->m_transform.get_pos());
+						tr.set_rot(p_li->m_transform.get_rot());
+						for (auto m : mod->m_meshes)
+							for (auto b : m->m_bones)
+							{
+								g_buffer_shader->set_uniform("M", tr.get_model()*b.m_offset);
+								renderer->get_model("sphere")->draw(g_buffer_shader);
+							}
+					}
+			}
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -429,6 +448,7 @@ void c_renderer::drawGUI()
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
+		ImGui::Checkbox("Render Bones", &m_render_options.render_bones);
 		if (ImGui::TreeNode("Antialiasing"))
 		{
 			ImGui::Checkbox("Do Antialiasing", &m_render_options.do_antialiasing);

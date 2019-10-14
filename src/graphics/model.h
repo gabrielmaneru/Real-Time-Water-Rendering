@@ -13,10 +13,12 @@ Author: Gabriel Mañeru - gabriel.m
 #include "texture.h"
 #include "material.h"
 #include <string>
+#include <map>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
 
 class Model
 {
