@@ -1,5 +1,9 @@
 #include "math_utils.h"
 #include <cstdlib>
+quat lerp(const quat& min, const quat& max, const float& coef)
+{
+	return glm::normalize(glm::slerp(min, max, static_cast<float>(coef)));
+}
 int round_float(const float & value)
 {
 	return static_cast<int>(value + 0.5f);

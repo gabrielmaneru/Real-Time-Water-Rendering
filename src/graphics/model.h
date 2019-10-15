@@ -19,26 +19,45 @@ Author: Gabriel Mañeru - gabriel.m
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-struct BoneData;
-struct Node
+struct bone_data;
+struct node
 {
-	Node(Node*);
-	~Node();
-	Node* Find(std::string);
-	void Update_Bones(mat4 current_transform = mat4(1.0));
+	node(node*);
+	~node();
+	node* Find(std::string);
 
-	Node* m_parent;
-	std::vector<Node*> m_children;
-	std::vector<BoneData*> m_bones;
+	node* m_parent;
+	std::vector<node*> m_children;
+	std::vector<bone_data*> m_bones;
 	std::string m_name;
 	mat4 m_transformation;
 };
 
-struct BoneData
+struct bone_data
 {
 	mat4 m_offset;
 	mutable mat4 m_final_transform;
 	std::string m_name;
+};
+
+using key_vec3 = std::pair<vec3, double>;
+using key_quat = std::pair<quat, double>;
+struct channel
+{
+	vec3 lerp_position(double time)const;
+	quat lerp_rotation(double time)const;
+	vec3 lerp_scaling(double time)const;
+
+	std::vector<key_vec3> m_key_position;
+	std::vector<key_quat> m_key_rotation;
+	std::vector<key_vec3> m_key_scaling;
+};
+
+struct animation
+{
+	double m_duration;
+	double m_tick_per_second;
+	std::map<std::string,channel> m_channels;
 };
 
 class Model
@@ -53,15 +72,24 @@ public:
 
 private:
 	void load_obj(const std::string&);
-	void processNode(aiNode* node, Node* parent, const aiScene* scene);
+	void processNode(aiNode* node_, node* parent, const aiScene* scene);
+	void processAnimations(const aiScene* scene);
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
 	int processMaterial(aiMaterial * material);
 	Texture loadMaterialTexture(aiMaterial *material, aiTextureType type);
+	void update(node* node_, mat4 parent)const;
 
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
 	static const Material m_def_material;
-	Node* m_hierarchy;
-	std::vector<BoneData*> m_bones;
+	node* m_hierarchy;
+	std::vector<bone_data*> m_bones;
 	std::map<std::string, int> m_bone_mapping;
+	std::vector<animation*> m_animations;
+	mutable struct animator
+	{
+		bool m_active{true};
+		double m_time{ 0.0 };
+		int m_current_animation{ 0 };
+	} m_animator;
 };

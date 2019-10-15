@@ -1,9 +1,14 @@
 #pragma once
+#include <glm/glm.h>
 template <typename T>
 T lerp(const T& min, const T& max, const float& coef)
 {
-	return min + (max - min) * coef;
+	T s = max - min;
+	s *= coef;
+	return static_cast<T>(min + s);
 }
+quat lerp(const quat& min, const quat& max, const float& coef);
+
 template <typename T>
 float coef(const T & min, const T & max, const T & value)
 {

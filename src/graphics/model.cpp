@@ -10,6 +10,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "model.h"
 #include "gl_error.h"
 #include <platform/editor.h>
+#include <utils/math_utils.h>
 
 const Material Model::m_def_material
 {
@@ -42,15 +43,25 @@ Model::~Model()
 	for (auto pB : m_bones)
 		delete pB;
 	m_meshes.clear();
+
+	for (auto pA : m_animations)
+		delete pA;
+	m_animations.clear();
 }
 
 void Model::draw(Shader_Program * shader, bool use_mat)const
 {
-	m_hierarchy->Update_Bones();
-	for (size_t i = 0; i < m_bones.size(); i++)
+	if (m_bones.size())
 	{
-		std::string call("bones[" + std::to_string(i) + "]");
-		shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform * m_bones[i]->m_offset);
+		if (m_animator.m_active)
+			m_animator.m_time += 1/200.0;
+
+		update(m_hierarchy, mat4(1.0f));
+		for (size_t i = 0; i < m_bones.size(); i++)
+		{
+			std::string call("bones[" + std::to_string(i) + "]");
+			shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform);
+		}
 	}
 
 	for (auto& mesh : m_meshes)
@@ -78,28 +89,71 @@ void Model::load_obj(const std::string & path)
 	if (!scn->mRootNode)
 		throw std::string("Mesh empty: ") + path;
 
-	m_hierarchy = new Node(nullptr);
+	m_hierarchy = new node(nullptr);
 	processNode(scn->mRootNode, m_hierarchy, scn);
 
 	for (auto b : m_bones)
 		m_hierarchy->Find(b->m_name)->m_bones.push_back(b);
+	if (scn->HasAnimations())
+		processAnimations(scn);
 }
 
-void Model::processNode(aiNode * node, Node * parent, const aiScene * scene)
+void Model::processNode(aiNode * node_, node * parent, const aiScene * scene)
 {
-	parent->m_name = { node->mName.data };
-	parent->m_transformation = to_glm(node->mTransformation);
+	parent->m_name = { node_->mName.data };
+	parent->m_transformation = to_glm(node_->mTransformation);
 
-	for (size_t i = 0; i < node->mNumMeshes; i++) {
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+	for (size_t i = 0; i < node_->mNumMeshes; i++) {
+		aiMesh* mesh = scene->mMeshes[node_->mMeshes[i]];
 		m_meshes.push_back(processMesh(mesh, scene));
 	}
 
-	for (size_t i = 0; i < node->mNumChildren; i++)
+	for (size_t i = 0; i < node_->mNumChildren; i++)
 	{
-		auto child = new Node(parent);
+		auto child = new node(parent);
 		parent->m_children.push_back(child);
-		processNode(node->mChildren[i], child, scene);
+		processNode(node_->mChildren[i], child, scene);
+	}
+}
+
+void Model::processAnimations(const aiScene * scene)
+{
+	for (size_t i = 0; i < scene->mNumAnimations; i++)
+	{
+		aiAnimation* ai_anim = scene->mAnimations[i];
+		animation* anim = new animation;
+		
+		anim->m_duration = ai_anim->mDuration;
+		anim->m_tick_per_second = ai_anim->mTicksPerSecond;
+
+		for (size_t i = 0; i < ai_anim->mNumChannels; i++)
+		{
+			aiNodeAnim* ai_channel = ai_anim->mChannels[i];
+			std::string name = ai_channel->mNodeName.data;
+			channel& c = anim->m_channels[name];
+
+			c.m_key_position.resize(ai_channel->mNumPositionKeys);
+			for (size_t i = 0; i < ai_channel->mNumPositionKeys; i++)
+			{
+				const aiVectorKey& key = ai_channel->mPositionKeys[i];
+				c.m_key_position[i] = { glm::make_vec3(&key.mValue.x), key.mTime };
+			}
+
+			c.m_key_rotation.resize(ai_channel->mNumRotationKeys);
+			for (size_t i = 0; i < ai_channel->mNumRotationKeys; i++)
+			{
+				const aiQuatKey& key = ai_channel->mRotationKeys[i];
+				c.m_key_rotation[i] = { quat(key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z), key.mTime };
+			}
+
+			c.m_key_scaling.resize(ai_channel->mNumScalingKeys);
+			for (size_t i = 0; i < ai_channel->mNumScalingKeys; i++)
+			{
+				const aiVectorKey& key = ai_channel->mScalingKeys[i];
+				c.m_key_scaling[i] = { glm::make_vec3(&key.mValue.x), key.mTime };
+			}
+		}
+		m_animations.push_back(anim);
 	}
 }
 
@@ -168,7 +222,7 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 			bone_id = (int)m_bones.size();
 			m_bone_mapping[bone_name] = bone_id;
 
-			BoneData* bdata = new BoneData{};
+			bone_data* bdata = new bone_data{};
 			bdata->m_offset = to_glm(bone->mOffsetMatrix);
 			bdata->m_name = bone_name;
 			m_bones.push_back(bdata);
@@ -272,36 +326,96 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	return texture;
 }
 
-Node::Node(Node * parent)
+void Model::update(node * node_, mat4 parent)const
+{
+	mat4 node_transformation = node_->m_transformation;
+	if (m_animator.m_current_animation != -1)
+	{
+		animation* anim = m_animations[m_animator.m_current_animation];
+		if (m_animator.m_time >= anim->m_duration)
+			m_animator.m_time -= anim->m_duration;
+
+		auto it = anim->m_channels.find(node_->m_name);
+		if (it != anim->m_channels.end())
+		{
+			const channel& c = it->second;
+			vec3 scaling = c.lerp_scaling(m_animator.m_time);
+			quat rotation = c.lerp_rotation(m_animator.m_time);
+			vec3 position = c.lerp_position(m_animator.m_time);
+
+			mat4 scl_mat = glm::scale(mat4(1.0f), vec3{ scaling });
+			mat4 rot_mat = glm::mat4_cast(rotation);
+			mat4 pos_mat = glm::translate(mat4(1.0f), position);
+			node_transformation = pos_mat * rot_mat * scl_mat;
+		}
+	}
+
+	node_transformation = parent * node_transformation;
+
+	for (auto b : node_->m_bones)
+		b->m_final_transform = node_transformation * b->m_offset;
+
+	for (auto c : node_->m_children)
+		update(c, node_transformation);
+}
+
+node::node(node * parent)
 	: m_parent(parent) {}
 
-Node::~Node()
+node::~node()
 {
 	for (auto c : m_children)
 		delete c;
 	m_children.clear();
 }
 
-Node * Node::Find(std::string name)
+node * node::Find(std::string name)
 {
 	if (m_name == name)
 		return this;
 
 	for (auto c : m_children)
 	{
-		Node* res = c->Find(name);
+		node* res = c->Find(name);
 		if (res != nullptr)
 			return res;
 	}
 	return nullptr;
 }
 
-void Node::Update_Bones(mat4 current_transform)
+vec3 channel::lerp_position(double time)const
 {
-	mat4 new_current = current_transform * m_transformation;
-	for (auto b : m_bones)
-		b->m_final_transform = new_current;
+	assert(m_key_position.size() > 0);
+	if (m_key_position.size() == 1)
+		return m_key_position[0].first;
 
-	for (auto c : m_children)
-		c->Update_Bones(new_current);
+	for (size_t i = 0; i < m_key_position.size() - 1; i++)
+		if (time < m_key_position[i + 1].second)
+			return map(time, m_key_position[i].second, m_key_position[i + 1].second,
+				m_key_position[i].first, m_key_position[i + 1].first);
+}
+
+quat channel::lerp_rotation(double time)const
+{
+	assert(m_key_rotation.size() > 0);
+	if (m_key_rotation.size() == 1)
+		return m_key_rotation[0].first;
+
+	for (size_t i = 0; i < m_key_rotation.size() - 1; i++)
+		if (time < m_key_rotation[i + 1].second)
+			return map(time, m_key_rotation[i].second, m_key_rotation[i + 1].second,
+				m_key_rotation[i].first, m_key_rotation[i + 1].first);
+
+}
+
+vec3 channel::lerp_scaling(double time)const
+{
+	assert(m_key_scaling.size() > 0);
+	if (m_key_scaling.size() == 1)
+		return m_key_scaling[0].first;
+
+	for (size_t i = 0; i < m_key_scaling.size() - 1; i++)
+		if (time < m_key_scaling[i + 1].second)
+			return map(time, m_key_scaling[i].second, m_key_scaling[i + 1].second,
+				m_key_scaling[i].first, m_key_scaling[i + 1].first);
 }
