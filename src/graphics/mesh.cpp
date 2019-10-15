@@ -78,7 +78,7 @@ void Mesh::load()
 	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_bonesbuffer));
 	GL_CALL(glBufferData(GL_ARRAY_BUFFER, m_vertices.bones.size() * sizeof(ivec4), m_vertices.bones.data(), GL_STATIC_DRAW));
 	GL_CALL(glEnableVertexAttribArray(6));
-	GL_CALL(glVertexAttribPointer(6, 4, GL_INT, GL_FALSE, 0, (void*)0));
+	GL_CALL(glVertexAttribIPointer(6, 4, GL_INT, 0, (void*)0));
 
 	// Indices
 	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexbuffer));

@@ -84,8 +84,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		m_models.push_back(new Model("./data/meshes/iona.fbx"));
-		m_models.push_back(new Model("./data/meshes/phoenix.fbx"));
+		m_models.push_back(new Model("./data/meshes/hiphop_dance.dae"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -145,21 +144,6 @@ void c_renderer::update()
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_bones)
 			{
-				/*transform3d tr;
-				tr.set_scl(.5f);
-
-				for (auto p_li : scene->m_objects)
-					if (const Model* mod = p_li->m_model)
-					{
-						tr.set_pos(p_li->m_transform.get_pos());
-						tr.set_rot(p_li->m_transform.get_rot());
-						for (auto m : mod->m_meshes)
-							for (auto b : m->m_bones)
-							{
-								g_buffer_shader->set_uniform("M", tr.get_model()*b.m_offset);
-								renderer->get_model("sphere")->draw(g_buffer_shader);
-							}
-					}*/
 			}
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
@@ -172,6 +156,7 @@ void c_renderer::update()
 		/**/GL_CALL(glViewport(0, 0, selection_buffer.m_width, selection_buffer.m_height));
 		/**/color_shader->use();
 		/**/scene_cam.set_uniforms(color_shader);
+		/**/scene_cam.set_prev_uniforms(color_shader);
 		/**/color_shader->set_uniform("mb_camera_motion", m_render_options.mb_camera_blur);
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/update_max_draw_call_count();
@@ -181,7 +166,7 @@ void c_renderer::update()
 		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
 		/**/	color_shader->set_uniform("color", compute_selection_color());
 		/**/	if (p_obj->m_model != nullptr)
-		/**/		p_obj->m_model->draw(color_shader);
+		/**/		p_obj->m_model->draw(color_shader, false);
 		/**/}
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(color_shader);

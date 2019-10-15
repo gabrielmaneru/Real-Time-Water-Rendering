@@ -30,9 +30,9 @@ void main()
 	if(attr_bones[0] > -1)
 	{
 		B = bones[attr_bones[0]] * attr_wbones[0];
-		B+= bones[attr_bones[1]] * attr_wbones[1];
-		B+= bones[attr_bones[2]] * attr_wbones[2];
-		B+= bones[attr_bones[3]] * attr_wbones[3];
+		if(attr_bones[1] > -1) B+= bones[attr_bones[1]] * attr_wbones[1];
+		if(attr_bones[2] > -1) B+= bones[attr_bones[2]] * attr_wbones[2];
+		if(attr_bones[3] > -1) B+= bones[attr_bones[3]] * attr_wbones[3];
 	}
 	
 	mat4 MV = V*M*B;

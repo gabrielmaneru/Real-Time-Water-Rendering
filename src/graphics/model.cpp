@@ -24,12 +24,7 @@ const Material Model::m_def_material
 };
 mat4 to_glm(aiMatrix4x4 m)
 {
-	return mat4{
-		m.a1, m.a2, m.a3, m.a4,
-		m.b1, m.b2, m.b3, m.b4,
-		m.c1, m.c2, m.c3, m.c4,
-		m.d1, m.d2, m.d3, m.d4
-	};
+	return glm::transpose(glm::make_mat4(&m.a1));
 }
 
 Model::Model(const std::string & path)
@@ -38,13 +33,24 @@ Model::Model(const std::string & path)
 	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }
 
+Model::~Model()
+{
+	for (auto pM : m_meshes)
+		delete pM;
+	m_meshes.clear();
+
+	for (auto pB : m_bones)
+		delete pB;
+	m_meshes.clear();
+}
+
 void Model::draw(Shader_Program * shader, bool use_mat)const
 {
-	for (size_t i = 0; i < m_bones.size();i++)
+	m_hierarchy->Update_Bones();
+	for (size_t i = 0; i < m_bones.size(); i++)
 	{
-		m_bones[i].m_final_transform = m_bones[i].m_node->GetMatrix() * m_bones[i].m_offset;
 		std::string call("bones[" + std::to_string(i) + "]");
-		shader->set_uniform(call.c_str(), m_bones[i].m_final_transform);
+		shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform * m_bones[i]->m_offset);
 	}
 
 	for (auto& mesh : m_meshes)
@@ -75,15 +81,15 @@ void Model::load_obj(const std::string & path)
 	m_hierarchy = new Node(nullptr);
 	processNode(scn->mRootNode, m_hierarchy, scn);
 
-	for (auto& b : m_bones)
-		b.m_node = m_hierarchy->Find(b.m_name);
+	for (auto b : m_bones)
+		m_hierarchy->Find(b->m_name)->m_bones.push_back(b);
 }
 
 void Model::processNode(aiNode * node, Node * parent, const aiScene * scene)
 {
 	parent->m_name = { node->mName.data };
 	parent->m_transformation = to_glm(node->mTransformation);
-	std::string name{ node->mName.data };
+
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		m_meshes.push_back(processMesh(mesh, scene));
@@ -162,9 +168,9 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 			bone_id = (int)m_bones.size();
 			m_bone_mapping[bone_name] = bone_id;
 
-			BoneData bdata;
-			bdata.m_offset = to_glm(bone->mOffsetMatrix);
-			bdata.m_name = bone_name;
+			BoneData* bdata = new BoneData{};
+			bdata->m_offset = to_glm(bone->mOffsetMatrix);
+			bdata->m_name = bone_name;
 			m_bones.push_back(bdata);
 		}
 		else
@@ -290,10 +296,12 @@ Node * Node::Find(std::string name)
 	return nullptr;
 }
 
-mat4 Node::GetMatrix() const
+void Node::Update_Bones(mat4 current_transform)
 {
-	if (m_parent)
-		return m_parent->GetMatrix()*m_transformation;
-	else
-		return m_transformation;
+	mat4 new_current = current_transform * m_transformation;
+	for (auto b : m_bones)
+		b->m_final_transform = new_current;
+
+	for (auto c : m_children)
+		c->Update_Bones(new_current);
 }

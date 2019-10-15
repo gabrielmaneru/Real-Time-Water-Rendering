@@ -15,7 +15,6 @@ void scene_object::draw(Shader_Program * shader)
 {
 	m_transform.m_tr.save_prev();
 	shader->set_uniform("M", m_transform.m_tr.get_model());
-	shader->set_uniform("M_prev", m_transform.m_tr.get_prev_model());
 	if(m_model != nullptr)
 		m_model->draw(shader);
 }
