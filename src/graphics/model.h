@@ -19,6 +19,17 @@ Author: Gabriel Mañeru - gabriel.m
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+struct Node
+{
+	Node(Node*);
+	~Node();
+
+	Node* m_parent;
+	std::vector<Node*> m_children;
+
+	std::string m_name;
+	mat4 m_transformation;
+};
 
 class Model
 {
@@ -31,7 +42,7 @@ public:
 
 private:
 	void load_obj(const std::string&);
-	void processNode(aiNode* node, const aiScene* scene);
+	void processNode(aiNode* node, Node* parent, const aiScene* scene);
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
 	int processMaterial(aiMaterial * material);
 	Texture loadMaterialTexture(aiMaterial *material, aiTextureType type);
@@ -39,4 +50,5 @@ private:
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
 	static const Material m_def_material;
+	Node* m_hierarchy;
 };

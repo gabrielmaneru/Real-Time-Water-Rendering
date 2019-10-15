@@ -56,7 +56,7 @@ void Model::draw(Shader_Program * shader, bool use_mat)const
 void Model::load_obj(const std::string & path)
 {
 	Assimp::Importer importer{};
-	const aiScene* scn = importer.ReadFile(path, aiProcessPreset_TargetRealtime_Quality|aiProcess_FlipUVs);
+	const aiScene* scn = importer.ReadFile(path, aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs);
 
 	if (!scn)
 		throw std::string("Mesh not found: ") + path;
@@ -65,18 +65,25 @@ void Model::load_obj(const std::string & path)
 	if (!scn->mRootNode)
 		throw std::string("Mesh empty: ") + path;
 
-	processNode(scn->mRootNode, scn);
+	m_hierarchy = new Node(nullptr);
+	processNode(scn->mRootNode, m_hierarchy, scn);
 }
 
-void Model::processNode(aiNode * node, const aiScene * scn)
+void Model::processNode(aiNode * node, Node * parent, const aiScene * scene)
 {
+	parent->m_name = { node->mName.data };
+	parent->m_transformation = to_glm(node->mTransformation);
+	std::string name{ node->mName.data };
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
-		aiMesh* mesh = scn->mMeshes[node->mMeshes[i]];
-		m_meshes.push_back(processMesh(mesh, scn));
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		m_meshes.push_back(processMesh(mesh, scene));
 	}
 
-	for (size_t i = 0; i < node->mNumChildren; i++) {
-		processNode(node->mChildren[i], scn);
+	for (size_t i = 0; i < node->mNumChildren; i++)
+	{
+		auto child = new Node(parent);
+		parent->m_children.push_back(child);
+		processNode(node->mChildren[i], child, scene);
 	}
 }
 
@@ -238,4 +245,14 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	texture.m_type = static_cast<Texture::e_texture_type>(type);
 	texture.m_path = str.C_Str();
 	return texture;
+}
+
+Node::Node(Node * parent)
+	: m_parent(parent) {}
+
+Node::~Node()
+{
+	for (auto c : m_children)
+		delete c;
+	m_children.clear();
 }
