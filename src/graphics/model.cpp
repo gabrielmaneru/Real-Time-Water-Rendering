@@ -40,6 +40,13 @@ Model::Model(const std::string & path)
 
 void Model::draw(Shader_Program * shader, bool use_mat)const
 {
+	for (size_t i = 0; i < m_bones.size();i++)
+	{
+		m_bones[i].m_final_transform = m_bones[i].m_node->GetMatrix() * m_bones[i].m_offset;
+		std::string call("bones[" + std::to_string(i) + "]");
+		shader->set_uniform(call.c_str(), m_bones[i].m_final_transform);
+	}
+
 	for (auto& mesh : m_meshes)
 	{
 		if (use_mat)
@@ -67,6 +74,9 @@ void Model::load_obj(const std::string & path)
 
 	m_hierarchy = new Node(nullptr);
 	processNode(scn->mRootNode, m_hierarchy, scn);
+
+	for (auto& b : m_bones)
+		b.m_node = m_hierarchy->Find(b.m_name);
 }
 
 void Model::processNode(aiNode * node, Node * parent, const aiScene * scene)
@@ -145,22 +155,31 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 	{
 		const aiBone* bone = mesh->mBones[b];
 		std::string bone_name = bone->mName.data;
-		m_mesh->m_bone_mapping[bone_name] = b;
+		int bone_id;
+		auto it = m_bone_mapping.find(bone_name);
+		if (it == m_bone_mapping.end())
+		{
+			bone_id = (int)m_bones.size();
+			m_bone_mapping[bone_name] = bone_id;
 
-		BoneData bdata;
-		bdata.m_offset = to_glm(bone->mOffsetMatrix);
-		m_mesh->m_bones.push_back(bdata);
-
+			BoneData bdata;
+			bdata.m_offset = to_glm(bone->mOffsetMatrix);
+			bdata.m_name = bone_name;
+			m_bones.push_back(bdata);
+		}
+		else
+			bone_id = m_bone_mapping[bone_name];
+		
 		for (size_t w = 0; w < bone->mNumWeights; w++)
 		{
-			unsigned id = bone->mWeights[w].mVertexId;
+			unsigned vtx_id = bone->mWeights[w].mVertexId;
 			float weight = bone->mWeights[w].mWeight;
 			for (vec4::length_type i = 0; i < 4u; i++)
 			{
-				if (vertices.bones[id][i] == -1)
+				if (vertices.bones[vtx_id][i] == -1)
 				{
-					vertices.bones[id][i] = (int)b;
-					vertices.wbones[id][i] = weight;
+					vertices.bones[vtx_id][i] = bone_id;
+					vertices.wbones[vtx_id][i] = weight;
 					break;
 				}
 			}
@@ -255,4 +274,26 @@ Node::~Node()
 	for (auto c : m_children)
 		delete c;
 	m_children.clear();
+}
+
+Node * Node::Find(std::string name)
+{
+	if (m_name == name)
+		return this;
+
+	for (auto c : m_children)
+	{
+		Node* res = c->Find(name);
+		if (res != nullptr)
+			return res;
+	}
+	return nullptr;
+}
+
+mat4 Node::GetMatrix() const
+{
+	if (m_parent)
+		return m_parent->GetMatrix()*m_transformation;
+	else
+		return m_transformation;
 }

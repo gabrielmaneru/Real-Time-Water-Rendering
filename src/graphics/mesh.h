@@ -27,12 +27,6 @@ struct VertexBuffer
 	std::vector<ivec4> bones;
 };
 
-struct BoneData
-{
-	mat4 m_offset;
-	mat4 m_final_transform;
-};
-
 struct Mesh
 {
 	Mesh(size_t s) :m_vertices(s) {}
@@ -55,6 +49,4 @@ struct Mesh
 	std::vector<GLuint> m_indices;
 	std::vector<Texture> m_textures;
 	enum e_prim { tri, quad } m_primitive;
-	std::vector<BoneData> m_bones;
-	std::map<std::string, size_t> m_bone_mapping;
 };

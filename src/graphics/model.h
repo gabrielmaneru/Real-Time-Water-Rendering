@@ -12,6 +12,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "mesh.h"
 #include "texture.h"
 #include "material.h"
+#include "shader_program.h"
 #include <string>
 #include <map>
 
@@ -23,12 +24,21 @@ struct Node
 {
 	Node(Node*);
 	~Node();
+	Node* Find(std::string);
+	mat4 GetMatrix()const;
 
 	Node* m_parent;
 	std::vector<Node*> m_children;
-
 	std::string m_name;
 	mat4 m_transformation;
+};
+
+struct BoneData
+{
+	mat4 m_offset;
+	mutable mat4 m_final_transform;
+	std::string m_name;
+	Node* m_node;
 };
 
 class Model
@@ -51,4 +61,6 @@ private:
 	std::vector<Material> m_materials;
 	static const Material m_def_material;
 	Node* m_hierarchy;
+	std::vector<BoneData> m_bones;
+	std::map<std::string, int> m_bone_mapping;
 };

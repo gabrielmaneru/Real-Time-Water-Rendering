@@ -14,9 +14,8 @@ uniform mat4 V_prev;
 uniform mat4 P;
 uniform bool mb_camera_motion = false;
 
-const int MAX_BONES=50;
+const int MAX_BONES=100;
 uniform mat4 bones[MAX_BONES];
-uniform int num_bones;
 
 out vec3 vNormal;
 out vec3 vTangent;
@@ -39,9 +38,9 @@ void main()
 	mat4 MV = V*M*B;
 	mat4 MVP_prev;
 	if(mb_camera_motion)
-		MVP_prev=P*V_prev*M_prev;
+		MVP_prev=P*V_prev*M_prev*B;
 	else
-		MVP_prev=P*V*M_prev;
+		MVP_prev=P*V*M_prev*B;
 	mat3 normalMtx = inverse(transpose(mat3(MV)));
 
 	vNormal = normalize(normalMtx * attr_norm);

@@ -145,7 +145,7 @@ void c_renderer::update()
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_bones)
 			{
-				transform3d tr;
+				/*transform3d tr;
 				tr.set_scl(.5f);
 
 				for (auto p_li : scene->m_objects)
@@ -159,7 +159,7 @@ void c_renderer::update()
 								g_buffer_shader->set_uniform("M", tr.get_model()*b.m_offset);
 								renderer->get_model("sphere")->draw(g_buffer_shader);
 							}
-					}
+					}*/
 			}
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////

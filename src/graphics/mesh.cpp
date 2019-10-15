@@ -90,19 +90,6 @@ void Mesh::load()
 
 void Mesh::draw(Shader_Program* shader)const
 {
-	// Bones
-	if (m_bones.size())
-	{
-		for (int i = 0; i < m_bones.size(); i++)
-		{
-			std::string call("bones[" + std::to_string(i) + "]");
-			shader->set_uniform(call.c_str(), m_bones[i].m_offset);
-		}
-		shader->set_uniform("num_bones", (int)m_bones.size());
-	}
-	else
-		shader->set_uniform("num_bones", 0);
-
 	// Draw mesh
 	GL_CALL(glBindVertexArray(m_VAO));
 	switch (m_primitive)
