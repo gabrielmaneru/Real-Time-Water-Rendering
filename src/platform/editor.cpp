@@ -131,19 +131,6 @@ void c_editor::draw_selected_window()
 
 		}
 		
-		if (ImGui::Button("Delete"))
-		{
-			for (size_t i = 0; i < scene->m_objects.size(); i++)
-				if (scene->m_objects[i] == m_selected)
-				{
-					scene->m_objects.erase(scene->m_objects.begin() + i);
-					delete m_selected;
-					m_selected = nullptr;
-					ImGui::End();
-					return;
-				}
-		}
-
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 		mat4 model = m_selected->m_transform.m_tr.m_model;
@@ -175,6 +162,17 @@ void c_editor::draw_selected_window()
 			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
 		ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f);
 		m_selected->m_transform.m_tr.upd();
+		m_selected->m_animator->draw_GUI();
+		if (ImGui::Button("Delete"))
+		{
+			for (size_t i = 0; i < scene->m_objects.size(); i++)
+				if (scene->m_objects[i] == m_selected)
+				{
+					scene->m_objects.erase(scene->m_objects.begin() + i);
+					delete m_selected;
+					m_selected = nullptr;
+				}
+		}
 	}
 	ImGui::End();
 	if (opened == false)

@@ -20,6 +20,8 @@ bool session::init()
 	if (!editor->init()) return false;
 	if (!renderer->init()) return false;
 	if (!scene->init()) return false;
+	scene->shutdown();
+	if (!scene->init()) return false;
 	return true;
 }
 

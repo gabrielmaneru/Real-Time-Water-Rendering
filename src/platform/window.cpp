@@ -19,7 +19,7 @@ bool window::mouse_but_left_triggered{ false };
 bool window::mouse_but_right_pressed{ false };
 bool window::mouse_but_right_triggered{ false };
 float window::mouse_offset[2]{ 0.0f };
-double window::frameTime{ 0.0 };
+double window::frameTime{ 60.0 };
 
 static void glfw_key_callback(GLFWwindow*, int key, int, int action, int)
 {

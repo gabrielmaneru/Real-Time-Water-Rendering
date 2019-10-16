@@ -47,7 +47,7 @@ struct channel
 {
 	vec3 lerp_position(double time)const;
 	quat lerp_rotation(double time)const;
-	vec3 lerp_scaling(double time)const;
+	vec3 lerp_scaling (double time)const;
 
 	std::vector<key_vec3> m_key_position;
 	std::vector<key_quat> m_key_rotation;

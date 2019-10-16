@@ -17,6 +17,7 @@ struct animator
 	bool m_playback_state{ true };
 	double m_time{ 0.0 };
 	int m_current_animation{ 0 };
+	void draw_GUI();
 };
 
 class scene_object : public renderable

@@ -56,6 +56,13 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 {
 	if (m_bones.size())
 	{
+		update(m_hierarchy,m_animator, mat4(1.0f));
+		for (size_t i = 0; i < m_bones.size(); i++)
+		{
+			std::string call("bones[" + std::to_string(i) + "]");
+			shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform);
+		}
+
 		if (m_animator && m_animator->m_active)
 		{
 			double dur = m_animations[m_animator->m_current_animation]->m_duration;
@@ -71,25 +78,18 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 				else
 				{
 					m_animator->m_time -= 1 / window::frameTime;
-					if (m_animator->m_time < dur)
+					if (m_animator->m_time < 0.0)
 						m_animator->m_time = -m_animator->m_time,
 						m_animator->m_playback_state = true;
 				}
-				
+
 			}
 			else
 			{
-				m_animator->m_time += 1/window::frameTime;
+				m_animator->m_time += 1 / window::frameTime;
 				if (m_animator->m_time >= dur)
 					m_animator->m_time -= dur;
 			}
-		}
-
-		update(m_hierarchy,m_animator, mat4(1.0f));
-		for (size_t i = 0; i < m_bones.size(); i++)
-		{
-			std::string call("bones[" + std::to_string(i) + "]");
-			shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform);
 		}
 	}
 

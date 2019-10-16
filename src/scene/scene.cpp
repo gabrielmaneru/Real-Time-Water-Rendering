@@ -320,6 +320,7 @@ void c_scene::drawGUI()
 				}
 				if (ImGui::DragFloat("Scale", &m_objects[i]->m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 				if (chng)m_objects[i]->m_transform.m_tr.upd();
+				m_objects[i]->m_animator->draw_GUI();
 				if (ImGui::Button("Delete"))
 				{
 					delete m_objects[i];
