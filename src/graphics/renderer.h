@@ -13,6 +13,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "ortho_camera.h"
 #include "model.h"
 #include "framebuffer.h"
+#include "curve.h"
 #include <glm/glm.h>
 
 class c_renderer
@@ -30,6 +31,12 @@ class c_renderer
 
 	// Meshes
 	std::vector<Model*> m_models;
+
+	//Curves
+	curve_line*    m_curve_line;
+	curve_hermite* m_curve_hermite;
+	curve_catmull* m_curve_catmull;
+	curve_bezier*  m_curve_bezier;
 
 	// Framebuffer
 	framebuffer g_buffer;

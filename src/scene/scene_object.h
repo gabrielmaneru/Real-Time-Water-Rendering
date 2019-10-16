@@ -10,6 +10,7 @@ Author: Gabriel Mañeru - gabriel.m
 #pragma once
 #include <graphics/renderable.h>
 #include <graphics/shader_program.h>
+#include <graphics/curve.h>
 struct animator
 {
 	bool m_active{ true };
@@ -24,9 +25,12 @@ struct animator
 class scene_object : public renderable
 {
 public:
-	scene_object(std::string mesh, transform3d tr = {}, animator * anim = nullptr);
-	animator* m_animator{nullptr};
+	scene_object(std::string mesh, transform3d tr, animator * anim, curve* curve_);
+	animator* m_animator{ nullptr };
+	curve* m_curve{ nullptr };
+	float m_curve_time{0.0f};
 	virtual ~scene_object() { if(m_animator) delete m_animator; }
+	void update_parent_curve();
 	virtual void enter() {};
 	virtual void update() {};
 	virtual void draw(Shader_Program*);

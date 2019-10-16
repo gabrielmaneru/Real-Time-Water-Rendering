@@ -169,6 +169,23 @@
         "num_anim": 0,
         "speed": 0.4
       }
+    },
+    {
+      "mesh": "cube",
+      "translation": {
+        "x": 6.0,
+        "y": 15.0,
+        "z": 20.0
+      },
+      "rotate": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 3.0
+      },
+      "curve": "line"
     }
   ]
 }

@@ -95,6 +95,12 @@ bool c_renderer::init()
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	
+	// Curves
+	m_curve_line = new curve_line("line");
+	m_curve_hermite = new curve_hermite("hermite");
+	m_curve_catmull = new curve_catmull("catmull");
+	m_curve_bezier = new curve_bezier("bezier");
+
 	// Setup Cameras
 	scene_cam.m_eye = { 4,16,44 };
 	scene_cam.update();

@@ -54,7 +54,7 @@ void light::recompute_scale()
 }
 
 light::light(transform3d tr, light_data ld)
-	:scene_object("sphere", tr), m_ldata(ld)
+	:scene_object("sphere", tr, nullptr, nullptr), m_ldata(ld)
 {
 }
 

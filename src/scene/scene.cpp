@@ -132,11 +132,12 @@ bool c_scene::load_scene(std::string path)
 					tr.set_tr(pos, scl, normalize(quat(glm::radians(rot))));
 					
 					// Get Animator
+					animator* anim{ nullptr };
 					auto t = obj.find("animator");
 					if (t < obj.size())
 					{
 						obj = obj.substr(t);
-						animator* anim = new animator;
+						anim = new animator;
 						std::string s = obj.substr(obj.find("active") + 7, obj.find("playback") - obj.find("active") - 8);
 						anim->m_active = (bool)std::atoi(s.c_str());
 						s = obj.substr(obj.find("playback") + 9, obj.find("num_anim") - obj.find("playback") - 10);
@@ -145,10 +146,25 @@ bool c_scene::load_scene(std::string path)
 						anim->m_current_animation = std::atoi(s.c_str());
 						s = obj.substr(obj.find("speed") + 6, obj.find("}") - obj.find("speed") - 6);
 						anim->m_speed = (double)std::atof(s.c_str());
-						m_objects.push_back(new scene_object(mesh_name, tr, anim));
 					}
-					else
-						m_objects.push_back(new scene_object(mesh_name, tr));
+
+					curve * m_curve{ nullptr };
+					t = obj.find("curve");
+					if (t < obj.size())
+					{
+						obj = obj.substr(t);
+						std::string s = obj.substr(obj.find(":")+1, obj.find("}") - obj.find(":")-1);
+						if (s == "line")
+							m_curve = renderer->m_curve_line;
+						if (s == "hermite")
+							m_curve = renderer->m_curve_hermite;
+						if (s == "catmull")
+							m_curve = renderer->m_curve_catmull;
+						if (s == "bezier")
+							m_curve = renderer->m_curve_bezier;
+					}
+
+					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));
 				}
 			}
 		}
@@ -291,7 +307,7 @@ void c_scene::drawGUI()
 	if (ImGui::TreeNode("Objects List"))
 	{
 		if (ImGui::Button("Create"))
-			m_objects.push_back(new scene_object{ "cube" });
+			m_objects.push_back(new scene_object{ "cube" , {}, nullptr, nullptr });
 		for (int i = 0; i < m_objects.size(); i++)
 		{
 			ImGui::PushID(i);
