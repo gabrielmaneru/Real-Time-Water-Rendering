@@ -70,14 +70,14 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 			{
 				if (m_animator->m_playback_state)
 				{
-					m_animator->m_time += 1 / window::frameTime;
+					m_animator->m_time += m_animator->m_speed / window::frameTime;
 					if (m_animator->m_time >= dur)
 						m_animator->m_time = 2 * dur - m_animator->m_time,
 						m_animator->m_playback_state = false;
 				}
 				else
 				{
-					m_animator->m_time -= 1 / window::frameTime;
+					m_animator->m_time -= m_animator->m_speed / window::frameTime;
 					if (m_animator->m_time < 0.0)
 						m_animator->m_time = -m_animator->m_time,
 						m_animator->m_playback_state = true;
@@ -86,7 +86,7 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 			}
 			else
 			{
-				m_animator->m_time += 1 / window::frameTime;
+				m_animator->m_time += m_animator->m_speed / window::frameTime;
 				if (m_animator->m_time >= dur)
 					m_animator->m_time -= dur;
 			}

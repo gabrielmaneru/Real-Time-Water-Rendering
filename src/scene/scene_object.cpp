@@ -27,6 +27,8 @@ void animator::draw_GUI()
 	{
 		ImGui::Checkbox("Active", &m_active);
 		ImGui::Checkbox("Playback", &m_playback);
+		float sp = m_speed;
+		if(ImGui::SliderFloat("Speed", &sp, 0.01f, 10.0f)) m_speed = sp;
 		ImGui::Text(("Time:"+std::to_string(m_time)).c_str());
 		ImGui::TreePop();
 	}

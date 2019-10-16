@@ -34,15 +34,16 @@
       "animator": {
         "active": 1,
         "playback": 0,
-        "num_anim": 0
+        "num_anim": 0,
+        "speed": 0.4
       }
     },
     {
       "mesh": "belly",
       "translation": {
-        "x": -6.0,
-        "y": 0.0,
-        "z": -25.0
+        "x": -7.0,
+        "y": 50.0,
+        "z": -100.0
       },
       "rotate": {
         "x": 0.0,
@@ -55,7 +56,30 @@
       "animator": {
         "active": 1,
         "playback": 0,
-        "num_anim": 0
+        "num_anim": 0,
+        "speed": 0.6
+      }
+    },
+    {
+      "mesh": "belly",
+      "translation": {
+        "x": 13.0,
+        "y": 50.0,
+        "z": -100.0
+      },
+      "rotate": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 0,
+        "num_anim": 0,
+        "speed": 0.6
       }
     },
     {
@@ -76,7 +100,8 @@
       "animator": {
         "active": 1,
         "playback": 0,
-        "num_anim": 0
+        "num_anim": 0,
+        "speed": 0.4
       }
     },
     {
@@ -97,7 +122,8 @@
       "animator": {
         "active": 1,
         "playback": 0,
-        "num_anim": 0
+        "num_anim": 0,
+        "speed": 0.4
       }
     },
     {
@@ -118,7 +144,8 @@
       "animator": {
         "active": 1,
         "playback": 0,
-        "num_anim": 0
+        "num_anim": 0,
+        "speed": 0.5
       }
     },
     {
@@ -139,7 +166,8 @@
       "animator": {
         "active": 1,
         "playback": 1,
-        "num_anim": 0
+        "num_anim": 0,
+        "speed": 0.4
       }
     }
   ]

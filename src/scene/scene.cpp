@@ -141,8 +141,10 @@ bool c_scene::load_scene(std::string path)
 						anim->m_active = (bool)std::atoi(s.c_str());
 						s = obj.substr(obj.find("playback") + 9, obj.find("num_anim") - obj.find("playback") - 10);
 						anim->m_playback = (bool)std::atoi(s.c_str());
-						s = obj.substr(obj.find("num_anim") + 9, obj.find("}") - obj.find("num_anim") - 9);
+						s = obj.substr(obj.find("num_anim") + 9, obj.find("speed") - obj.find("num_anim") - 10);
 						anim->m_current_animation = std::atoi(s.c_str());
+						s = obj.substr(obj.find("speed") + 6, obj.find("}") - obj.find("speed") - 6);
+						anim->m_speed = (double)std::atof(s.c_str());
 						m_objects.push_back(new scene_object(mesh_name, tr, anim));
 					}
 					else
@@ -168,6 +170,9 @@ bool c_scene::init()
 		light_data ld;
 		ld.m_att_factor = { 0.f,0.001f,0.001f };
 		tr.set_pos({ 5,22,7 });
+		m_lights.push_back(new light(tr, ld));
+		tr.set_pos({ 3.5f,65.0f,-99.0f });
+		ld.m_diffuse = { 1,0,1 };
 		m_lights.push_back(new light(tr, ld));
 	}
 	light_data ld;
