@@ -95,7 +95,30 @@ void Model::load_obj(const std::string & path)
 	for (auto b : m_bones)
 		m_hierarchy->Find(b->m_name)->m_bones.push_back(b);
 	if (scn->HasAnimations())
+	{
 		processAnimations(scn);
+		for (auto& m : m_materials)
+		{
+			
+			float scalar = random_float(0.0f, 360.f);
+			float val = fmod(scalar, 60.f) / 60.f;
+
+			vec3 color;
+			if (scalar < 60.f)
+				color = { 1.0f, val, 0.0f };
+			else if (scalar < 120.f)
+				color = { 1.f - val, 1.0f, 0.0f };
+			else if (scalar < 180.f)
+				color = { 0.0f, 1.f, val };
+			else if (scalar < 240.f)
+				color = { 0.0f, 1.f - val, 1.0f };
+			else if (scalar < 300.f)
+				color = { val, 0.0f, 1.0f };
+			else
+				color = { 1.0f, 0.0f, 1.f - val };
+			m.m_diffuse = color;
+		}
+	}
 }
 
 void Model::processNode(aiNode * node_, node * parent, const aiScene * scene)

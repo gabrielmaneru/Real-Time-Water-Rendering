@@ -85,6 +85,12 @@ bool c_renderer::init()
 
 		// Complex
 		m_models.push_back(new Model("./data/meshes/hiphop_dance.dae"));
+		m_models.push_back(new Model("./data/meshes/dance.dae"));
+		m_models.push_back(new Model("./data/meshes/belly.dae"));
+		m_models.push_back(new Model("./data/meshes/cheer.dae"));
+		m_models.push_back(new Model("./data/meshes/jazz.dae"));
+		m_models.push_back(new Model("./data/meshes/samba.dae"));
+		m_models.push_back(new Model("./data/meshes/capoeira.dae"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
