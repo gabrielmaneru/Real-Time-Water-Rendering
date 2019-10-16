@@ -30,6 +30,11 @@
       },
       "scale": {
         "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 0,
+        "num_anim": 0
       }
     },
     {
@@ -46,6 +51,11 @@
       },
       "scale": {
         "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 0,
+        "num_anim": 0
       }
     },
     {
@@ -62,6 +72,11 @@
       },
       "scale": {
         "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 0,
+        "num_anim": 0
       }
     },
     {
@@ -78,6 +93,11 @@
       },
       "scale": {
         "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 0,
+        "num_anim": 0
       }
     },
     {
@@ -94,6 +114,11 @@
       },
       "scale": {
         "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 0,
+        "num_anim": 0
       }
     },
     {
@@ -110,6 +135,11 @@
       },
       "scale": {
         "x": 10.0
+      },
+      "animator": {
+        "active": 1,
+        "playback": 1,
+        "num_anim": 0
       }
     }
   ]

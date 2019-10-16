@@ -8,13 +8,14 @@ Author: Gabriel Mañeru - gabriel.m
 - End Header --------------------------------------------------------*/
 #include "scene_object.h"
 #include "graphics/renderer.h"
-scene_object::scene_object(std::string mesh, transform3d tr)
-	:renderable(tr,renderer->get_model(mesh)) {}
+
+scene_object::scene_object(std::string mesh, transform3d tr, animator * anim)
+	: renderable(tr, renderer->get_model(mesh)), m_animator(anim) {}
 
 void scene_object::draw(Shader_Program * shader)
 {
 	m_transform.m_tr.save_prev();
 	shader->set_uniform("M", m_transform.m_tr.get_model());
 	if(m_model != nullptr)
-		m_model->draw(shader);
+		m_model->draw(shader, m_animator);
 }

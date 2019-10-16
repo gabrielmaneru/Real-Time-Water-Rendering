@@ -11,6 +11,9 @@ Author: Gabriel Mañeru - gabriel.m
 #include "gl_error.h"
 #include <platform/editor.h>
 #include <utils/math_utils.h>
+#include <scene/scene_object.h>
+#include <platform/window_manager.h>
+#include <platform/window.h>
 
 const Material Model::m_def_material
 {
@@ -49,14 +52,40 @@ Model::~Model()
 	m_animations.clear();
 }
 
-void Model::draw(Shader_Program * shader, bool use_mat)const
+void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) const
 {
 	if (m_bones.size())
 	{
-		if (m_animator.m_active)
-			m_animator.m_time += 1/200.0;
+		if (m_animator && m_animator->m_active)
+		{
+			double dur = m_animations[m_animator->m_current_animation]->m_duration;
+			if (m_animator->m_playback)
+			{
+				if (m_animator->m_playback_state)
+				{
+					m_animator->m_time += 1 / window::frameTime;
+					if (m_animator->m_time >= dur)
+						m_animator->m_time = 2 * dur - m_animator->m_time,
+						m_animator->m_playback_state = false;
+				}
+				else
+				{
+					m_animator->m_time -= 1 / window::frameTime;
+					if (m_animator->m_time < dur)
+						m_animator->m_time = -m_animator->m_time,
+						m_animator->m_playback_state = true;
+				}
+				
+			}
+			else
+			{
+				m_animator->m_time += 1/window::frameTime;
+				if (m_animator->m_time >= dur)
+					m_animator->m_time -= dur;
+			}
+		}
 
-		update(m_hierarchy, mat4(1.0f));
+		update(m_hierarchy,m_animator, mat4(1.0f));
 		for (size_t i = 0; i < m_bones.size(); i++)
 		{
 			std::string call("bones[" + std::to_string(i) + "]");
@@ -349,22 +378,20 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	return texture;
 }
 
-void Model::update(node * node_, mat4 parent)const
+void Model::update(node * node_, animator * m_animator, mat4 parent) const
 {
 	mat4 node_transformation = node_->m_transformation;
-	if (m_animator.m_current_animation != -1)
+	if (m_animator && m_animator->m_current_animation != -1)
 	{
-		animation* anim = m_animations[m_animator.m_current_animation];
-		if (m_animator.m_time >= anim->m_duration)
-			m_animator.m_time -= anim->m_duration;
+		animation* anim = m_animations[m_animator->m_current_animation];
 
 		auto it = anim->m_channels.find(node_->m_name);
 		if (it != anim->m_channels.end())
 		{
 			const channel& c = it->second;
-			vec3 scaling = c.lerp_scaling(m_animator.m_time);
-			quat rotation = c.lerp_rotation(m_animator.m_time);
-			vec3 position = c.lerp_position(m_animator.m_time);
+			vec3 scaling  =  c.lerp_scaling(m_animator->m_time);
+			quat rotation = c.lerp_rotation(m_animator->m_time);
+			vec3 position = c.lerp_position(m_animator->m_time);
 
 			mat4 scl_mat = glm::scale(mat4(1.0f), vec3{ scaling });
 			mat4 rot_mat = glm::mat4_cast(rotation);
@@ -379,7 +406,7 @@ void Model::update(node * node_, mat4 parent)const
 		b->m_final_transform = node_transformation * b->m_offset;
 
 	for (auto c : node_->m_children)
-		update(c, node_transformation);
+		update(c, m_animator, node_transformation);
 }
 
 node::node(node * parent)

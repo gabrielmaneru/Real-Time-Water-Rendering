@@ -29,5 +29,6 @@ struct window
 	static bool mouse_but_right_pressed;
 	static bool mouse_but_right_triggered;
 	static float mouse_offset[2];
+	static double frameTime;
 	friend class c_editor;
 };

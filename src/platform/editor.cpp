@@ -56,6 +56,7 @@ void c_editor::update()
 	selector();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	window_manager->m_window->frameTime = ImGui::GetIO().Framerate;
 }
 
 void c_editor::shutdown()

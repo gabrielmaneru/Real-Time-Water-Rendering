@@ -172,7 +172,7 @@ void c_renderer::update()
 		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
 		/**/	color_shader->set_uniform("color", compute_selection_color());
 		/**/	if (p_obj->m_model != nullptr)
-		/**/		p_obj->m_model->draw(color_shader, false);
+		/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
 		/**/}
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(color_shader);

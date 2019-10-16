@@ -10,11 +10,21 @@ Author: Gabriel Mañeru - gabriel.m
 #pragma once
 #include <graphics/renderable.h>
 #include <graphics/shader_program.h>
+struct animator
+{
+	bool m_active{ true };
+	bool m_playback{ false };
+	bool m_playback_state{ true };
+	double m_time{ 0.0 };
+	int m_current_animation{ 0 };
+};
+
 class scene_object : public renderable
 {
 public:
-	scene_object(std::string mesh, transform3d tr = {});
-	virtual ~scene_object() = default;
+	scene_object(std::string mesh, transform3d tr = {}, animator * anim = nullptr);
+	animator* m_animator{nullptr};
+	virtual ~scene_object() { if(m_animator) delete m_animator; }
 	virtual void enter() {};
 	virtual void update() {};
 	virtual void draw(Shader_Program*);

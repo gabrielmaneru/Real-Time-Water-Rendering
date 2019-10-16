@@ -20,6 +20,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 struct bone_data;
+struct animator;
 struct node
 {
 	node(node*);
@@ -65,7 +66,7 @@ class Model
 public:
 	Model(const std::string&);
 	~Model();
-	void draw(Shader_Program *, bool use_mat = true)const;
+	void draw(Shader_Program *, animator* m_animator, bool use_mat = true)const;
 
 	std::string m_name;
 	std::vector<Mesh*> m_meshes;
@@ -77,7 +78,7 @@ private:
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
 	int processMaterial(aiMaterial * material);
 	Texture loadMaterialTexture(aiMaterial *material, aiTextureType type);
-	void update(node* node_, mat4 parent)const;
+	void update(node* node_, animator* m_animator, mat4 parent)const;
 
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
@@ -86,10 +87,4 @@ private:
 	std::vector<bone_data*> m_bones;
 	std::map<std::string, int> m_bone_mapping;
 	std::vector<animation*> m_animations;
-	mutable struct animator
-	{
-		bool m_active{true};
-		double m_time{ 0.0 };
-		int m_current_animation{ 0 };
-	} m_animator;
 };

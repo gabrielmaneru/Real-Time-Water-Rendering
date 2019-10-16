@@ -13,6 +13,8 @@ Author: Gabriel Mañeru - gabriel.m
 #include <imgui/imgui.h>
 #include <utils/math_utils.h>
 #include <graphics/renderer.h>
+#include <GLFW/glfw3.h>
+#include <platform/window_manager.h>
 c_scene * scene = new c_scene;
 bool c_scene::load_scene(std::string path)
 {
@@ -109,28 +111,42 @@ bool c_scene::load_scene(std::string path)
 					std::string obj = objs.substr(0, objs.find_first_of(0x1D));
 					objs = objs.substr(objs.find_first_of(0x1D)+2);
 
+					// Get Mesh
 					std::string mesh_name = obj.substr(obj.find("mesh") + 5, obj.find_first_of(',') - obj.find("mesh") - 5);
 
+					// Get Transform
 					vec3 pos{-1.0};
 					obj = obj.substr(obj.find("translation"));
 					pos.x = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
 					pos.y = (float)std::atof(obj.substr(obj.find_first_of('y')+2, obj.find_first_of('z') - obj.find_first_of('y')-3).c_str());
 					pos.z = (float)std::atof(obj.substr(obj.find_first_of('z')+2, obj.find_first_of('}') - obj.find_first_of('z')-2).c_str());
-
 					vec3 rot{ -1.0 };
 					obj = obj.substr(obj.find("rotate"));
 					rot.x = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
 					rot.y = (float)std::atof(obj.substr(obj.find_first_of('y') + 2, obj.find_first_of('z') - obj.find_first_of('y') - 3).c_str());
 					rot.z = (float)std::atof(obj.substr(obj.find_first_of('z') + 2, obj.find_first_of('}') - obj.find_first_of('z') - 2).c_str());
-
 					float scl{ -1.0 };
 					obj = obj.substr(obj.find("scale"));
 					scl = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
-
 					transform3d tr;
 					tr.set_tr(pos, scl, normalize(quat(glm::radians(rot))));
 					
-					m_objects.push_back(new scene_object(mesh_name, tr));
+					// Get Animator
+					auto t = obj.find("animator");
+					if (t < obj.size())
+					{
+						obj = obj.substr(t);
+						animator* anim = new animator;
+						std::string s = obj.substr(obj.find("active") + 7, obj.find("playback") - obj.find("active") - 8);
+						anim->m_active = (bool)std::atoi(s.c_str());
+						s = obj.substr(obj.find("playback") + 9, obj.find("num_anim") - obj.find("playback") - 10);
+						anim->m_playback = (bool)std::atoi(s.c_str());
+						s = obj.substr(obj.find("num_anim") + 9, obj.find("}") - obj.find("num_anim") - 9);
+						anim->m_current_animation = std::atoi(s.c_str());
+						m_objects.push_back(new scene_object(mesh_name, tr, anim));
+					}
+					else
+						m_objects.push_back(new scene_object(mesh_name, tr));
 				}
 			}
 		}
@@ -215,7 +231,7 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
 		shader->set_uniform("selection_color", renderer->compute_selection_color());
-		renderer->get_model("sphere")->draw(shader);
+		renderer->get_model("sphere")->draw(shader, nullptr);
 	}
 }
 
@@ -232,6 +248,12 @@ void c_scene::shutdown()
 void c_scene::drawGUI()
 {
 	ImGui::Text("# Objects #");
+	if (window_manager->is_key_down(GLFW_KEY_LEFT_CONTROL)
+	&&  window_manager->is_key_triggered(GLFW_KEY_R))
+	{
+		shutdown();
+		init();
+	}
 	if (ImGui::TreeNode("Scene Options"))
 	{
 		if (ImGui::Button("Reload"))

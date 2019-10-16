@@ -10,6 +10,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "window.h"
 #include <core\session.h>
 #include <GLFW\glfw3.h>
+#include <string>
 
 int window::m_keyboard[keyboard_size]{ 0 };
 std::unordered_set<int> window::m_updated_keys{};
@@ -18,6 +19,7 @@ bool window::mouse_but_left_triggered{ false };
 bool window::mouse_but_right_pressed{ false };
 bool window::mouse_but_right_triggered{ false };
 float window::mouse_offset[2]{ 0.0f };
+double window::frameTime{ 0.0 };
 
 static void glfw_key_callback(GLFWwindow*, int key, int, int action, int)
 {
@@ -72,6 +74,7 @@ window * window::create_window(int width, int height, const char * title, bool f
 void window::update_window()
 {
 	glfwSwapBuffers(m_window);
+	glfwSetWindowTitle(m_window, ("Framework [dt="+std::to_string(frameTime)+"]").c_str());
 	m_updated_keys.clear();
 	mouse_but_left_triggered = false;
 	mouse_but_right_triggered = false;

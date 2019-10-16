@@ -9,6 +9,7 @@ Author: Gabriel Mañeru - gabriel.m
 
 #include "window_manager.h"
 #include "window.h"
+#include <core\session.h>
 #include <GLFW\glfw3.h>
 
 c_window_manager * window_manager = new c_window_manager;
@@ -33,6 +34,8 @@ bool c_window_manager::init()
 void c_window_manager::update()
 {
 	m_window->update_window();
+	if (is_key_down(GLFW_KEY_LEFT_CONTROL) && is_key_triggered(GLFW_KEY_Q))
+		session::end |= true;
 }
 
 void c_window_manager::shutdown()

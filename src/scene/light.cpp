@@ -70,6 +70,6 @@ void light::draw(Shader_Program * shader)
 	{
 		recompute_scale();
 		shader->set_uniform("M", m_transform.get_model());
-		m_model->draw(shader, false);
+		m_model->draw(shader,nullptr, false);
 	}
 }
