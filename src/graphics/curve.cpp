@@ -1,7 +1,7 @@
 #include "curve.h"
 #include <fstream>
 
-curve::curve(std::string path)
+curve_base::curve_base(std::string path)
 {
 	std::string real_path = "./data/curves/" + path + ".txt";
 	std::ifstream file;
@@ -16,7 +16,7 @@ curve::curve(std::string path)
 
 		while (1)
 		{
-			size_t s, e;
+			size_t s;
 			s = stream.find("KF");
 			if (s > stream.size()) break;
 			stream = stream.substr(s);
@@ -39,7 +39,7 @@ curve::curve(std::string path)
 	}
 }
 
-float curve::duration() const
+float curve_base::duration() const
 {
 	return m_frames.back().second;
 }

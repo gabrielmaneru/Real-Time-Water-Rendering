@@ -61,35 +61,14 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 		{
 			std::string call("bones[" + std::to_string(i) + "]");
 			shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform);
+			call= "prev_bones[" + std::to_string(i) + "]";
+			shader->set_uniform(call.c_str(), m_bones[i]->m_prev_transform);
 		}
 
-		if (m_animator && m_animator->m_active)
+		if (m_animator && m_animator->m_active && m_animator->m_current_animation > -1)
 		{
 			double dur = m_animations[m_animator->m_current_animation]->m_duration;
-			if (m_animator->m_playback)
-			{
-				if (m_animator->m_playback_state)
-				{
-					m_animator->m_time += m_animator->m_speed / window::frameTime;
-					if (m_animator->m_time >= dur)
-						m_animator->m_time = 2 * dur - m_animator->m_time,
-						m_animator->m_playback_state = false;
-				}
-				else
-				{
-					m_animator->m_time -= m_animator->m_speed / window::frameTime;
-					if (m_animator->m_time < 0.0)
-						m_animator->m_time = -m_animator->m_time,
-						m_animator->m_playback_state = true;
-				}
-
-			}
-			else
-			{
-				m_animator->m_time += m_animator->m_speed / window::frameTime;
-				if (m_animator->m_time >= dur)
-					m_animator->m_time -= dur;
-			}
+			m_animator->update(dur);
 		}
 	}
 
@@ -403,7 +382,10 @@ void Model::update(node * node_, animator * m_animator, mat4 parent) const
 	node_transformation = parent * node_transformation;
 
 	for (auto b : node_->m_bones)
+	{
+		b->m_prev_transform = b->m_final_transform;
 		b->m_final_transform = node_transformation * b->m_offset;
+	}
 
 	for (auto c : node_->m_children)
 		update(c, m_animator, node_transformation);

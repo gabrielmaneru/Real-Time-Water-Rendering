@@ -38,6 +38,7 @@ struct bone_data
 {
 	mat4 m_offset;
 	mutable mat4 m_final_transform;
+	mutable mat4 m_prev_transform{1.0f};
 	std::string m_name;
 };
 

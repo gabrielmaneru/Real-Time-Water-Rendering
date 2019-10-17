@@ -148,20 +148,21 @@ bool c_scene::load_scene(std::string path)
 						anim->m_speed = (double)std::atof(s.c_str());
 					}
 
-					curve * m_curve{ nullptr };
+					curve_interpolator * m_curve{ nullptr };
 					t = obj.find("curve");
 					if (t < obj.size())
 					{
 						obj = obj.substr(t);
+						m_curve = new curve_interpolator;
 						std::string s = obj.substr(obj.find(":")+1, obj.find("}") - obj.find(":")-1);
 						if (s == "line")
-							m_curve = renderer->m_curve_line;
+							m_curve->m_curve = renderer->m_curve_line;
 						if (s == "hermite")
-							m_curve = renderer->m_curve_hermite;
+							m_curve->m_curve = renderer->m_curve_hermite;
 						if (s == "catmull")
-							m_curve = renderer->m_curve_catmull;
+							m_curve->m_curve = renderer->m_curve_catmull;
 						if (s == "bezier")
-							m_curve = renderer->m_curve_bezier;
+							m_curve->m_curve = renderer->m_curve_bezier;
 					}
 
 					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));
@@ -341,7 +342,10 @@ void c_scene::drawGUI()
 				}
 				if (ImGui::DragFloat("Scale", &m_objects[i]->m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 				if (chng)m_objects[i]->m_transform.m_tr.upd();
-				m_objects[i]->m_animator->draw_GUI();
+				if (m_objects[i]->m_animator && ImGui::TreeNode("Animator"))
+					m_objects[i]->m_animator->draw_GUI(), ImGui::TreePop();
+				if (m_objects[i]->m_curve && ImGui::TreeNode("Curve"))
+					m_objects[i]->m_curve->draw_GUI(), ImGui::TreePop();
 				if (ImGui::Button("Delete"))
 				{
 					delete m_objects[i];

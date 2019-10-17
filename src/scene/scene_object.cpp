@@ -11,18 +11,22 @@ Author: Gabriel Mañeru - gabriel.m
 #include <imgui/imgui.h>
 #include <platform/window.h>
 
-scene_object::scene_object(std::string mesh, transform3d tr, animator * anim, curve * curve_)
+scene_object::scene_object(std::string mesh, transform3d tr, animator * anim, curve_interpolator * curve_)
 	: renderable(tr, renderer->get_model(mesh)), m_animator(anim), m_curve(curve_) {}
+
+scene_object::~scene_object()
+{
+	if (m_animator) delete m_animator;
+	if (m_curve) delete m_curve;
+}
 
 void scene_object::update_parent_curve()
 {
-	vec3 pos = m_curve->evaluate(m_curve_time);
+	vec3 pos = m_curve->m_curve->evaluate(m_curve->m_time);
 	mat4 mat_pos = glm::translate(mat4(1.0), pos);
 	m_transform.m_tr.parent = mat_pos;
 
-	m_curve_time += 1.0f / window::frameTime;
-	if (m_curve_time >= m_curve->duration())
-		m_curve_time -= m_curve->duration();
+	m_curve->update(m_curve->m_curve->duration());
 }
 
 void scene_object::draw(Shader_Program * shader)
@@ -35,15 +39,34 @@ void scene_object::draw(Shader_Program * shader)
 		m_model->draw(shader, m_animator);
 }
 
-void animator::draw_GUI()
+void interpolator::update(double max_t)
 {
-	if(ImGui::TreeNode("Animator"))
+	if (!m_playback || m_playback_state)
+		m_time += m_speed / window::frameTime;
+	else
+		m_time -= m_speed / window::frameTime;
+
+	if (m_playback)
 	{
-		ImGui::Checkbox("Active", &m_active);
-		ImGui::Checkbox("Playback", &m_playback);
-		float sp = m_speed;
-		if(ImGui::SliderFloat("Speed", &sp, 0.01f, 10.0f)) m_speed = sp;
-		ImGui::Text(("Time:"+std::to_string(m_time)).c_str());
-		ImGui::TreePop();
+		if (m_time >= max_t)
+			m_time = 2 * max_t - m_time, m_playback_state = false;
+		else if (m_time < 0.0f)
+			m_time = -m_time, m_playback_state = true;
 	}
+	else
+		m_time = fmod(m_time, max_t);
+}
+
+void interpolator::draw_GUI()
+{
+	ImGui::Checkbox("Active", &m_active);
+	if (ImGui::Checkbox("Playback", &m_playback))m_playback_state = true;
+	float sp = (float)m_speed;
+	if (ImGui::SliderFloat("Speed", &sp, 0.01f, 10.0f)) m_speed = (double)sp;
+	ImGui::Text(("Time:" + std::to_string(m_time)).c_str());
+}
+
+curve_interpolator::curve_interpolator()
+{
+	m_active = false;
 }
