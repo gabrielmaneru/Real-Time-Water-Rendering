@@ -23,11 +23,13 @@ struct interpolator
 };
 struct animator : public interpolator
 {
+	void draw_GUI();
 	int m_current_animation{ 0 };
 };
 struct curve_interpolator : public interpolator
 {
-	const curve_base* m_curve{ nullptr };
+	void draw_GUI();
+	const curve_base* m_actual_curve{ nullptr };
 };
 
 class scene_object : public renderable

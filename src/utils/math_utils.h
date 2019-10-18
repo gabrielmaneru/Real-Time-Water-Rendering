@@ -3,9 +3,7 @@
 template <typename T>
 T lerp(const T& min, const T& max, const float& coef)
 {
-	T s = max - min;
-	s *= coef;
-	return static_cast<T>(min + s);
+	return static_cast<T>(min + (max - min) * coef);
 }
 quat lerp(const quat& min, const quat& max, const float& coef);
 

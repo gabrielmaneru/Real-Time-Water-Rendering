@@ -97,10 +97,10 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 	
 	// Curves
-	m_curve_line = new curve_line("line");
-	m_curve_hermite = new curve_line("hermite");
-	m_curve_catmull = new curve_catmull("catmull");
-	m_curve_bezier = new curve_bezier("bezier");
+	m_curves.push_back(new curve_line("line"));
+	m_curves.push_back(new curve_hermite("hermite"));
+	m_curves.push_back(new curve_catmull("catmull"));
+	m_curves.push_back(new curve_bezier("bezier"));
 
 	// Setup Cameras
 	scene_cam.m_eye = { 4,16,44 };
@@ -446,6 +446,10 @@ void c_renderer::drawGUI()
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
+		if(m_render_options.interpolate_slerp)
+			ImGui::Checkbox("Interpolator: SLERP", &m_render_options.interpolate_slerp);
+		else
+			ImGui::Checkbox("Interpolator: NLERP", &m_render_options.interpolate_slerp);
 		if (ImGui::TreeNode("Antialiasing"))
 		{
 			ImGui::Checkbox("Do Antialiasing", &m_render_options.do_antialiasing);

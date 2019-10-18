@@ -8,6 +8,7 @@ struct curve_base
 	virtual vec3 evaluate(float t)const = 0;
 	float duration()const;
 	std::vector<keyframe> m_frames;
+	std::string m_name;
 };
 
 struct curve_line : public curve_base

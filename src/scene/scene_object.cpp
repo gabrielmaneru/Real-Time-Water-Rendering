@@ -27,17 +27,17 @@ void scene_object::update_parent_curve()
 {
 	if (m_curve->m_active)
 	{
-		vec3 pos = m_curve->m_curve->evaluate((float)m_curve->m_time);
+		vec3 pos = m_curve->m_actual_curve->evaluate((float)m_curve->m_time);
 		mat4 mat_pos = glm::translate(mat4(1.0), pos);
 
 		double nxt_time = m_curve->m_time + 0.1;
-		nxt_time = fmod(nxt_time, m_curve->m_curve->duration());
-		vec3 nxt = m_curve->m_curve->evaluate((float)nxt_time);
+		nxt_time = fmod(nxt_time, m_curve->m_actual_curve->duration());
+		vec3 nxt = m_curve->m_actual_curve->evaluate((float)nxt_time);
 		vec3 front = glm::normalize(pos-nxt);
 		m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
 		m_transform.m_tr.parent = mat_pos;
 
-		m_curve->update(m_curve->m_curve->duration());
+		m_curve->update(m_curve->m_actual_curve->duration());
 	}
 	else
 		m_transform.m_tr.parent = mat4{1};
@@ -78,4 +78,36 @@ void interpolator::draw_GUI()
 	float sp = (float)m_speed;
 	if (ImGui::SliderFloat("Speed", &sp, 0.01f, 10.0f)) m_speed = (double)sp;
 	ImGui::Text(("Time:" + std::to_string(m_time)).c_str());
+}
+
+void curve_interpolator::draw_GUI()
+{
+	if (ImGui::TreeNode("Curve"))
+	{
+		if (ImGui::BeginCombo("Mesh", m_actual_curve->m_name.c_str()))
+		{
+			for (size_t n = 0; n < renderer->m_curves.size(); n++)
+			{
+				bool is_selected = m_actual_curve == renderer->m_curves[n];
+				if (ImGui::Selectable(renderer->m_curves[n]->m_name.c_str(), is_selected))
+					m_actual_curve = renderer->m_curves[n];
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+
+		}
+		interpolator::draw_GUI();
+		ImGui::TreePop();
+	}
+}
+
+void animator::draw_GUI()
+{
+	if (ImGui::TreeNode("Animator"))
+	{
+		ImGui::SliderInt("AnimNum", &m_current_animation, -1, 0);
+		interpolator::draw_GUI();
+		ImGui::TreePop();
+	}
 }

@@ -425,6 +425,7 @@ vec3 channel::lerp_position(double time)const
 		if (time < m_key_position[i + 1].second)
 			return map(time, m_key_position[i].second, m_key_position[i + 1].second,
 				m_key_position[i].first, m_key_position[i + 1].first);
+	return{};
 }
 
 quat channel::lerp_rotation(double time)const
@@ -437,7 +438,7 @@ quat channel::lerp_rotation(double time)const
 		if (time < m_key_rotation[i + 1].second)
 			return map(time, m_key_rotation[i].second, m_key_rotation[i + 1].second,
 				m_key_rotation[i].first, m_key_rotation[i + 1].first);
-
+	return{};
 }
 
 vec3 channel::lerp_scaling(double time)const
@@ -450,4 +451,5 @@ vec3 channel::lerp_scaling(double time)const
 		if (time < m_key_scaling[i + 1].second)
 			return map(time, m_key_scaling[i].second, m_key_scaling[i + 1].second,
 				m_key_scaling[i].first, m_key_scaling[i + 1].first);
+	return{};
 }

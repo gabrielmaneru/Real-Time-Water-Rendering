@@ -33,10 +33,7 @@ class c_renderer
 	std::vector<Model*> m_models;
 
 	//Curves
-	curve_line*    m_curve_line;
-	curve_line* m_curve_hermite;
-	curve_catmull* m_curve_catmull;
-	curve_bezier*  m_curve_bezier;
+	std::vector<curve_base*> m_curves;
 
 	// Framebuffer
 	framebuffer g_buffer;
@@ -58,27 +55,6 @@ class c_renderer
 		BLUR_RESULT
 	}m_txt_cur{ BLUR_RESULT };
 	
-	struct Options
-	{
-		bool render_lights{ false };
-		bool render_curves{ false };
-
-		bool do_antialiasing{ true };
-		float aa_coef_normal{ 0.05f };
-		float aa_coef_depth{ 0.25f };
-		int aa_sigma{ 5 };
-
-		bool do_depth_of_field{ false };
-		float df_plane_focus{ 45.f };
-		float df_aperture{ 45.f };
-		bool df_auto_focus{ false };
-
-		bool do_motion_blur{ true };
-		bool mb_camera_blur{ true };
-
-		bool do_bloom{ true };
-		float bl_coef{ 1.f };
-	}m_render_options;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
 	void update_max_draw_call_count();
@@ -94,7 +70,31 @@ public:
 	const Model* get_model(std::string s);
 	vec3 compute_selection_color();
 
+	struct Options
+	{
+		bool render_lights{ false };
+		bool render_curves{ false };
+		bool interpolate_slerp{ true };
+
+		bool do_antialiasing{ true };
+		float aa_coef_normal{ 0.05f };
+		float aa_coef_depth{ 0.25f };
+		int aa_sigma{ 5 };
+
+		bool do_depth_of_field{ false };
+		float df_plane_focus{ 45.f };
+		float df_aperture{ 45.f };
+		bool df_auto_focus{ false };
+
+		bool do_motion_blur{ false };
+		bool mb_camera_blur{ false };
+
+		bool do_bloom{ true };
+		float bl_coef{ 1.f };
+	}m_render_options;
+
 	friend class c_editor;
+	friend struct curve_interpolator;
 	friend class c_scene;
 	friend class light;
 };

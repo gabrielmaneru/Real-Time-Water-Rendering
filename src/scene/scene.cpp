@@ -159,14 +159,21 @@ bool c_scene::load_scene(std::string path)
 
 						std::string s;
 						s = obj.substr(obj.find("curve:") + 6, obj.find("active") - obj.find("curve:") - 7);
-						if (s == "line")
-							m_curve->m_curve = renderer->m_curve_line;
-						else if (s == "hermite")
-							m_curve->m_curve = renderer->m_curve_hermite;
-						else if (s == "catmull")
-							m_curve->m_curve = renderer->m_curve_catmull;
-						else if (s == "bezier")
-							m_curve->m_curve = renderer->m_curve_bezier;
+						for (auto p_c : renderer->m_curves)
+						{
+							if (p_c->m_name == s)
+							{
+								m_curve->m_actual_curve = p_c;
+								break;
+							}
+						}
+						if (m_curve->m_actual_curve == nullptr)
+						{
+							delete m_curve;
+							m_curve = nullptr;
+							break;
+						}
+
 						s = obj.substr(obj.find("active") + 7, obj.find("playback") - obj.find("active") - 8);
 						m_curve->m_active = (bool)std::atoi(s.c_str());
 						s = obj.substr(obj.find("playback") + 9, obj.find("speed") - obj.find("playback") - 10);
@@ -276,7 +283,7 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 			continue;
 
 		const size_t evals = 1000;
-		float dur = p_obj->m_curve->m_curve->duration();
+		float dur = p_obj->m_curve->m_actual_curve->duration();
 		float step = dur / (float)evals;
 
 		for (size_t i = 0; i < evals; i++)
@@ -284,21 +291,58 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 			float t_0 = step * (float)i;
 			float t_1 = step * (float)(i+1);
 
-			vec3 pos_0 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_curve->evaluate(t_0);
-			vec3 pos_1 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_curve->evaluate(t_1);
+			vec3 pos_0 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_actual_curve->evaluate(t_0);
+			vec3 pos_1 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_actual_curve->evaluate(t_1);
 
 			mat4 model = glm::translate(mat4(1.0f), lerp(pos_0, pos_1, 0.5f));
-			model = glm::scale(model, abs(pos_1-pos_0) + vec3(0.1f, 0.1f, 0.1f));
+			model = glm::scale(model, abs(pos_1 - pos_0) + vec3(0.1f));
 			shader->set_uniform("M", model);
 
 			renderer->get_model("cube")->draw(shader, nullptr);
 		}
-		for (auto p : p_obj->m_curve->m_curve->m_frames)
-		{
-			mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + p.first);
-			shader->set_uniform("M", model);
 
-			renderer->get_model("sphere")->draw(shader, nullptr);
+		const curve_base* curve= p_obj->m_curve->m_actual_curve;
+		if (dynamic_cast<const curve_line*>(curve) != nullptr)
+		{
+			for (auto p : curve->m_frames)
+			{
+				mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + p.first);
+				model = glm::scale(model, vec3(0.5f));
+				shader->set_uniform("M", model);
+
+				renderer->get_model("sphere")->draw(shader, nullptr);
+			}
+		}
+		else if (dynamic_cast<const curve_hermite*>(curve) != nullptr)
+		{
+			for (size_t i = 0; i < curve->m_frames.size() - 3; i += 3)
+			{
+				vec3 P0 = curve->m_frames[i].first;
+				vec3 P1 = curve->m_frames[i + 3].first;
+
+				vec3 T0 = P0 * 0.1f + curve->m_frames[i + 1].first;
+				vec3 T1 = P1 * 0.1f + curve->m_frames[i + 2].first;
+
+				mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + P0);
+				model = glm::scale(model, vec3(0.5f));
+				shader->set_uniform("M", model);
+				renderer->get_model("sphere")->draw(shader, nullptr);
+
+				model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + P1);
+				model = glm::scale(model, vec3(0.5f));
+				shader->set_uniform("M", model);
+				renderer->get_model("sphere")->draw(shader, nullptr);
+
+				model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + T0);
+				model = glm::scale(model, vec3(0.5f));
+				shader->set_uniform("M", model);
+				renderer->get_model("sphere")->draw(shader, nullptr);
+
+				model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + T1);
+				model = glm::scale(model, vec3(0.5f));
+				shader->set_uniform("M", model);
+				renderer->get_model("sphere")->draw(shader, nullptr);
+			}
 		}
 	}
 }
@@ -388,10 +432,10 @@ void c_scene::drawGUI()
 				}
 				if (ImGui::DragFloat("Scale", &m_objects[i]->m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 				if (chng)m_objects[i]->m_transform.m_tr.upd();
-				if (m_objects[i]->m_animator && ImGui::TreeNode("Animator"))
-					m_objects[i]->m_animator->draw_GUI(), ImGui::TreePop();
-				if (m_objects[i]->m_curve && ImGui::TreeNode("Curve"))
-					m_objects[i]->m_curve->draw_GUI(), ImGui::TreePop();
+				if (m_objects[i]->m_animator)
+					m_objects[i]->m_animator->draw_GUI();
+				if (m_objects[i]->m_curve)
+					m_objects[i]->m_curve->draw_GUI();
 				if (ImGui::Button("Delete"))
 				{
 					delete m_objects[i];
