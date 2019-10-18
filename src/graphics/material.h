@@ -17,13 +17,17 @@ constexpr int default_material = -1;
 struct Material
 {
 	void set_uniform(Shader_Program*)const;
-
 	std::string m_name;
-	vec3 m_ambient;
-	vec3 m_diffuse;
-	vec3 m_specular;
-	float m_shininess;
-	Texture m_diffuse_txt;
-	Texture m_specular_txt;
+
+	vec3 m_albedo;
+	Texture m_albedo_txt;
+
+	vec3 m_metallic;
+	Texture m_metallic_txt;
+
+	float m_roughness;
+	Texture m_roughness_txt;
+
+	float m_ambient;
 	Texture m_normal_txt;
 };

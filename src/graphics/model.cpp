@@ -18,12 +18,13 @@ Author: Gabriel Mañeru - gabriel.m
 const Material Model::m_def_material
 {
 	"default",
-	vec3(1.0),
 	vec3(0.0, 1.0, 0.0),
-	vec3(1.0, 1.0, 1.0),
-	10.f,
 	{},
+	vec3(0.0f),
 	{},
+	0.5f,
+	{},
+	1.0f,
 	{}
 };
 mat4 to_glm(aiMatrix4x4 m)
@@ -124,7 +125,7 @@ void Model::load_obj(const std::string & path)
 				color = { val, 0.0f, 1.0f };
 			else
 				color = { 1.0f, 0.0f, 1.f - val };
-			m.m_diffuse = color;
+			m.m_albedo = color;
 		}
 	}
 }
@@ -310,22 +311,19 @@ int Model::processMaterial(aiMaterial * material)
 	// Extract material keys
 	aiColor3D color;
 	material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-	mat.m_ambient.r = color.r;
-	mat.m_ambient.g = color.g;
-	mat.m_ambient.b = color.b;
+	mat.m_ambient = color.r;
 	material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-	mat.m_diffuse.r = color.r;
-	mat.m_diffuse.g = color.g;
-	mat.m_diffuse.b = color.b;
+	mat.m_albedo.r = color.r;
+	mat.m_albedo.g = color.g;
+	mat.m_albedo.b = color.b;
 	material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-	mat.m_specular.r = color.r;
-	mat.m_specular.g = color.g;
-	mat.m_specular.b = color.b;
-
-	material->Get(AI_MATKEY_SHININESS, mat.m_shininess);
+	mat.m_metallic.r = color.r;
+	mat.m_metallic.g = color.g;
+	mat.m_metallic.b = color.b;
 	
-	mat.m_diffuse_txt = loadMaterialTexture(material, aiTextureType_DIFFUSE);
-	mat.m_specular_txt = loadMaterialTexture(material, aiTextureType_SPECULAR);
+	mat.m_albedo_txt = loadMaterialTexture(material, aiTextureType_DIFFUSE);
+	mat.m_metallic_txt = loadMaterialTexture(material, aiTextureType_AMBIENT);
+	mat.m_roughness_txt = loadMaterialTexture(material, aiTextureType_SHININESS);
 	mat.m_normal_txt = loadMaterialTexture(material, aiTextureType_HEIGHT);
 	if(mat.m_normal_txt.m_id == 0)
 		mat.m_normal_txt = loadMaterialTexture(material, aiTextureType_NORMALS);
@@ -351,8 +349,7 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	name = "./data/textures/" + name.substr(start);
 
 	Texture texture;
-	texture.loadFromFile(name.c_str(), type == Texture::e_texture_type::DIFFUSE);
-	texture.m_type = static_cast<Texture::e_texture_type>(type);
+	texture.loadFromFile(name.c_str(), type == aiTextureType_DIFFUSE);
 	texture.m_path = str.C_Str();
 	return texture;
 }

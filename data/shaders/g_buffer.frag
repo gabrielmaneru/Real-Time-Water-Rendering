@@ -6,58 +6,72 @@ in vec3 vPosition;
 in float vMotion;
 in vec2 vUv;
 
-layout (binding = 0) uniform sampler2D diff_txt;
-layout (binding = 1) uniform sampler2D spec_txt;
-layout (binding = 2) uniform sampler2D norm_txt;
-uniform bool diff_txt_active;
-uniform bool spec_txt_active;
-uniform bool norm_txt_active;
-uniform vec3 ka;
-uniform vec3 kd;
-uniform vec3 ks;
-uniform float ns;
+layout (binding = 0) uniform sampler2D albedo_txt;
+layout (binding = 1) uniform sampler2D metallic_txt;
+layout (binding = 2) uniform sampler2D roughness_txt;
+layout (binding = 3) uniform sampler2D normal_txt;
+
+uniform bool albedo_txt_active;
+uniform bool metallic_txt_active;
+uniform bool roughness_txt_active;
+uniform bool normal_txt_active;
+
+uniform vec3 kalbedo;
+uniform vec3 kmetallic;
+uniform float kroughness;
+uniform float kambient;
+
 uniform float near;
 uniform float far;
 
 layout (location = 0) out vec4 attr_position;
-layout (location = 1) out vec4 attr_diffuse;
-layout (location = 2) out vec4 attr_normal;
+layout (location = 1) out vec4 attr_albedo;
+layout (location = 2) out vec4 attr_metallic;
+layout (location = 3) out vec4 attr_normal;
 
 void main()
 {
-	vec3 diffuse;
-	if(diff_txt_active)
+	vec3 albedo;
+	if(albedo_txt_active)
 	{
-		vec4 txt = texture(diff_txt, vUv);
+		vec4 txt = texture(albedo_txt, vUv);
 		if(txt.a < 0.5)
 			discard;
-		diffuse = txt.rgb;
+		albedo = txt.rgb;
 	}
 	else
-		diffuse = kd;
+		albedo = kalbedo;
 	
-	float specular;
-	if(spec_txt_active)
-		specular = texture(spec_txt, vUv).r;
+	vec3 metallic;
+	if(metallic_txt_active)
+		metallic = vec3(texture(metallic_txt, vUv).r);
 	else
-		specular = ks.r;
+		metallic = kmetallic;
+	
+	float roughness;
+	if(roughness_txt_active)
+		roughness = texture(roughness_txt, vUv).r;
+	else
+		roughness = kroughness;
 
 	vec3 normal;
-	if(norm_txt_active)
+	if(normal_txt_active)
 	{
 		const vec3 T = normalize(vTangent);
 		const vec3 B = normalize(vBitangent);
 		const vec3 N = normalize(vNormal);
 
 		mat3 TBN = mat3(T,B,N);
-		normal = normalize(TBN * (2.0 * texture(norm_txt, vUv).xyz - 1.0));
+		normal = normalize(TBN * (2.0 * texture(normal_txt, vUv).xyz - 1.0));
 	}
 	else
 		normal = normalize(vNormal);
 
-	attr_diffuse = vec4(diffuse, 1.0+specular);
-	attr_position = vec4(vPosition, 1.0+ka.r);
-	attr_normal = vec4(normal, 1.0+ns);
+	attr_position = vec4(vPosition, 1.0+kambient);
+	attr_albedo = vec4(albedo, 1.0+roughness);
+	attr_metallic = vec4(metallic, 1.0);
+	attr_normal = vec4(normal, 1.0);
+
     gl_FragDepth = (near * far) / (far - near + vPosition.z);
 	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
 }

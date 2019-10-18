@@ -11,36 +11,44 @@ Author: Gabriel Mañeru - gabriel.m
 #include <gl/gl3w.h>
 void Material::set_uniform(Shader_Program * shader)const
 {
-	shader->set_uniform("ka", m_ambient);
-	shader->set_uniform("kd", m_diffuse);
-	shader->set_uniform("ks", m_specular);
 
-	shader->set_uniform("ns", m_shininess);
-	
-	if (m_diffuse_txt.m_id > 0)
+	shader->set_uniform("kalbedo", m_albedo);
+	if (m_albedo_txt.m_id > 0)
 	{
 		glActiveTexture(GL_TEXTURE0);
-		shader->set_uniform("diff_txt_active", true);
-		glBindTexture(GL_TEXTURE_2D, m_diffuse_txt.m_id);
+		shader->set_uniform("albedo_txt_active", true);
+		glBindTexture(GL_TEXTURE_2D, m_albedo_txt.m_id);
 	}
 	else
-		shader->set_uniform("diff_txt_active", false);
+		shader->set_uniform("albedo_txt_active", false);
 
-	if (m_specular_txt.m_id > 0)
+	shader->set_uniform("kmetallic", m_metallic);
+	if (m_metallic_txt.m_id > 0)
 	{
 		glActiveTexture(GL_TEXTURE1);
-		shader->set_uniform("spec_txt_active", true);
-		glBindTexture(GL_TEXTURE_2D, m_specular_txt.m_id);
+		shader->set_uniform("metallic_txt_active", true);
+		glBindTexture(GL_TEXTURE_2D, m_metallic_txt.m_id);
 	}
 	else
-		shader->set_uniform("spec_txt_active", false);
-	
-	if (m_normal_txt.m_id > 0)
+		shader->set_uniform("metallic_txt_active", false);
+
+	shader->set_uniform("kroughness", m_roughness);
+	if (m_roughness_txt.m_id > 0)
 	{
 		glActiveTexture(GL_TEXTURE2);
-		shader->set_uniform("norm_txt_active", true);
+		shader->set_uniform("roughness_txt_active", true);
+		glBindTexture(GL_TEXTURE_2D, m_roughness_txt.m_id);
+	}
+	else
+		shader->set_uniform("roughness_txt_active", false);
+
+	shader->set_uniform("kambient", m_ambient);
+	if (m_normal_txt.m_id > 0)
+	{
+		glActiveTexture(GL_TEXTURE3);
+		shader->set_uniform("normal_txt_active", true);
 		glBindTexture(GL_TEXTURE_2D, m_normal_txt.m_id);
 	}
 	else
-		shader->set_uniform("norm_txt_active", false);
+		shader->set_uniform("normal_txt_active", false);
 }

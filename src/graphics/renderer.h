@@ -46,6 +46,7 @@ class c_renderer
 	enum e_texture {
 		DIFFUSE,
 		POSITION,
+		METALLIC,
 		NORMAL,
 		SELECTION,
 		DEPTH,

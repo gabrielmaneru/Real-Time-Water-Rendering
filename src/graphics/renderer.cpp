@@ -67,7 +67,7 @@ bool c_renderer::init()
 	// Load Programs
 	try {
 		g_buffer_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
-		light_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
+		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 		color_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/color.frag");
@@ -115,6 +115,7 @@ void c_renderer::update()
 	||  window_manager->get_height() != g_buffer.m_height)
 	{
 		g_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
+			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
@@ -201,10 +202,10 @@ void c_renderer::update()
 		/**/light_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "render_ambient");
 		/**/ortho_cam.set_uniforms(light_shader);
 		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
-		/**/glActiveTexture(GL_TEXTURE1);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
-		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glActiveTexture(GL_TEXTURE1);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
+		/**/glActiveTexture(GL_TEXTURE3);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 		/**/m_models[2]->m_meshes[0]->draw(light_shader);
 		/**/
@@ -213,6 +214,8 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(light_shader);
 		/**/light_shader->set_uniform("window_width", window_manager->get_width());
 		/**/light_shader->set_uniform("window_height", window_manager->get_height());
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(METALLIC));
 		/**/GL_CALL(glEnable(GL_BLEND));
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/glDepthFunc(GL_GREATER);
@@ -412,6 +415,7 @@ void c_renderer::drawGUI()
 		{
 			show_image(c_renderer::DIFFUSE);
 			show_image(c_renderer::POSITION);
+			show_image(c_renderer::METALLIC);
 			show_image(c_renderer::NORMAL);
 			show_image(c_renderer::DEPTH);
 			ImGui::TreePop();
@@ -504,8 +508,10 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return g_buffer.m_color_texture[0]; 
 	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[1];
-	case c_renderer::e_texture::NORMAL:
+	case c_renderer::e_texture::METALLIC:
 		return g_buffer.m_color_texture[2];
+	case c_renderer::e_texture::NORMAL:
+		return g_buffer.m_color_texture[3];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:
