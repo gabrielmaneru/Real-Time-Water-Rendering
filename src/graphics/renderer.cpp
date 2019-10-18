@@ -98,7 +98,7 @@ bool c_renderer::init()
 	
 	// Curves
 	m_curve_line = new curve_line("line");
-	m_curve_hermite = new curve_hermite("hermite");
+	m_curve_hermite = new curve_line("hermite");
 	m_curve_catmull = new curve_catmull("catmull");
 	m_curve_bezier = new curve_bezier("bezier");
 

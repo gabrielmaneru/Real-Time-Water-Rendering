@@ -192,7 +192,7 @@
         "speed": 0.4
       },
       "curve_interpolator": {
-        "curve": "line",
+        "curve": "hermite",
         "active": 1,
         "playback": 0,
         "speed": 0.3

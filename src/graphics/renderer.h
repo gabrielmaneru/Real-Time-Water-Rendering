@@ -34,7 +34,7 @@ class c_renderer
 
 	//Curves
 	curve_line*    m_curve_line;
-	curve_hermite* m_curve_hermite;
+	curve_line* m_curve_hermite;
 	curve_catmull* m_curve_catmull;
 	curve_bezier*  m_curve_bezier;
 
