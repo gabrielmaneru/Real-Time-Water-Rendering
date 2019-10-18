@@ -32,9 +32,9 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 0,
-        "num_anim": 0,
         "speed": 0.4
       }
     },
@@ -54,9 +54,9 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 0,
-        "num_anim": 0,
         "speed": 0.6
       }
     },
@@ -76,9 +76,9 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 0,
-        "num_anim": 0,
         "speed": 0.6
       }
     },
@@ -98,9 +98,9 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 0,
-        "num_anim": 0,
         "speed": 0.4
       }
     },
@@ -120,9 +120,9 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 0,
-        "num_anim": 0,
         "speed": 0.4
       }
     },
@@ -142,9 +142,9 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 0,
-        "num_anim": 0,
         "speed": 0.5
       }
     },
@@ -164,18 +164,18 @@
         "x": 10.0
       },
       "animator": {
+        "num_anim": 0,
         "active": 1,
         "playback": 1,
-        "num_anim": 0,
         "speed": 0.4
       }
     },
     {
-      "mesh": "cube",
+      "mesh": "sneak",
       "translation": {
-        "x": 6.0,
-        "y": 15.0,
-        "z": 20.0
+        "x": 4.0,
+        "y": 0.0,
+        "z": 25.0
       },
       "rotate": {
         "x": 0.0,
@@ -183,9 +183,20 @@
         "z": 0.0
       },
       "scale": {
-        "x": 3.0
+        "x": 10.0
       },
-      "curve": "line"
+      "animator": {
+        "num_anim": 0,
+        "active": 1,
+        "playback": 0,
+        "speed": 0.4
+      },
+      "curve_interpolator": {
+        "curve": "line",
+        "active": 1,
+        "playback": 0,
+        "speed": 0.3
+      }
     }
   ]
 }

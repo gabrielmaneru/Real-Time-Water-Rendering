@@ -4,7 +4,7 @@ Reproduction or disclosure of this file or its contents without the prior writte
 DigiPen Institute of Technology is prohibited.
 File Name:	renderer.cpp
 Purpose: OpenGl renderer
-Author: Gabriel Mañeru - gabriel.m
+Author: Gabriel Maï¿½eru - gabriel.m
 - End Header --------------------------------------------------------*/
 
 #include "renderer.h"
@@ -84,6 +84,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
+		m_models.push_back(new Model("./data/meshes/sneak.dae"));
 		m_models.push_back(new Model("./data/meshes/hiphop_dance.dae"));
 		m_models.push_back(new Model("./data/meshes/dance.dae"));
 		m_models.push_back(new Model("./data/meshes/belly.dae"));
@@ -154,9 +155,8 @@ void c_renderer::update()
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
-		/**/if (m_render_options.render_bones)
-			{
-			}
+		/**/if (m_render_options.render_curves)
+		/**/	scene->draw_debug_curves(g_buffer_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -445,7 +445,7 @@ void c_renderer::drawGUI()
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
-		ImGui::Checkbox("Render Bones", &m_render_options.render_bones);
+		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
 		if (ImGui::TreeNode("Antialiasing"))
 		{
 			ImGui::Checkbox("Do Antialiasing", &m_render_options.do_antialiasing);

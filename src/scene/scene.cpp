@@ -138,31 +138,41 @@ bool c_scene::load_scene(std::string path)
 					{
 						obj = obj.substr(t);
 						anim = new animator;
-						std::string s = obj.substr(obj.find("active") + 7, obj.find("playback") - obj.find("active") - 8);
-						anim->m_active = (bool)std::atoi(s.c_str());
-						s = obj.substr(obj.find("playback") + 9, obj.find("num_anim") - obj.find("playback") - 10);
-						anim->m_playback = (bool)std::atoi(s.c_str());
-						s = obj.substr(obj.find("num_anim") + 9, obj.find("speed") - obj.find("num_anim") - 10);
+
+						std::string s;
+						s = obj.substr(obj.find("num_anim") + 9, obj.find("active") - obj.find("num_anim") - 10);
 						anim->m_current_animation = std::atoi(s.c_str());
+						s = obj.substr(obj.find("active") + 7, obj.find("playback") - obj.find("active") - 8);
+						anim->m_active = (bool)std::atoi(s.c_str());
+						s = obj.substr(obj.find("playback") + 9, obj.find("speed") - obj.find("playback") - 10);
+						anim->m_playback = (bool)std::atoi(s.c_str());
 						s = obj.substr(obj.find("speed") + 6, obj.find("}") - obj.find("speed") - 6);
 						anim->m_speed = (double)std::atof(s.c_str());
 					}
 
 					curve_interpolator * m_curve{ nullptr };
-					t = obj.find("curve");
+					t = obj.find("curve_interpolator");
 					if (t < obj.size())
 					{
 						obj = obj.substr(t);
 						m_curve = new curve_interpolator;
-						std::string s = obj.substr(obj.find(":")+1, obj.find("}") - obj.find(":")-1);
+
+						std::string s;
+						s = obj.substr(obj.find("curve:") + 6, obj.find("active") - obj.find("curve:") - 7);
 						if (s == "line")
 							m_curve->m_curve = renderer->m_curve_line;
-						if (s == "hermite")
+						else if (s == "hermite")
 							m_curve->m_curve = renderer->m_curve_hermite;
-						if (s == "catmull")
+						else if (s == "catmull")
 							m_curve->m_curve = renderer->m_curve_catmull;
-						if (s == "bezier")
+						else if (s == "bezier")
 							m_curve->m_curve = renderer->m_curve_bezier;
+						s = obj.substr(obj.find("active") + 7, obj.find("playback") - obj.find("active") - 8);
+						m_curve->m_active = (bool)std::atoi(s.c_str());
+						s = obj.substr(obj.find("playback") + 9, obj.find("speed") - obj.find("playback") - 10);
+						m_curve->m_playback = (bool)std::atoi(s.c_str());
+						s = obj.substr(obj.find("speed") + 6, obj.find("}") - obj.find("speed") - 6);
+						m_curve->m_speed = (double)std::atof(s.c_str());
 					}
 
 					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));
@@ -254,6 +264,42 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 		shader->set_uniform("M", tr.get_model());
 		shader->set_uniform("selection_color", renderer->compute_selection_color());
 		renderer->get_model("sphere")->draw(shader, nullptr);
+	}
+}
+
+void c_scene::draw_debug_curves(Shader_Program * shader)
+{
+	transform3d tr;
+	for (auto p_obj : m_objects)
+	{
+		if (p_obj->m_curve == nullptr)
+			continue;
+
+		const size_t evals = 1000;
+		float dur = p_obj->m_curve->m_curve->duration();
+		float step = dur / (float)evals;
+
+		for (size_t i = 0; i < evals; i++)
+		{
+			float t_0 = step * (float)i;
+			float t_1 = step * (float)(i+1);
+
+			vec3 pos_0 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_curve->evaluate(t_0);
+			vec3 pos_1 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_curve->evaluate(t_1);
+
+			mat4 model = glm::translate(mat4(1.0f), lerp(pos_0, pos_1, 0.5f));
+			model = glm::scale(model, abs(pos_1-pos_0) + vec3(0.1f, 0.1f, 0.1f));
+			shader->set_uniform("M", model);
+
+			renderer->get_model("cube")->draw(shader, nullptr);
+		}
+		for (auto p : p_obj->m_curve->m_curve->m_frames)
+		{
+			mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + p.first);
+			shader->set_uniform("M", model);
+
+			renderer->get_model("sphere")->draw(shader, nullptr);
+		}
 	}
 }
 

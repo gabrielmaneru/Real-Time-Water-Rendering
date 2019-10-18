@@ -27,7 +27,6 @@ struct animator : public interpolator
 };
 struct curve_interpolator : public interpolator
 {
-	curve_interpolator();
 	const curve_base* m_curve{ nullptr };
 };
 

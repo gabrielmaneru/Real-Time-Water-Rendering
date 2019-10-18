@@ -165,6 +165,7 @@ void c_editor::draw_selected_window()
 			m_selected->m_animator->draw_GUI(), ImGui::TreePop();
 		if (m_selected->m_curve && ImGui::TreeNode("Curve"))
 			m_selected->m_curve->draw_GUI(), ImGui::TreePop();
+		m_selected->m_transform.m_tr.upd();
 		if (ImGui::Button("Delete"))
 		{
 			for (size_t i = 0; i < scene->m_objects.size(); i++)

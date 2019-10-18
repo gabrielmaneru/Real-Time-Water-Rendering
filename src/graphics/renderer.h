@@ -4,7 +4,7 @@ Reproduction or disclosure of this file or its contents without the prior writte
 DigiPen Institute of Technology is prohibited.
 File Name:	renderer.h
 Purpose: OpenGl renderer
-Author: Gabriel Mañeru - gabriel.m
+Author: Gabriel Maï¿½eru - gabriel.m
 - End Header --------------------------------------------------------*/
 
 #pragma once
@@ -61,7 +61,7 @@ class c_renderer
 	struct Options
 	{
 		bool render_lights{ false };
-		bool render_bones{ false };
+		bool render_curves{ false };
 
 		bool do_antialiasing{ true };
 		float aa_coef_normal{ 0.05f };
@@ -74,7 +74,7 @@ class c_renderer
 		bool df_auto_focus{ false };
 
 		bool do_motion_blur{ true };
-		bool mb_camera_blur{ false };
+		bool mb_camera_blur{ true };
 
 		bool do_bloom{ true };
 		float bl_coef{ 1.f };
