@@ -34,6 +34,7 @@ void scene_object::update_parent_curve()
 		nxt_time = fmod(nxt_time, m_curve->m_actual_curve->duration());
 		vec3 nxt = m_curve->m_actual_curve->evaluate((float)nxt_time);
 		vec3 front = glm::normalize(pos-nxt);
+
 		m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
 		m_transform.m_tr.parent = mat_pos;
 

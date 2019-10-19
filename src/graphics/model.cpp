@@ -15,18 +15,8 @@ Author: Gabriel Mañeru - gabriel.m
 #include <platform/window_manager.h>
 #include <platform/window.h>
 
-const Material Model::m_def_material
-{
-	"default",
-	vec3(0.0, 1.0, 0.0),
-	{},
-	vec3(0.0f),
-	{},
-	0.5f,
-	{},
-	1.0f,
-	{}
-};
+std::vector<const Material*> Model::m_def_materials{};
+
 mat4 to_glm(aiMatrix4x4 m)
 {
 	return glm::transpose(glm::make_mat4(&m.a1));
@@ -73,16 +63,23 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 		}
 	}
 
-	for (auto& mesh : m_meshes)
+	for (size_t i = 0; i < m_meshes.size(); i++)
 	{
 		if (use_mat)
 		{
-			if (mesh->m_material_idx == default_material)
-				m_def_material.set_uniform(shader);
+			if (m_bones.size())
+			{
+				if (i > 0)
+					m_def_materials[1]->set_uniform(shader);
+				else
+					m_def_materials[2]->set_uniform(shader);
+			}
+			else if(m_meshes[i]->m_material_idx == default_material)
+				m_def_materials[0]->set_uniform(shader);
 			else
-				m_materials[mesh->m_material_idx].set_uniform(shader);
+				m_materials[m_meshes[i]->m_material_idx].set_uniform(shader);
 		}
-		mesh->draw(shader);
+		m_meshes[i]->draw(shader);
 	}
 }
 

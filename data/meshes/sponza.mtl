@@ -150,7 +150,7 @@ newmtl floor
 	Kd 0.5880 0.5880 0.5880
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka ./data/textures/Dielectric_metallic.tga
+	map_Ka ./data/textures/Sponza_Floor_metallic.tga
 	map_Kd ./data/textures/Sponza_Floor_diffuse.tga
 	map_bump ./data/textures/Sponza_Floor_normal.tga
 	bump ./data/textures/Sponza_Floor_normal.tga

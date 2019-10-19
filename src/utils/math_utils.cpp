@@ -4,10 +4,31 @@
 #include <ctime>
 quat lerp(const quat& min, const quat& max, const float& coef)
 {
+	// Try Slerp
 	if (renderer->m_render_options.interpolate_slerp)
-		return glm::normalize(glm::slerp(min, max, static_cast<float>(coef)));
-	else // do NLerp
-		return glm::normalize(min + (max - min) * coef);
+	{
+		float cos_theta = glm::dot(min, max);
+
+		quat fixed_max;
+		if (cos_theta < 0.0f)
+		{
+			fixed_max = -max;
+			cos_theta = -cos_theta;
+		}
+		else
+			fixed_max = max;
+
+		// Avoid Slerp when cos_theta is close to 1
+		if (cos_theta < 1.0f - glm::epsilon<float>())
+		{
+			float theta = glm::acos(cos_theta);
+			return glm::normalize(  (glm::sin((1 - coef)*theta)* min + glm::sin(coef*theta)* fixed_max)
+									/ glm::sin(theta));
+		}
+	}
+
+	// do NLerp
+	return glm::normalize(min + (max - min) * coef);
 }
 int round_float(const float & value)
 {

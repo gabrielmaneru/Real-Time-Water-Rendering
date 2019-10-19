@@ -16,6 +16,12 @@ Author: Gabriel Mañeru - gabriel.m
 constexpr int default_material = -1;
 struct Material
 {
+	Material() = default;
+	Material(std::string name,
+		vec3 albedo_v, std::string albedo_path,
+		vec3 metalli_v, std::string metallic_path,
+		float roughness_v, std::string roughness_path,
+		float ambient_v, std::string normal_path);
 	void set_uniform(Shader_Program*)const;
 	std::string m_name;
 

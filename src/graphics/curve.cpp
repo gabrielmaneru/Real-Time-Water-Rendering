@@ -90,37 +90,52 @@ vec3 curve_catmull::evaluate(float t)const
 		return m_frames.front().first;
 	if (t >= duration())
 		return m_frames.back().first;
-
-	/*LINEAR*/
-	for (size_t i = 0; i < m_frames.size() - 1; i++)
-		if (t < m_frames[i + 1].second)
-			return map(t, m_frames[i].second, m_frames[i + 1].second,
-				m_frames[i].first, m_frames[i + 1].first);
-	/*LINEAR*/
-
+	
 	for (size_t i = 0; i < m_frames.size() - 1; i++)
 		if (t < m_frames[i + 1].second)
 		{
 			if (i == 0)
 			{
-				return map(t, m_frames[i].second, m_frames[i + 1].second,
-					m_frames[i].first, m_frames[i + 1].first);
+				float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
+
+				vec3 P1 = m_frames[i].first;
+				vec3 P2 = m_frames[i + 1].first;
+				vec3 P3 = m_frames[i + 2].first;
+
+				vec3 C0, C1;
+				C0 = 0.5f*((P2 - P1) + (P2 - P3));
+				C1 = 0.5f*(P3 - P1);
+
+				return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 			}
 			else if (i == m_frames.size() - 2)
 			{
-				return map(t, m_frames[i].second, m_frames[i + 1].second,
-					m_frames[i].first, m_frames[i + 1].first);
+				float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
+
+				vec3 P0 = m_frames[i - 1].first;
+				vec3 P1 = m_frames[i].first;
+				vec3 P2 = m_frames[i + 1].first;
+
+				vec3 C0, C1;
+				C0 = 0.5f*(P2 - P0);
+				C1 = -0.5f*((P1-P2)+(P1-P0));
+
+				return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 			}
 			else
 			{
-				float c = coef(m_frames[i].second, m_frames[i + 3].second, t);
+				float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
 
 				vec3 P0 = m_frames[i - 1].first;
 				vec3 P1 = m_frames[i].first;
 				vec3 P2 = m_frames[i + 1].first;
 				vec3 P3 = m_frames[i + 2].first;
 
-				return (-P0 + 3.0f*P1 - 3.0f*P2 + P3)*(c*c*c) + (2.0f*P0 - 5.0f*P1 + 4.0f*P2 - P3)*(c*c) + (P2 - P0)*0.5f*c + P1;
+				vec3 C0,C1;
+				C0 = 0.5f*(P2 - P0);
+				C1 = 0.5f*(P3 - P1);
+
+				return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 			}
 		}
 	return{};

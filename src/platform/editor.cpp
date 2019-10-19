@@ -161,10 +161,10 @@ void c_editor::draw_selected_window()
 		if (ImGui::DragFloat3("Rotation", &eu_angles.x))
 			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
 		ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f);
-		if (m_selected->m_animator && ImGui::TreeNode("Animator"))
-			m_selected->m_animator->draw_GUI(), ImGui::TreePop();
-		if (m_selected->m_curve && ImGui::TreeNode("Curve"))
-			m_selected->m_curve->draw_GUI(), ImGui::TreePop();
+		if (m_selected->m_animator)
+			m_selected->m_animator->draw_GUI();
+		if (m_selected->m_curve)
+			m_selected->m_curve->draw_GUI();
 		m_selected->m_transform.m_tr.upd();
 		if (ImGui::Button("Delete"))
 		{

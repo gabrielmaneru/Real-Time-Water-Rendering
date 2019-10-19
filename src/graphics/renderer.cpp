@@ -102,6 +102,23 @@ bool c_renderer::init()
 	m_curves.push_back(new curve_catmull("catmull"));
 	m_curves.push_back(new curve_bezier("bezier"));
 
+	// Materials
+	Model::m_def_materials.push_back(new Material{ "default",
+		vec3(0.0, 1.0, 0.0),{},
+		vec3(0.0f),{},
+		0.5f,{},
+		1.0f,{}});
+	Model::m_def_materials.push_back(new Material{"plastic",
+		{},"plasticpattern1-albedo.png",
+		{},"Dielectric_metallic.tga",
+		{},"plasticpattern1-roughness2.png",
+		1.0f,"plasticpattern1-normal2b.png"});
+	Model::m_def_materials.push_back(new Material{"copper",
+		{},"Copper-scuffed_basecolor-boosted.png",
+		{},"Metallic_metallic.tga",
+		{},"Copper-scuffed_roughness.png",
+		1.0f,"Copper-scuffed_normal.png"});
+
 	// Setup Cameras
 	scene_cam.m_eye = { 4,16,44 };
 	scene_cam.update();

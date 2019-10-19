@@ -72,6 +72,8 @@ public:
 	std::string m_name;
 	std::vector<Mesh*> m_meshes;
 
+	static std::vector<const Material*> m_def_materials;
+
 private:
 	void load_obj(const std::string&);
 	void processNode(aiNode* node_, node* parent, const aiScene* scene);
@@ -83,7 +85,6 @@ private:
 
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
-	static const Material m_def_material;
 	node* m_hierarchy;
 	std::vector<bone_data*> m_bones;
 	std::map<std::string, int> m_bone_mapping;
