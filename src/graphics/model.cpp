@@ -19,6 +19,7 @@ std::vector<const Material*> Model::m_def_materials{};
 
 mat4 to_glm(aiMatrix4x4 m)
 {
+	// Transform Column mayor/Row mayor
 	return glm::transpose(glm::make_mat4(&m.a1));
 }
 
@@ -30,6 +31,7 @@ Model::Model(const std::string & path)
 
 Model::~Model()
 {
+	// Clean Memory
 	for (auto pM : m_meshes)
 		delete pM;
 	m_meshes.clear();
@@ -45,40 +47,52 @@ Model::~Model()
 
 void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) const
 {
+	// If it has bones
 	if (m_bones.size())
 	{
+		// Update Final Transformations of Bones
 		update(m_hierarchy,m_animator, mat4(1.0f));
+
+		// Load Bone transformations
 		for (size_t i = 0; i < m_bones.size(); i++)
 		{
 			std::string call("bones[" + std::to_string(i) + "]");
 			shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform);
+
 			call= "prev_bones[" + std::to_string(i) + "]";
 			shader->set_uniform(call.c_str(), m_bones[i]->m_prev_transform);
 		}
 
-		if (m_animator && m_animator->m_active && m_animator->m_current_animation > -1)
+		// Update Animators (this should be object individually)
+		if (m_animator && m_animator->m_active && m_animator->m_current_animation > -1 && m_animations.size() > 0)
 		{
 			double dur = m_animations[m_animator->m_current_animation]->m_duration;
 			m_animator->update(dur);
 		}
 	}
 
+	// Loop each mesh
 	for (size_t i = 0; i < m_meshes.size(); i++)
 	{
 		if (use_mat)
 		{
-			if (m_bones.size())
+			// Load Material (hardcoded)
+			if(m_meshes[i]->m_material_idx == default_material)
+				m_def_materials[2]->set_uniform(shader);
+				//m_def_materials[0]->set_uniform(shader);
+			else
 			{
-				if (i > 0)
+				const Material & mat = m_materials[m_meshes[i]->m_material_idx];
+				if (mat.m_name == "Beta_Joints_Mat")
+					m_def_materials[2]->set_uniform(shader);
+				else if (mat.m_name == "asdf1_Beta_HighLimbsGeoSG2")
 					m_def_materials[1]->set_uniform(shader);
 				else
-					m_def_materials[2]->set_uniform(shader);
+					mat.set_uniform(shader);
 			}
-			else if(m_meshes[i]->m_material_idx == default_material)
-				m_def_materials[0]->set_uniform(shader);
-			else
-				m_materials[m_meshes[i]->m_material_idx].set_uniform(shader);
 		}
+
+		// Draw it
 		m_meshes[i]->draw(shader);
 	}
 }
@@ -95,48 +109,32 @@ void Model::load_obj(const std::string & path)
 	if (!scn->mRootNode)
 		throw std::string("Mesh empty: ") + path;
 
+	// Process Hierarchy
 	m_hierarchy = new node(nullptr);
 	processNode(scn->mRootNode, m_hierarchy, scn);
 
+	// Link Bones to Animnodes
 	for (auto b : m_bones)
 		m_hierarchy->Find(b->m_name)->m_bones.push_back(b);
-	if (scn->HasAnimations())
-	{
-		processAnimations(scn);
-		for (auto& m : m_materials)
-		{
-			
-			float scalar = random_float(0.0f, 360.f);
-			float val = fmod(scalar, 60.f) / 60.f;
 
-			vec3 color;
-			if (scalar < 60.f)
-				color = { 1.0f, val, 0.0f };
-			else if (scalar < 120.f)
-				color = { 1.f - val, 1.0f, 0.0f };
-			else if (scalar < 180.f)
-				color = { 0.0f, 1.f, val };
-			else if (scalar < 240.f)
-				color = { 0.0f, 1.f - val, 1.0f };
-			else if (scalar < 300.f)
-				color = { val, 0.0f, 1.0f };
-			else
-				color = { 1.0f, 0.0f, 1.f - val };
-			m.m_albedo = color;
-		}
-	}
+	// Process Animation
+	if (scn->HasAnimations())
+		processAnimations(scn);
 }
 
 void Model::processNode(aiNode * node_, node * parent, const aiScene * scene)
 {
+	// Store data
 	parent->m_name = { node_->mName.data };
 	parent->m_transformation = to_glm(node_->mTransformation);
 
+	// Add Meshes
 	for (size_t i = 0; i < node_->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[node_->mMeshes[i]];
 		m_meshes.push_back(processMesh(mesh, scene));
 	}
 
+	// Continue down the hierarchy
 	for (size_t i = 0; i < node_->mNumChildren; i++)
 	{
 		auto child = new node(parent);
@@ -147,6 +145,7 @@ void Model::processNode(aiNode * node_, node * parent, const aiScene * scene)
 
 void Model::processAnimations(const aiScene * scene)
 {
+	// Loop animations
 	for (size_t i = 0; i < scene->mNumAnimations; i++)
 	{
 		aiAnimation* ai_anim = scene->mAnimations[i];
@@ -155,12 +154,14 @@ void Model::processAnimations(const aiScene * scene)
 		anim->m_duration = ai_anim->mDuration;
 		anim->m_tick_per_second = ai_anim->mTicksPerSecond;
 
+		// Copy channels
 		for (size_t i = 0; i < ai_anim->mNumChannels; i++)
 		{
 			aiNodeAnim* ai_channel = ai_anim->mChannels[i];
 			std::string name = ai_channel->mNodeName.data;
 			channel& c = anim->m_channels[name];
 
+			// Add Positions
 			c.m_key_position.resize(ai_channel->mNumPositionKeys);
 			for (size_t i = 0; i < ai_channel->mNumPositionKeys; i++)
 			{
@@ -168,6 +169,7 @@ void Model::processAnimations(const aiScene * scene)
 				c.m_key_position[i] = { glm::make_vec3(&key.mValue.x), key.mTime };
 			}
 
+			// Add Rotations
 			c.m_key_rotation.resize(ai_channel->mNumRotationKeys);
 			for (size_t i = 0; i < ai_channel->mNumRotationKeys; i++)
 			{
@@ -175,6 +177,7 @@ void Model::processAnimations(const aiScene * scene)
 				c.m_key_rotation[i] = { quat(key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z), key.mTime };
 			}
 
+			// Add Scales
 			c.m_key_scaling.resize(ai_channel->mNumScalingKeys);
 			for (size_t i = 0; i < ai_channel->mNumScalingKeys; i++)
 			{
@@ -182,18 +185,21 @@ void Model::processAnimations(const aiScene * scene)
 				c.m_key_scaling[i] = { glm::make_vec3(&key.mValue.x), key.mTime };
 			}
 		}
+
+		// Add new animations
 		m_animations.push_back(anim);
 	}
 }
 
 Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 {
+	// Create the mesh
 	Mesh* m_mesh = new Mesh(mesh->mNumVertices);
 	auto quad = mesh->mPrimitiveTypes & aiPrimitiveType::aiPrimitiveType_POLYGON;
 	m_mesh->m_primitive = (quad > 0) ? Mesh::e_prim::quad : Mesh::e_prim::tri;
 
+	// Load the vertex buffer
 	VertexBuffer& vertices = m_mesh->m_vertices;
-
 	// Vertex
 	for (size_t i = 0; i < mesh->mNumVertices; i++)
 	{
@@ -244,6 +250,8 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 	{
 		const aiBone* bone = mesh->mBones[b];
 		std::string bone_name = bone->mName.data;
+
+		// Link id with bonemap
 		int bone_id;
 		auto it = m_bone_mapping.find(bone_name);
 		if (it == m_bone_mapping.end())
@@ -259,6 +267,7 @@ Mesh* Model::processMesh(aiMesh * mesh, const aiScene * scene)
 		else
 			bone_id = m_bone_mapping[bone_name];
 		
+		// Apply weights
 		for (size_t w = 0; w < bone->mNumWeights; w++)
 		{
 			unsigned vtx_id = bone->mWeights[w].mVertexId;
@@ -354,7 +363,7 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 void Model::update(node * node_, animator * m_animator, mat4 parent) const
 {
 	mat4 node_transformation = node_->m_transformation;
-	if (m_animator && m_animator->m_current_animation != -1)
+	if (m_animator && m_animator->m_current_animation != -1 && m_animations.size() > 0)
 	{
 		animation* anim = m_animations[m_animator->m_current_animation];
 

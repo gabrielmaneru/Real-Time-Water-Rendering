@@ -1,3 +1,11 @@
+/* Start Header -------------------------------------------------------
+Copyright (C) 2019 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written consent of
+DigiPen Institute of Technology is prohibited.
+File Name:	curve.cpp
+Purpose: Curve interpolation
+Author: Gabriel Mañeru - gabriel.m
+- End Header --------------------------------------------------------*/
 #include "curve.h"
 #include <fstream>
 
@@ -14,6 +22,7 @@ curve_base::curve_base(std::string path)
 		file.seekg(0, std::ios::beg);
 		stream.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 
+		// Parse the curve
 		while (1)
 		{
 			size_t s;
@@ -47,11 +56,13 @@ float curve_base::duration() const
 
 vec3 curve_line::evaluate(float t)const
 {
+	// Bounding assertions
 	if (t <= 0.0f || m_frames.size() == 1)
 		return m_frames.front().first;
 	if (t >= duration())
 		return m_frames.back().first;
 
+	// Find current frame
 	for (size_t i = 0; i < m_frames.size() - 1; i++)
 		if (t < m_frames[i + 1].second)
 			return map(t, m_frames[i].second, m_frames[i + 1].second,
@@ -61,95 +72,90 @@ vec3 curve_line::evaluate(float t)const
 
 vec3 curve_hermite::evaluate(float t)const
 {
+	// Bounding assertions
 	if (t <= 0.0f || m_frames.size() == 1)
 		return m_frames.front().first;
 	if (t >= duration())
 		return m_frames.back().first;
 
+	// Find current frame
 	for (size_t i = 0; i < m_frames.size() - 3; i += 3)
-	{
 		if (t < m_frames[i + 3].second)
 		{
+			
 			float c = coef(m_frames[i].second, m_frames[i + 3].second, t);
-
 			vec3 P0 = m_frames[i].first;
 			vec3 P1 = m_frames[i + 3].first;
-
 			vec3 T0 = m_frames[i + 1].first;
 			vec3 T1 = m_frames[i + 2].first;
 
+			// Apply cubic interpolation
 			return (2.0f*(P0 - P1) + T0 + T1)*(c*c*c) + (3.0f*(P1 - P0) - 2.0f*T0 - T1)*(c*c) + T0 * c + P0;
 		}
-	}
 	return{};
 }
 
 vec3 curve_catmull::evaluate(float t)const
 {
+	// Bounding assertions
 	if (t <= 0.0f || m_frames.size() == 1)
 		return m_frames.front().first;
 	if (t >= duration())
 		return m_frames.back().first;
-	
+
+	// Find current frame
 	for (size_t i = 0; i < m_frames.size() - 1; i++)
 		if (t < m_frames[i + 1].second)
 		{
+			float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
+			vec3 P1 = m_frames[i].first;
+			vec3 P2 = m_frames[i + 1].first;
+
+			// Compute Tangents
+			vec3 C0, C1;
+			// Initial case
 			if (i == 0)
 			{
-				float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
-
-				vec3 P1 = m_frames[i].first;
-				vec3 P2 = m_frames[i + 1].first;
 				vec3 P3 = m_frames[i + 2].first;
 
-				vec3 C0, C1;
 				C0 = 0.5f*((P2 - P1) + (P2 - P3));
 				C1 = 0.5f*(P3 - P1);
-
-				return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 			}
+
+			// Ending case
 			else if (i == m_frames.size() - 2)
 			{
-				float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
-
 				vec3 P0 = m_frames[i - 1].first;
-				vec3 P1 = m_frames[i].first;
-				vec3 P2 = m_frames[i + 1].first;
 
-				vec3 C0, C1;
 				C0 = 0.5f*(P2 - P0);
 				C1 = -0.5f*((P1-P2)+(P1-P0));
-
-				return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 			}
+
+			// Intermediate case
 			else
 			{
-				float c = coef(m_frames[i].second, m_frames[i + 1].second, t);
-
 				vec3 P0 = m_frames[i - 1].first;
-				vec3 P1 = m_frames[i].first;
-				vec3 P2 = m_frames[i + 1].first;
 				vec3 P3 = m_frames[i + 2].first;
 
-				vec3 C0,C1;
 				C0 = 0.5f*(P2 - P0);
 				C1 = 0.5f*(P3 - P1);
-
-				return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 			}
+
+			return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 		}
 	return{};
 }
 
 vec3 curve_bezier::evaluate(float t)const
 {
+	// Bounding assertions
 	if (t <= 0.0f || m_frames.size() == 1)
 		return m_frames.front().first;
 	if (t >= duration())
 		return m_frames.back().first;
 
+	// Find current frame
 	for (size_t i = 0; i < m_frames.size() - 3; i += 3)
-	{
 		if (t < m_frames[i + 3].second)
 		{
 			float c = coef(m_frames[i].second, m_frames[i + 3].second, t);
@@ -159,15 +165,18 @@ vec3 curve_bezier::evaluate(float t)const
 			vec3 C1 = m_frames[i + 2].first;
 			vec3 P1 = m_frames[i + 3].first;
 
+			// DeCasteljau intermediate interpolation
+			// First Degree
 			vec3 m = lerp(P0, C0, c);
 			vec3 n = lerp(C0, C1, c);
 			vec3 o = lerp(C1, P1, c);
 
+			// Second Degree
 			vec3 r = lerp(m, n, c);
 			vec3 s = lerp(n, o, c);
 
+			// Point in the curve
 			return lerp(r, s, c);
 		}
-	}
 	return{};
 }

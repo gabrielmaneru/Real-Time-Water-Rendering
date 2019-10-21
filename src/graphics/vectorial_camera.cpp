@@ -95,20 +95,29 @@ void vectorial_camera::update_free_mode()
 
 void vectorial_camera::update_target_mode()
 {
-	float speed = ROTATION_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 10.0f : 1.0f);
-	if (window_manager->is_key_down(GLFW_KEY_A))
-		m_alpha += speed;
-	if (window_manager->is_key_down(GLFW_KEY_D))
-		m_alpha -= speed;
-	if (window_manager->is_key_down(GLFW_KEY_W))
-		m_beta += speed;
-	if (window_manager->is_key_down(GLFW_KEY_S))
-		m_beta -= speed;
-	if (window_manager->is_key_down(GLFW_KEY_E))
-		m_dist *= 1 + speed;
-	if (window_manager->is_key_down(GLFW_KEY_Q))
-		m_dist *= 1 - speed;
 
+	// Check for Mouse Imput
+	if (window::mouse_but_right_pressed)
+	{
+		float speed = ROTATION_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 10.0f : 1.0f);
+		if (window_manager->is_key_down(GLFW_KEY_A))
+			m_alpha += speed;
+		if (window_manager->is_key_down(GLFW_KEY_D))
+			m_alpha -= speed;
+		if (window_manager->is_key_down(GLFW_KEY_W))
+			m_beta += speed;
+		if (window_manager->is_key_down(GLFW_KEY_S))
+			m_beta -= speed;
+		if (window_manager->is_key_down(GLFW_KEY_E))
+			m_dist *= 1 + speed;
+		if (window_manager->is_key_down(GLFW_KEY_Q))
+			m_dist *= 1 - speed;
+
+		// Apply Offset
+		static const float mouse_speed = glm::pow(MOUSE_SENSITIVITY, 5);
+		m_alpha += window::mouse_offset[0] * mouse_speed;
+		m_beta -= window::mouse_offset[1] * mouse_speed;
+	}
 	m_beta = glm::clamp(m_beta, glm::pi<float>() * -.45f, glm::pi<float>() * .45f);
 	m_dist = glm::clamp(m_dist, m_near, m_far * 0.5f);
 	m_eye = m_target->m_transform.get_pos();

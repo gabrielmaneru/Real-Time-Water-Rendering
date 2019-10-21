@@ -114,10 +114,10 @@ bool c_renderer::init()
 		{},"plasticpattern1-roughness2.png",
 		1.0f,"plasticpattern1-normal2b.png"});
 	Model::m_def_materials.push_back(new Material{"copper",
-		{},"Copper-scuffed_basecolor-boosted.png",
-		{},"Metallic_metallic.tga",
-		{},"Copper-scuffed_roughness.png",
-		1.0f,"Copper-scuffed_normal.png"});
+		{},"oxidized-copper-albedo.png",
+		{},"oxidized-copper-metal.png",
+		{},"oxidized-coppper-roughness.png",
+		1.0f,"oxidized-copper-normal-ue.png"});
 
 	// Setup Cameras
 	scene_cam.m_eye = { 4,16,44 };
