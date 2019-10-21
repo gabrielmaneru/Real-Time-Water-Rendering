@@ -398,7 +398,7 @@ void c_scene::drawGUI()
 			if (ImGui::TreeNode(tree_name.c_str()))
 			{
 				m_objects[i]->draw_GUI();
-				if (ImGui::Button("Delete"))
+				if (ImGui::Button("Delete Object"))
 				{
 					delete m_objects[i];
 					m_objects.erase(m_objects.begin() + i);

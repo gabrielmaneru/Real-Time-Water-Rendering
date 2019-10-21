@@ -51,16 +51,33 @@ void scene_object::draw_GUI()
 	if (ImGui::DragFloat("Scale", &m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 	if (chng)m_transform.m_tr.upd();
 
+	ImGui::NewLine();
 	if (m_animator)
+	{
 		m_animator->draw_GUI();
+		if (ImGui::Button("Delete Animator"))
+		{
+			delete m_animator;
+			m_animator = nullptr;
+		}
+	}
 	else if (ImGui::Button("Create Animator"))
 		m_animator = new animator;
 
+	ImGui::NewLine();
 	if (m_curve)
+	{
 		m_curve->draw_GUI();
+		if (ImGui::Button("Delete Curve Interpolator"))
+		{
+			delete m_curve;
+			m_curve = nullptr;
+		}
+	}
 	else if (ImGui::Button("Create Curve Interpolator"))
 		m_curve = new curve_interpolator;
 
+	ImGui::NewLine();
 }
 
 void scene_object::update_parent_curve()
