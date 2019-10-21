@@ -302,43 +302,32 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 		}
 
 		const curve_base* curve= p_obj->m_curve->m_actual_curve;
-		if (dynamic_cast<const curve_line*>(curve) != nullptr)
+		if (dynamic_cast<const curve_line*>(curve) != nullptr
+		||  dynamic_cast<const curve_catmull*>(curve) != nullptr)
 		{
 			for (auto p : curve->m_frames)
 			{
 				mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + p.first);
 				model = glm::scale(model, vec3(0.5f));
 				shader->set_uniform("M", model);
-
 				renderer->get_model("sphere")->draw(shader, nullptr);
 			}
 		}
-		else if (dynamic_cast<const curve_hermite*>(curve) != nullptr)
+		else
+		if (dynamic_cast<const curve_hermite*>(curve) != nullptr
+		||  dynamic_cast<const curve_bezier*>(curve) != nullptr)
 		{
 			for (size_t i = 0; i < curve->m_frames.size() - 3; i += 3)
 			{
-				vec3 P0 = curve->m_frames[i].first;
-				vec3 P1 = curve->m_frames[i + 3].first;
+				vec3 P0 = p_obj->m_transform.get_pos() + curve->m_frames[i].first;
+				vec3 P1 = p_obj->m_transform.get_pos() + curve->m_frames[i + 3].first;
 
-				vec3 T0 = P0 * 0.1f + curve->m_frames[i + 1].first;
-				vec3 T1 = P1 * 0.1f + curve->m_frames[i + 2].first;
-
-				mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + P0);
+				mat4 model = glm::translate(mat4(1.0f), P0);
 				model = glm::scale(model, vec3(0.5f));
 				shader->set_uniform("M", model);
 				renderer->get_model("sphere")->draw(shader, nullptr);
 
-				model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + P1);
-				model = glm::scale(model, vec3(0.5f));
-				shader->set_uniform("M", model);
-				renderer->get_model("sphere")->draw(shader, nullptr);
-
-				model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + T0);
-				model = glm::scale(model, vec3(0.5f));
-				shader->set_uniform("M", model);
-				renderer->get_model("sphere")->draw(shader, nullptr);
-
-				model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + T1);
+				model = glm::translate(mat4(1.0f), P1);
 				model = glm::scale(model, vec3(0.5f));
 				shader->set_uniform("M", model);
 				renderer->get_model("sphere")->draw(shader, nullptr);

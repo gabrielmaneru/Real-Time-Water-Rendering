@@ -78,12 +78,11 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 		{
 			// Load Material (hardcoded)
 			if(m_meshes[i]->m_material_idx == default_material)
-				m_def_materials[2]->set_uniform(shader);
-				//m_def_materials[0]->set_uniform(shader);
+				m_def_materials[0]->set_uniform(shader);
 			else
 			{
 				const Material & mat = m_materials[m_meshes[i]->m_material_idx];
-				if (mat.m_name == "Beta_Joints_Mat")
+				if (mat.m_name == "Beta_Joints_MAT")
 					m_def_materials[2]->set_uniform(shader);
 				else if (mat.m_name == "asdf1_Beta_HighLimbsGeoSG2")
 					m_def_materials[1]->set_uniform(shader);
