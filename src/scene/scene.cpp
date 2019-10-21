@@ -279,7 +279,7 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 	transform3d tr;
 	for (auto p_obj : m_objects)
 	{
-		if (p_obj->m_curve == nullptr)
+		if (p_obj->m_curve == nullptr || p_obj->m_curve->m_actual_curve == nullptr)
 			continue;
 
 		const size_t evals = 1000;
@@ -397,38 +397,11 @@ void c_scene::drawGUI()
 
 			if (ImGui::TreeNode(tree_name.c_str()))
 			{
-				const char* current = m_objects[i]->m_model ? m_objects[i]->m_model->m_name.c_str() : "Unknown";
-				if (ImGui::BeginCombo("Mesh", current))
-				{
-					for (size_t n = 0; n < renderer->m_models.size(); n++)
-					{
-						bool is_selected = (m_objects[i]->m_model == renderer->m_models[n]);
-						if (ImGui::Selectable(renderer->m_models[n]->m_name.c_str(), is_selected))
-							m_objects[i]->m_model = renderer->m_models[n];
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndCombo();
-					
-				}
-				bool chng{ false };
-				if (ImGui::DragFloat3("Position", &m_objects[i]->m_transform.m_tr.m_pos.x, .1f))chng = true;
-				vec3 eu_angles = degrees(glm::eulerAngles(m_objects[i]->m_transform.m_tr.m_rot));
-				if (ImGui::DragFloat3("Rotation", &eu_angles.x))
-				{
-					m_objects[i]->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
-					chng = true;
-				}
-				if (ImGui::DragFloat("Scale", &m_objects[i]->m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
-				if (chng)m_objects[i]->m_transform.m_tr.upd();
-				if (m_objects[i]->m_animator)
-					m_objects[i]->m_animator->draw_GUI();
-				if (m_objects[i]->m_curve)
-					m_objects[i]->m_curve->draw_GUI();
+				m_objects[i]->draw_GUI();
 				if (ImGui::Button("Delete"))
 				{
 					delete m_objects[i];
-					m_objects.erase(m_objects.begin()+i);
+					m_objects.erase(m_objects.begin() + i);
 					i--;
 				}
 				ImGui::TreePop();

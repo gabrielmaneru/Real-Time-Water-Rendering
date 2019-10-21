@@ -23,9 +23,49 @@ scene_object::~scene_object()
 		editor->m_selected = nullptr;
 }
 
+void scene_object::draw_GUI()
+{
+
+	const char* current = m_model ? m_model->m_name.c_str() : "None";
+	if (ImGui::BeginCombo("Mesh", current))
+	{
+		for (size_t n = 0; n < renderer->m_models.size(); n++)
+		{
+			bool is_selected = (m_model == renderer->m_models[n]);
+			if (ImGui::Selectable(renderer->m_models[n]->m_name.c_str(), is_selected))
+				m_model = renderer->m_models[n];
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+
+	}
+	bool chng{ false };
+	if (ImGui::DragFloat3("Position", &m_transform.m_tr.m_pos.x, .1f))chng = true;
+	vec3 eu_angles = degrees(glm::eulerAngles(m_transform.m_tr.m_rot));
+	if (ImGui::DragFloat3("Rotation", &eu_angles.x))
+	{
+		m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
+		chng = true;
+	}
+	if (ImGui::DragFloat("Scale", &m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
+	if (chng)m_transform.m_tr.upd();
+
+	if (m_animator)
+		m_animator->draw_GUI();
+	else if (ImGui::Button("Create Animator"))
+		m_animator = new animator;
+
+	if (m_curve)
+		m_curve->draw_GUI();
+	else if (ImGui::Button("Create Curve Interpolator"))
+		m_curve = new curve_interpolator;
+
+}
+
 void scene_object::update_parent_curve()
 {
-	if (m_curve->m_active)
+	if (m_curve->m_active && m_curve->m_actual_curve != nullptr)
 	{
 		vec3 pos = m_curve->m_actual_curve->evaluate((float)m_curve->m_time);
 		mat4 mat_pos = glm::translate(mat4(1.0), pos);
@@ -85,7 +125,8 @@ void curve_interpolator::draw_GUI()
 {
 	if (ImGui::TreeNode("Curve"))
 	{
-		if (ImGui::BeginCombo("Mesh", m_actual_curve->m_name.c_str()))
+		std::string name = (m_actual_curve == nullptr) ? "None" : m_actual_curve->m_name;
+		if (ImGui::BeginCombo("Mesh", name.c_str()))
 		{
 			for (size_t n = 0; n < renderer->m_curves.size(); n++)
 			{

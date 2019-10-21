@@ -156,15 +156,8 @@ void c_editor::draw_selected_window()
 			m_selected->m_transform.m_tr.m_scl = (matrixScale[0] + matrixScale[1] + matrixScale[2]) / 3.0f;
 			break;
 		}
-		ImGui::DragFloat3("Position", &m_selected->m_transform.m_tr.m_pos.x, .1f);
 		
-		if (ImGui::DragFloat3("Rotation", &eu_angles.x))
-			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
-		ImGui::DragFloat("Scale", &m_selected->m_transform.m_tr.m_scl, .1f, .001f, 9999.f);
-		if (m_selected->m_animator)
-			m_selected->m_animator->draw_GUI();
-		if (m_selected->m_curve)
-			m_selected->m_curve->draw_GUI();
+		m_selected->draw_GUI();
 		m_selected->m_transform.m_tr.upd();
 		if (ImGui::Button("Delete"))
 		{

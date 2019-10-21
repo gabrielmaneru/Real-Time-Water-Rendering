@@ -16,7 +16,7 @@ Options:
 	using spherical coordinates.
 	
 	-Recompile Shaders
-	-Render debug curve (Catmull implemented with phantom)
+	-Render debug curve
 
 
 Scene:
@@ -29,3 +29,7 @@ Object Pick:
 	-Edit Objects/Lights
 	-Animation Interpolator (Animator)
 	-Curve Interpolator (Curve)
+
+Comments:
+	-Catmull implemented with Phantom points
+	-Not much difference between using Nlerp or Slerp, at least with the used animations

@@ -74,7 +74,7 @@ public:
 	struct Options
 	{
 		bool render_lights{ false };
-		bool render_curves{ false };
+		bool render_curves{ true };
 		bool interpolate_slerp{ true };
 
 		bool do_antialiasing{ true };
@@ -95,6 +95,7 @@ public:
 	}m_render_options;
 
 	friend class c_editor;
+	friend class scene_object;
 	friend struct curve_interpolator;
 	friend class c_scene;
 	friend class light;

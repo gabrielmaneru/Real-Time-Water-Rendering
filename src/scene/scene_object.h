@@ -42,6 +42,7 @@ public:
 	virtual void draw(Shader_Program*);
 	virtual void exit() {};
 
+	void draw_GUI();
 	void update_parent_curve();
 
 	animator* m_animator{ nullptr };
