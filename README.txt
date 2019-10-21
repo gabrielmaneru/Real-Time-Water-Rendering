@@ -4,39 +4,28 @@ Login: gabriel.m
 Controls:
 	-Shift+Leftclick for picking objects
 	-Rightclick to enable movement
-	-WASDQE for displacement
-	-Mouse for rotating
+	-WASDQE for displacement (In Target & Freemode)
+	-Mouse for rotating (In Target & Freemode)
 	-Shift for accelerating movement
+	-Ctrl+R & Ctrl+Q working
 
 
 Options:
 	-Free camera controller using Mouse+Keyboard.
 	-Possibility to Target an Object and rotate around
 	using spherical coordinates.
-
-	- Double-click Buffer textures to change the current displayed image.
-	-Selection is a debug image for object picking.
-	-The Blur factor is divided in rgb components for AA/DoF/MB
 	
 	-Recompile Shaders
-	-Render point-lights as debug spheres.
-	-Antialiasing implemented with normals and depth.
-	-Depth of Field {TO BE GRADED} can be tweaked and visualized in the blur factor image.
-	Also an auto focus is implemented that targets the center pixel
-	-Motion Blur can be difficult to appreciate but can be seen on the blur factor image.
-	-Can change Bloom parameters as well
+	-Render debug curve (Catmull implemented with phantom)
 
 
 Scene:
-	-Reloading
-	-Animating Lights
-	-Add lights randomly (All the random lights are spawned randomly on the two center walls,
-	that might affect the number of lights/performance rate)
-	-Change values of ALL lights easily for debugging purposes
-	-Add/Remove Objects/Lights
+	-Reloading Scene
+	-Animating Lights (Disco fancy mode)
 	-Edit Objects/Lights
 
 
-Known Issues:
-	-Couldn't play arround and found the correct values for the attenuation for you to not
-	see any of the light sphere's border
+Object Pick:
+	-Edit Objects/Lights
+	-Animation Interpolator (Animator)
+	-Curve Interpolator (Curve)
