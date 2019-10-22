@@ -1,5 +1,6 @@
 #version 440
-
+ 
+// PN patch data
 struct PNData
 {
     float b210;
@@ -10,39 +11,29 @@ struct PNData
     float b201;
     float b111;
 };
+
+layout(triangles, equal_spacing) in;
  
+in vec3 Normal_tcs[];
+in vec3 Tangent_tcs[];
+in vec3 Bitangent_tcs[];
+in vec2 Uv_tcs[];
+in PNData PatchData[];
+
 uniform mat4 M; 
 uniform mat4 V; 
 uniform mat4 P; 
+
+out vec3 Normal_tes;
+out vec3 Tangent_tes;
+out vec3 Bitangent_tes;
+out vec3 Position_tes;
+out vec2 Uv_tes;
+
+uniform float uTessAlpha = 1.0f;    
  
-layout(triangles, equal_spacing) in;
-
-in vec3 vNormal_tcs[];
-in vec3 vTangent_tcs[];
-in vec3 vBitangent_tcs[];
-in vec3 vPosition_tcs[];
-in float vMotion_tcs[];
-in vec2 vUv_tcs[];
-in PNData PatchData[];
-
-out vec3 vNormal[];
-out vec3 vTangent[];
-out vec3 vBitangent[];
-out vec3 vPosition[];
-out float vMotion[];
-out vec2 vUv[];
-
-const float uTessAlpha = 1.0f;         
-
 void main()
 {
-    vNormal = vNormal_tcs[0] + vNormal_tcs[1] + vNormal_tcs[2];
-    vTangent = vTangent_tcs[0] + vTangent_tcs[1] + vTangent_tcs[2];
-    vBitangent = vBitangent_tcs[0] + vBitangent_tcs[1] + vBitangent_tcs[2];
-    vPosition = vPosition_tcs[0] + vPosition_tcs[1] + vPosition_tcs[2];
-    vMotion = vMotion_tcs[0] + vMotion_tcs[1] + vMotion_tcs[2];
-    vUv = vUv_tcs[0] + vUv_tcs[1] + vUv_tcs[2];
-
     vec3 b300  = gl_in[0].gl_Position.xyz;
     vec3 b030  = gl_in[1].gl_Position.xyz;
     vec3 b003  = gl_in[2].gl_Position.xyz;
@@ -72,5 +63,26 @@ void main()
 				  + b021*3*u2*v + b102*3*w*v2 + b012*3*u*v2
 				  + b111*6*w*u*v;
 
-    gl_Position   = P * V * M * vec4(finalPos,1.0);
+    Normal_tes = gl_TessCoord[0]*Normal_tcs[0]
+			   + gl_TessCoord[1]*Normal_tcs[1]
+			   + gl_TessCoord[2]*Normal_tcs[2];
+    Tangent_tes = gl_TessCoord[0]*Tangent_tcs[0]
+			    + gl_TessCoord[1]*Tangent_tcs[1]
+			    + gl_TessCoord[2]*Tangent_tcs[2];
+    Bitangent_tes = gl_TessCoord[0]*Bitangent_tcs[0]
+		          + gl_TessCoord[1]*Bitangent_tcs[1]
+		          + gl_TessCoord[2]*Bitangent_tcs[2];
+    Uv_tes = gl_TessCoord[0]*Uv_tcs[0]
+		   + gl_TessCoord[1]*Uv_tcs[1]
+		   + gl_TessCoord[2]*Uv_tcs[2];
+
+	mat4 MV = V*M;
+	mat3 normalMtx = inverse(transpose(mat3(MV)));
+
+	Normal_tes = normalize(normalMtx * Normal_tes);
+	Tangent_tes = normalize(normalMtx * Tangent_tes);
+	Bitangent_tes = normalize(normalMtx * Bitangent_tes);
+
+	Position_tes = (MV*vec4(finalPos, 1.0)).xyz;
+	gl_Position = P*MV* vec4(finalPos, 1.0);
 }

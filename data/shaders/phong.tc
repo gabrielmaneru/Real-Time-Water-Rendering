@@ -1,5 +1,6 @@
 #version 440
-
+ 
+// PN patch data
 struct PNData
 {
     float b210;
@@ -11,36 +12,32 @@ struct PNData
     float b111;
 };
  
+// tessellation levels
+uniform float uTessLevels = 1.0f;
+ 
 layout(vertices=3) out;
 
 in vec3 vNormal[];
 in vec3 vTangent[];
 in vec3 vBitangent[];
-in vec3 vPosition[];
-in float vMotion[];
 in vec2 vUv[];
 
-out vec3 vNormal_tcs[];
-out vec3 vTangent_tcs[];
-out vec3 vBitangent_tcs[];
-out vec3 vPosition_tcs[];
-out float vMotion_tcs[];
-out vec2 vUv_tcs[];
+out vec3 Normal_tcs[];
+out vec3 Tangent_tcs[];
+out vec3 Bitangent_tcs[];
+out vec2 Uv_tcs[];
 out PNData PatchData[3];
 
-// tessellation levels
-const float uTessLevels = 1.0f;
  
 void main()
 {
+    // get data
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-    
-	vNormal_tcs[gl_InvocationID] = vNormal[gl_InvocationID];
-	vTangent_tcs[gl_InvocationID] = vTangent[gl_InvocationID];
-	vBitangent_tcs[gl_InvocationID] = vBitangent[gl_InvocationID];
-	vPosition_tcs[gl_InvocationID] = vPosition[gl_InvocationID];
-	vMotion_tcs[gl_InvocationID] = vMotion[gl_InvocationID];
-	vUv_tcs[gl_InvocationID] = vUv[gl_InvocationID];
+	
+    Normal_tcs[gl_InvocationID] = vNormal[gl_InvocationID];
+    Tangent_tcs[gl_InvocationID] = vTangent[gl_InvocationID];
+    Bitangent_tcs[gl_InvocationID] = vBitangent[gl_InvocationID];
+    Uv_tcs[gl_InvocationID] = vUv[gl_InvocationID];
 	
 	vec3 P1 = gl_in[0].gl_Position.xyz;
 	vec3 P2 = gl_in[1].gl_Position.xyz;
@@ -49,6 +46,7 @@ void main()
 	vec3 N1 = vNormal[0];
 	vec3 N2 = vNormal[1];
 	vec3 N3 = vNormal[2];
+
 
 	PatchData[gl_InvocationID].b210=(2*P1[gl_InvocationID]+P2[gl_InvocationID]-dot(P2-P1,N1)*N1[gl_InvocationID])/3;
 	PatchData[gl_InvocationID].b120=(2*P2[gl_InvocationID]+P1[gl_InvocationID]-dot(P1-P2,N2)*N2[gl_InvocationID])/3;

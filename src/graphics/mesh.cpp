@@ -93,7 +93,7 @@ void Mesh::draw(Shader_Program* shader)const
 {
 	// Draw mesh
 	GL_CALL(glBindVertexArray(m_VAO));
-	if(shader == renderer->g_buffer_shader)
+	if(shader == renderer->tesselation_shader)
 		GL_CALL(glDrawElements(GL_PATCHES, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0))
 	else
 	{

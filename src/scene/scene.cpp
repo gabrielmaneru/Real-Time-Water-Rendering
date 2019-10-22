@@ -183,6 +183,10 @@ bool c_scene::load_scene(std::string path)
 					}
 
 					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));
+
+					t = obj.find("tesselate");
+					if (t < obj.size())
+						m_objects[m_objects.size()-1]->m_tesselate = true;
 				}
 			}
 		}
@@ -248,7 +252,15 @@ void c_scene::update()
 void c_scene::draw_objs(Shader_Program * shader)
 {
 	for (auto p_obj : m_objects)
-		p_obj->draw(shader);
+		if(!p_obj->m_tesselate)
+			p_obj->draw(shader);
+}
+
+void c_scene::draw_tesselations(Shader_Program * shader)
+{
+	for (auto p_obj : m_objects)
+		if (p_obj->m_tesselate)
+			p_obj->draw(shader);
 }
 
 void c_scene::draw_lights(Shader_Program * shader)

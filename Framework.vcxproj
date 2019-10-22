@@ -532,8 +532,10 @@
     <None Include="data\shaders\color.frag" />
     <None Include="data\shaders\light.frag" />
     <None Include="data\shaders\g_buffer.frag" />
+    <None Include="data\shaders\phong.frag" />
     <None Include="data\shaders\phong.tc" />
     <None Include="data\shaders\phong.te" />
+    <None Include="data\shaders\phong.vert" />
     <None Include="data\shaders\texture.frag" />
     <None Include="data\shaders\blur.frag" />
     <None Include="dependencies\include\assimp\color4.inl" />

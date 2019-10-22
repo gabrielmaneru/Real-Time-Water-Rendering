@@ -21,6 +21,7 @@ class c_renderer
 public:
 	// Shaders
 	Shader_Program* g_buffer_shader;
+	Shader_Program* tesselation_shader;
 	Shader_Program* light_shader;
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
@@ -92,6 +93,9 @@ public:
 
 		bool do_bloom{ true };
 		float bl_coef{ 1.f };
+
+		float tess_levels{ 1.0f };
+		float tess_alpha{ 1.0f };
 	}m_render_options;
 
 	friend class c_editor;

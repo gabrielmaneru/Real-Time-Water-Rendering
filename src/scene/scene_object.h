@@ -45,6 +45,7 @@ public:
 	void draw_GUI();
 	void update_parent_curve();
 
+	bool m_tesselate{false};
 	animator* m_animator{ nullptr };
 	curve_interpolator* m_curve{ nullptr };
 

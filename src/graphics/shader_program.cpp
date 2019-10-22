@@ -35,6 +35,8 @@ Shader_Program::Shader_Program(const std::string & vtx, const std::string & tess
 	paths[1] = tess_control;
 	paths[2] = tess_eval;
 	paths[4] = frag;
+	if (create_handle())
+		compile_program();
 }
 Shader_Program::~Shader_Program()
 {

@@ -58,7 +58,7 @@ bool c_renderer::init()
 		return false;
 
 	// GL Options
-	setup_gl_debug();
+	//setup_gl_debug();
 	glCullFace(GL_FRONT);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glBlendEquation(GL_FUNC_ADD);
@@ -66,7 +66,8 @@ bool c_renderer::init()
 
 	// Load Programs
 	try {
-		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/phong.tc", "./data/shaders/phong.te", "./data/shaders/g_buffer.frag");
+		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
+		tesselation_shader = new Shader_Program("./data/shaders/phong.vert", "./data/shaders/phong.tc", "./data/shaders/phong.te", "./data/shaders/phong.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
@@ -141,23 +142,29 @@ void c_renderer::update()
 	scene_cam.save_prev();
 	scene_cam.update();
 
-	if (g_buffer_shader->is_valid())
+	if (g_buffer_shader->is_valid() && tesselation_shader->is_valid())
 	{
 		// G_Buffer Pass	///////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, g_buffer.m_width, g_buffer.m_height));
+		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/
 		/**/g_buffer_shader->use();
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
-		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
 		/**/	scene->draw_debug_curves(g_buffer_shader);
+		/**/
+		/**/tesselation_shader->use();
+		/**/scene_cam.set_uniforms(tesselation_shader);
+		/**/tesselation_shader->set_uniform("near", scene_cam.m_near);
+		/**/tesselation_shader->set_uniform("far", scene_cam.m_far);
+		/**/scene->draw_tesselations(tesselation_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
