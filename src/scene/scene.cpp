@@ -214,7 +214,6 @@ bool c_scene::init()
 	{
 		tr.set_pos({ random_float(17.5f, 32.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
-		ld.m_specular = ld.m_diffuse;
 		m_lights.push_back(new light(tr, ld));
 	}
 
@@ -222,7 +221,6 @@ bool c_scene::init()
 	{
 		tr.set_pos({ random_float(-27.5f, -12.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
-		ld.m_specular = ld.m_diffuse;
 		m_lights.push_back(new light(tr, ld));
 	}
 	for (auto& l : m_lights)
@@ -367,14 +365,10 @@ void c_scene::drawGUI()
 		if ((m_lights.size() > 1) && ImGui::TreeNode("Change ALL Light Values"))
 		{
 			vec3 m_diffuse = m_lights[1]->m_ldata.m_diffuse;
-			vec3 m_specular=m_lights[1]->m_ldata.m_specular;
 			vec3 m_att_factor = m_lights[1]->m_ldata.m_att_factor;
 			if (ImGui::InputFloat3("ALL Diffuse", &m_diffuse.x))
 				for (auto l : m_lights)
 					l->m_ldata.m_diffuse = m_diffuse;
-			if (ImGui::InputFloat3("ALL Specular", &m_specular.x))
-				for (auto l : m_lights)
-					l->m_ldata.m_specular = m_specular;
 			if (ImGui::InputFloat3("ALL AttFactor", &m_att_factor.x))
 				for (auto l : m_lights)
 					l->m_ldata.m_att_factor = m_att_factor;

@@ -17,25 +17,14 @@ float light_data::m_att_max{ 0.05f };
 
 void light_data::drawGUI()
 {
-	static bool display_break[]{ false, false };
+	static bool display_break{ false };
 
-	ImGui::PushID(0);
-	ImGui::Checkbox("", display_break);
+	ImGui::Checkbox("", &display_break);
 	ImGui::SameLine();
-	if (display_break[0])
+	if (display_break)
 		ImGui::DragFloat3("Diff", &m_diffuse.x, 0.01f, 0.0f, 1000.0f);
 	else if (ImGui::DragFloat("Diff", &m_diffuse.x, 0.01f, 0.0f, 1000.0f))
 		m_diffuse.y = m_diffuse.z = m_diffuse.x;
-	ImGui::PopID();
-
-	ImGui::PushID(1);
-	ImGui::Checkbox("", display_break+1);
-	ImGui::SameLine();
-	if (display_break[1])
-		ImGui::DragFloat3("Spec", &m_specular.x, 0.01f, 0.0f, 1.0f);
-	else if (ImGui::DragFloat("Spec", &m_specular.x, 0.01f, 0.0f, 1.0f))
-		m_specular.y = m_specular.z = m_specular.x;
-	ImGui::PopID();
 
 	ImGui::DragFloat3("Att", &m_att_factor.x, 0.0001f, 0.001f, 1.0f);
 }
@@ -62,7 +51,6 @@ void light::draw(Shader_Program * shader)
 {
 	shader->set_uniform("l_pos", vec3(renderer->scene_cam.m_view * vec4(m_transform.get_pos(), 1.0f)));
 	shader->set_uniform("ld", m_ldata.m_diffuse);
-	shader->set_uniform("ls", m_ldata.m_specular);
 	shader->set_uniform("att_factor", m_ldata.m_att_factor);
 	shader->set_uniform("rad", m_transform.m_tr.m_scl);
 

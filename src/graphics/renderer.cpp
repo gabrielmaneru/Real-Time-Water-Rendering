@@ -84,14 +84,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		m_models.push_back(new Model("./data/meshes/sneak.dae"));
-		m_models.push_back(new Model("./data/meshes/hiphop_dance.dae"));
-		m_models.push_back(new Model("./data/meshes/dance.dae"));
-		m_models.push_back(new Model("./data/meshes/belly.dae"));
-		m_models.push_back(new Model("./data/meshes/cheer.dae"));
-		m_models.push_back(new Model("./data/meshes/jazz.dae"));
-		m_models.push_back(new Model("./data/meshes/samba.dae"));
-		m_models.push_back(new Model("./data/meshes/capoeira.dae"));
+		m_models.push_back(new Model("./data/meshes/suzanne.obj"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -108,16 +101,6 @@ bool c_renderer::init()
 		vec3(0.0f),{},
 		0.5f,{},
 		1.0f,{}});
-	Model::m_def_materials.push_back(new Material{"plastic",
-		{},"plasticpattern1-albedo.png",
-		{},"Dielectric_metallic.tga",
-		{},"plasticpattern1-roughness2.png",
-		1.0f,"plasticpattern1-normal2b.png"});
-	Model::m_def_materials.push_back(new Material{"copper",
-		{},"oxidized-copper-albedo.png",
-		{},"oxidized-copper-metal.png",
-		{},"oxidized-coppper-roughness.png",
-		1.0f,"oxidized-copper-normal-ue.png"});
 
 	// Setup Cameras
 	scene_cam.m_eye = { 4,16,44 };
