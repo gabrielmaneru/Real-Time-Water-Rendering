@@ -18,6 +18,7 @@ Author: Gabriel Ma�eru - gabriel.m
 
 class c_renderer
 {
+public:
 	// Shaders
 	Shader_Program* g_buffer_shader;
 	Shader_Program* light_shader;
@@ -60,7 +61,6 @@ class c_renderer
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
 	void update_max_draw_call_count();
 
-public:
 	bool init();
 	void update();
 	void shutdown();

@@ -16,6 +16,7 @@ class Shader_Program
 public:
 	Shader_Program(const std::string& vtx, const std::string& frag);
 	Shader_Program(const std::string& vtx, const std::string& geo, const std::string& frag);
+	Shader_Program(const std::string& vtx, const std::string& tess_control, const std::string& tess_eval, const std::string& frag);
 	~Shader_Program();
 
 	bool is_valid()const;
@@ -30,10 +31,10 @@ public:
 	void set_uniform(const char *name, const mat4 & m) const;
 	void set_uniform_sampler(const int & val) const;
 	void set_uniform_subroutine(unsigned int shader_type, const std::string& value);
-	std::string paths[3]{};
+	std::string paths[5]{};
 
 private:
-	enum class e_shader_type { VERTEX, FRAGMENT, GEOMETRY };
+	enum class e_shader_type { VERTEX, TESS_CONTROL, TESS_EVAL, GEOMETRY, FRAGMENT};
 	bool create_handle();
 	void compile_program();
 	bool compile_shader(const std::string& filename, const e_shader_type& type);

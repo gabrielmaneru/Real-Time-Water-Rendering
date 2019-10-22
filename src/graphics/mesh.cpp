@@ -9,6 +9,7 @@ Author: Gabriel Mañeru - gabriel.m
 
 #include "mesh.h"
 #include "gl_error.h"
+#include "renderer.h"
 
 
 Mesh::~Mesh()
@@ -92,14 +93,19 @@ void Mesh::draw(Shader_Program* shader)const
 {
 	// Draw mesh
 	GL_CALL(glBindVertexArray(m_VAO));
-	switch (m_primitive)
+	if(shader == renderer->g_buffer_shader)
+		GL_CALL(glDrawElements(GL_PATCHES, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0))
+	else
 	{
-	case Mesh::tri:
-		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
-		break;
-	case Mesh::quad:
-		GL_CALL(glDrawElements(GL_QUADS, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
-		break;
+		switch (m_primitive)
+		{
+		case Mesh::tri:
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
+			break;
+		case Mesh::quad:
+			GL_CALL(glDrawElements(GL_QUADS, (GLsizei)m_indices.size(), GL_UNSIGNED_INT, 0));
+			break;
+		}
 	}
 	GL_CALL(glBindVertexArray(0));
 }

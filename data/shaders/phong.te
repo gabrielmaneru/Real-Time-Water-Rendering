@@ -1,0 +1,76 @@
+#version 440
+
+struct PNData
+{
+    float b210;
+    float b120;
+    float b021;
+    float b012;
+    float b102;
+    float b201;
+    float b111;
+};
+ 
+uniform mat4 M; 
+uniform mat4 V; 
+uniform mat4 P; 
+ 
+layout(triangles, equal_spacing) in;
+
+in vec3 vNormal_tcs[];
+in vec3 vTangent_tcs[];
+in vec3 vBitangent_tcs[];
+in vec3 vPosition_tcs[];
+in float vMotion_tcs[];
+in vec2 vUv_tcs[];
+in PNData PatchData[];
+
+out vec3 vNormal[];
+out vec3 vTangent[];
+out vec3 vBitangent[];
+out vec3 vPosition[];
+out float vMotion[];
+out vec2 vUv[];
+
+const float uTessAlpha = 1.0f;         
+
+void main()
+{
+    vNormal = vNormal_tcs[0] + vNormal_tcs[1] + vNormal_tcs[2];
+    vTangent = vTangent_tcs[0] + vTangent_tcs[1] + vTangent_tcs[2];
+    vBitangent = vBitangent_tcs[0] + vBitangent_tcs[1] + vBitangent_tcs[2];
+    vPosition = vPosition_tcs[0] + vPosition_tcs[1] + vPosition_tcs[2];
+    vMotion = vMotion_tcs[0] + vMotion_tcs[1] + vMotion_tcs[2];
+    vUv = vUv_tcs[0] + vUv_tcs[1] + vUv_tcs[2];
+
+    vec3 b300  = gl_in[0].gl_Position.xyz;
+    vec3 b030  = gl_in[1].gl_Position.xyz;
+    vec3 b003  = gl_in[2].gl_Position.xyz;
+    
+	vec3 b210 = vec3(PatchData[0].b210,PatchData[1].b210,PatchData[2].b210);
+	vec3 b120 = vec3(PatchData[0].b120,PatchData[1].b120,PatchData[2].b120);
+	vec3 b021 = vec3(PatchData[0].b021,PatchData[1].b021,PatchData[2].b021);
+	vec3 b012 = vec3(PatchData[0].b012,PatchData[1].b012,PatchData[2].b012);
+	vec3 b102 = vec3(PatchData[0].b102,PatchData[1].b102,PatchData[2].b102);
+	vec3 b201 = vec3(PatchData[0].b201,PatchData[1].b201,PatchData[2].b201);
+	vec3 b111 = vec3(PatchData[0].b111,PatchData[1].b111,PatchData[2].b111);
+	
+	float w = gl_TessCoord[2];
+	float w2 = w*w;
+	float w3 = w2*w;
+	
+	float u = gl_TessCoord[0];
+	float u2 = u*u;
+	float u3 = u2*u;
+
+	float v = gl_TessCoord[1];
+	float v2 = v*v;
+	float v3 = v2*v;
+
+    vec3 finalPos = b300*w3 + b030*u3 + b003*v3
+				  + b210*3*w2*u + b120*3*w*u2 + b201*3*w2*v
+				  + b021*3*u2*v + b102*3*w*v2 + b012*3*u*v2
+				  + b111*6*w*u*v;
+
+    gl_Position   = P * V * M * vec4(finalPos,1.0);
+}

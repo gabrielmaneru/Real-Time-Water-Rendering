@@ -17,17 +17,24 @@ Author: Gabriel Mañeru - gabriel.m
 Shader_Program::Shader_Program(const std::string & vtx, const std::string & frag)
 {
 	paths[0] = vtx;
-	paths[2] = frag;
+	paths[4] = frag;
 	if (create_handle())
 		compile_program();
 }
 Shader_Program::Shader_Program(const std::string & vtx, const std::string & geo, const std::string & frag)
 {
 	paths[0] = vtx;
-	paths[1] = geo;
-	paths[2] = frag;
+	paths[3] = geo;
+	paths[4] = frag;
 	if (create_handle())
 		compile_program();
+}
+Shader_Program::Shader_Program(const std::string & vtx, const std::string & tess_control, const std::string & tess_eval, const std::string & frag)
+{
+	paths[0] = vtx;
+	paths[1] = tess_control;
+	paths[2] = tess_eval;
+	paths[4] = frag;
 }
 Shader_Program::~Shader_Program()
 {
@@ -43,10 +50,6 @@ bool Shader_Program::is_valid()const
 void Shader_Program::recompile()
 {
 	try {
-		//GL_CALL(glDeleteProgram(m_handle));
-		//m_handle = 0;
-		//m_linked = false;
-		//create_handle();
 		compile_program();
 	}
 	catch (const std::string & log) { std::cout << log; }
@@ -140,9 +143,12 @@ bool Shader_Program::create_handle()
 void Shader_Program::compile_program()
 {
 	if (compile_shader(paths[0], e_shader_type::VERTEX))
-		if (paths[1].size()==0 || compile_shader(paths[1], e_shader_type::GEOMETRY))
-			if (compile_shader(paths[2], e_shader_type::FRAGMENT))
-				link();
+		if (paths[1].size() == 0 || compile_shader(paths[1], e_shader_type::TESS_CONTROL))
+			if (paths[2].size() == 0 || compile_shader(paths[2], e_shader_type::TESS_EVAL))
+				if (paths[3].size() == 0 || compile_shader(paths[3], e_shader_type::GEOMETRY))
+					if (compile_shader(paths[4], e_shader_type::FRAGMENT))
+						link();
+
 	if (!is_valid())
 		throw std::string("Compile Error");
 }
@@ -176,11 +182,17 @@ bool Shader_Program::compile_shader(const std::string & filename, const e_shader
 	case e_shader_type::VERTEX:
 		shader = glCreateShader(GL_VERTEX_SHADER);
 		break;
-	case e_shader_type::FRAGMENT:
-		shader = glCreateShader(GL_FRAGMENT_SHADER);
+	case e_shader_type::TESS_CONTROL:
+		shader = glCreateShader(GL_TESS_CONTROL_SHADER);
+		break;
+	case e_shader_type::TESS_EVAL:
+		shader = glCreateShader(GL_TESS_EVALUATION_SHADER);
 		break;
 	case e_shader_type::GEOMETRY:
 		shader = glCreateShader(GL_GEOMETRY_SHADER);
+		break;
+	case e_shader_type::FRAGMENT:
+		shader = glCreateShader(GL_FRAGMENT_SHADER);
 		break;
 	default:
 		return false;

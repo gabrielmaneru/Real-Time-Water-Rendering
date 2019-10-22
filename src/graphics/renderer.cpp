@@ -66,7 +66,7 @@ bool c_renderer::init()
 
 	// Load Programs
 	try {
-		g_buffer_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
+		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/phong.tc", "./data/shaders/phong.te", "./data/shaders/g_buffer.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
