@@ -94,8 +94,8 @@ public:
 		bool do_bloom{ true };
 		float bl_coef{ 1.f };
 
-		float tess_levels{ 1.0f };
-		float tess_alpha{ 1.0f };
+		float tess_levels{ 2.0f };
+		float tess_alpha{ 2.0f };
 	}m_render_options;
 
 	friend class c_editor;

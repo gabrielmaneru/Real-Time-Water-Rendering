@@ -1,24 +1,19 @@
 #version 440
  
-// PN patch data
-struct PNData
+struct PhongData
 {
-    float b210;
-    float b120;
-    float b021;
-    float b012;
-    float b102;
-    float b201;
-    float b111;
+    float termIJ;
+    float termJK;
+    float termIK;
 };
 
-layout(triangles, equal_spacing) in;
+layout(triangles, fractional_odd_spacing, ccw) in;
  
 in vec3 Normal_tcs[];
 in vec3 Tangent_tcs[];
 in vec3 Bitangent_tcs[];
 in vec2 Uv_tcs[];
-in PNData PatchData[];
+in PhongData PatchData[];
 
 uniform mat4 M; 
 uniform mat4 V; 
@@ -30,39 +25,20 @@ out vec3 Bitangent_tes;
 out vec3 Position_tes;
 out vec2 Uv_tes;
 
-uniform float uTessAlpha = 1.0f;    
+#define Pi gl_in[0].gl_Position.xyz
+#define Pj gl_in[1].gl_Position.xyz
+#define Pk gl_in[2].gl_Position.xyz
+#define tc1 gl_TessCoord
+
+uniform float uTessAlpha = 1.00;    
  
 void main()
 {
-    vec3 b300  = gl_in[0].gl_Position.xyz;
-    vec3 b030  = gl_in[1].gl_Position.xyz;
-    vec3 b003  = gl_in[2].gl_Position.xyz;
-    
-	vec3 b210 = vec3(PatchData[0].b210,PatchData[1].b210,PatchData[2].b210);
-	vec3 b120 = vec3(PatchData[0].b120,PatchData[1].b120,PatchData[2].b120);
-	vec3 b021 = vec3(PatchData[0].b021,PatchData[1].b021,PatchData[2].b021);
-	vec3 b012 = vec3(PatchData[0].b012,PatchData[1].b012,PatchData[2].b012);
-	vec3 b102 = vec3(PatchData[0].b102,PatchData[1].b102,PatchData[2].b102);
-	vec3 b201 = vec3(PatchData[0].b201,PatchData[1].b201,PatchData[2].b201);
-	vec3 b111 = vec3(PatchData[0].b111,PatchData[1].b111,PatchData[2].b111);
+	vec3 tc2 = tc1*tc1;
 	
-	float w = gl_TessCoord[2];
-	float w2 = w*w;
-	float w3 = w2*w;
-	
-	float u = gl_TessCoord[0];
-	float u2 = u*u;
-	float u3 = u2*u;
-
-	float v = gl_TessCoord[1];
-	float v2 = v*v;
-	float v3 = v2*v;
-
-    vec3 finalPos = b300*w3 + b030*u3 + b003*v3
-				  + b210*3*w2*u + b120*3*w*u2 + b201*3*w2*v
-				  + b021*3*u2*v + b102*3*w*v2 + b012*3*u*v2
-				  + b111*6*w*u*v;
-
+vec3 termIJ = vec3(PatchData[0].termIJ, PatchData[1].termIJ, PatchData[2].termIJ);
+vec3 termJK = vec3(PatchData[0].termJK, PatchData[1].termJK, PatchData[2].termJK);
+vec3 termIK = vec3(PatchData[0].termIK, PatchData[1].termIK, PatchData[2].termIK);
     Normal_tes = gl_TessCoord[0]*Normal_tcs[0]
 			   + gl_TessCoord[1]*Normal_tcs[1]
 			   + gl_TessCoord[2]*Normal_tcs[2];
@@ -75,6 +51,20 @@ void main()
     Uv_tes = gl_TessCoord[0]*Uv_tcs[0]
 		   + gl_TessCoord[1]*Uv_tcs[1]
 		   + gl_TessCoord[2]*Uv_tcs[2];
+
+
+
+	vec3 barPos = gl_TessCoord[0]*Pi
+		        + gl_TessCoord[1]*Pj
+		        + gl_TessCoord[2]*Pk;
+	vec3 phongPos = tc2[0]*Pi
+	+tc2[1]*Pj
+	+tc2[2]*Pk
+	+tc1[0]*tc1[1]*termIJ
+	+tc1[1]*tc1[2]*termJK
+	+tc1[2]*tc1[0]*termIK;
+	
+	vec3 finalPos = mix(barPos,phongPos,uTessAlpha);
 
 	mat4 MV = V*M;
 	mat3 normalMtx = inverse(transpose(mat3(MV)));

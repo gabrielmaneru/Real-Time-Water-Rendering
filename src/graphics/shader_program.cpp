@@ -38,6 +38,16 @@ Shader_Program::Shader_Program(const std::string & vtx, const std::string & tess
 	if (create_handle())
 		compile_program();
 }
+Shader_Program::Shader_Program(const std::string & vtx, const std::string & tess_control, const std::string & tess_eval, const std::string & geo, const std::string & frag)
+{
+	paths[0] = vtx;
+	paths[1] = tess_control;
+	paths[2] = tess_eval;
+	paths[3] = geo;
+	paths[4] = frag;
+	if (create_handle())
+		compile_program();
+}
 Shader_Program::~Shader_Program()
 {
 	if (m_handle > 0)

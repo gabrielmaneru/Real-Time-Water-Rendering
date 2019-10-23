@@ -1,15 +1,10 @@
 #version 440
  
-// PN patch data
-struct PNData
+struct PhongData
 {
-    float b210;
-    float b120;
-    float b021;
-    float b012;
-    float b102;
-    float b201;
-    float b111;
+    float termIJ;
+    float termJK;
+    float termIK;
 };
  
 // tessellation levels
@@ -22,16 +17,26 @@ in vec3 vTangent[];
 in vec3 vBitangent[];
 in vec2 vUv[];
 
-out vec3 Normal_tcs[];
-out vec3 Tangent_tcs[];
-out vec3 Bitangent_tcs[];
-out vec2 Uv_tcs[];
-out PNData PatchData[3];
+out vec3 Normal_tcs[3];
+out vec3 Tangent_tcs[3];
+out vec3 Bitangent_tcs[3];
+out vec2 Uv_tcs[3];
+out PhongData PatchData[3];
 
+#define Pi gl_in[0].gl_Position.xyz
+#define Pj gl_in[1].gl_Position.xyz
+#define Pk gl_in[2].gl_Position.xyz
  
+float PI_i(int i, vec3 q)
+{
+	vec3 qp = q - gl_in[i].gl_Position.xyz;
+	return q[gl_InvocationID] - dot(qp, vNormal[i]) * vNormal[i][gl_InvocationID];
+}
+
+
 void main()
 {
-    // get data
+    // pass data
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 	
     Normal_tcs[gl_InvocationID] = vNormal[gl_InvocationID];
@@ -39,27 +44,9 @@ void main()
     Bitangent_tcs[gl_InvocationID] = vBitangent[gl_InvocationID];
     Uv_tcs[gl_InvocationID] = vUv[gl_InvocationID];
 	
-	vec3 P1 = gl_in[0].gl_Position.xyz;
-	vec3 P2 = gl_in[1].gl_Position.xyz;
-	vec3 P3 = gl_in[2].gl_Position.xyz;
-
-	vec3 N1 = vNormal[0];
-	vec3 N2 = vNormal[1];
-	vec3 N3 = vNormal[2];
-
-
-	PatchData[gl_InvocationID].b210=(2*P1[gl_InvocationID]+P2[gl_InvocationID]-dot(P2-P1,N1)*N1[gl_InvocationID])/3;
-	PatchData[gl_InvocationID].b120=(2*P2[gl_InvocationID]+P1[gl_InvocationID]-dot(P1-P2,N2)*N2[gl_InvocationID])/3;
-	PatchData[gl_InvocationID].b021=(2*P2[gl_InvocationID]+P3[gl_InvocationID]-dot(P3-P2,N2)*N2[gl_InvocationID])/3;
-	PatchData[gl_InvocationID].b012=(2*P3[gl_InvocationID]+P2[gl_InvocationID]-dot(P2-P3,N3)*N3[gl_InvocationID])/3;
-	PatchData[gl_InvocationID].b102=(2*P3[gl_InvocationID]+P1[gl_InvocationID]-dot(P1-P3,N3)*N3[gl_InvocationID])/3;
-	PatchData[gl_InvocationID].b201=(2*P1[gl_InvocationID]+P3[gl_InvocationID]-dot(P3-P1,N1)*N1[gl_InvocationID])/3;
-
-	float E=( PatchData[gl_InvocationID].b210 + PatchData[gl_InvocationID].b120
-	  + PatchData[gl_InvocationID].b021 + PatchData[gl_InvocationID].b012
-	  + PatchData[gl_InvocationID].b102 + PatchData[gl_InvocationID].b201) / 6;
-	float V=(P1[gl_InvocationID]+P2[gl_InvocationID]+P3[gl_InvocationID])/3;
-	PatchData[gl_InvocationID].b111=E+(E-V)/2;
+	PatchData[gl_InvocationID].termIJ = PI_i(0,Pj) + PI_i(1,Pi);
+	PatchData[gl_InvocationID].termJK = PI_i(1,Pk) + PI_i(2,Pj);
+	PatchData[gl_InvocationID].termIK = PI_i(2,Pi) + PI_i(0,Pk);
 
     // set tess levels
     gl_TessLevelOuter[gl_InvocationID] = uTessLevels;

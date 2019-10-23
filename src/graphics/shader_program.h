@@ -17,6 +17,7 @@ public:
 	Shader_Program(const std::string& vtx, const std::string& frag);
 	Shader_Program(const std::string& vtx, const std::string& geo, const std::string& frag);
 	Shader_Program(const std::string& vtx, const std::string& tess_control, const std::string& tess_eval, const std::string& frag);
+	Shader_Program(const std::string& vtx, const std::string& tess_control, const std::string& tess_eval, const std::string& geo, const std::string& frag);
 	~Shader_Program();
 
 	bool is_valid()const;

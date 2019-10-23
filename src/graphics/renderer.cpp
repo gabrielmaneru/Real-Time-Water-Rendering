@@ -58,7 +58,7 @@ bool c_renderer::init()
 		return false;
 
 	// GL Options
-	//setup_gl_debug();
+	setup_gl_debug();
 	glCullFace(GL_FRONT);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glBlendEquation(GL_FUNC_ADD);
@@ -164,6 +164,8 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(tesselation_shader);
 		/**/tesselation_shader->set_uniform("near", scene_cam.m_near);
 		/**/tesselation_shader->set_uniform("far", scene_cam.m_far);
+		/**/tesselation_shader->set_uniform("uTessAlpha", m_render_options.tess_alpha);
+		/**/tesselation_shader->set_uniform("uTessLevels", m_render_options.tess_levels);
 		/**/scene->draw_tesselations(tesselation_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
@@ -451,12 +453,14 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &light_shader, &texture_shader, &blur_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &tesselation_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
+		ImGui::DragFloat("Tesselation Alpha", &m_render_options.tess_alpha, 0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat("Tesselation Levels", &m_render_options.tess_levels, 0.01f, 0.0f, 50.0f);
 		if(m_render_options.interpolate_slerp)
 			ImGui::Checkbox("Interpolator: SLERP", &m_render_options.interpolate_slerp);
 		else
