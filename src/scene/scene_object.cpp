@@ -50,6 +50,7 @@ void scene_object::draw_GUI()
 	}
 	if (ImGui::DragFloat("Scale", &m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 	if (chng)m_transform.m_tr.upd();
+	ImGui::Checkbox("Tesselate", &m_tesselate);
 
 	ImGui::NewLine();
 	if (m_animator)

@@ -5,6 +5,7 @@ in vec3 Tangent_tes;
 in vec3 Bitangent_tes;
 in vec3 Position_tes;
 in vec2 Uv_tes;
+in float adapt_value_tes;
 
 layout (binding = 0) uniform sampler2D albedo_txt;
 layout (binding = 1) uniform sampler2D metallic_txt;
@@ -28,6 +29,7 @@ layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
 layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
+layout (location = 4) out vec4 attr_adaptive;
 
 void main()
 {
@@ -72,6 +74,8 @@ void main()
 	attr_metallic = vec4(metallic, 1.0);
 	attr_normal = vec4(normal, 1.0);
 
+	attr_adaptive = vec4(vec3(adapt_value_tes), 1.0);
+	
     gl_FragDepth = (near * far) / (far - near + Position_tes.z);
 	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
 }

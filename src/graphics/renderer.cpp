@@ -119,6 +119,7 @@ void c_renderer::update()
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
@@ -154,6 +155,7 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
+		/**/
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
@@ -164,9 +166,16 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(tesselation_shader);
 		/**/tesselation_shader->set_uniform("near", scene_cam.m_near);
 		/**/tesselation_shader->set_uniform("far", scene_cam.m_far);
-		/**/tesselation_shader->set_uniform("uTessAlpha", m_render_options.tess_alpha);
-		/**/tesselation_shader->set_uniform("uTessLevels", m_render_options.tess_levels);
+		/**/tesselation_shader->set_uniform("alpha", m_render_options.tess_alpha);
+		/**/tesselation_shader->set_uniform("levels", m_render_options.tess_levels);
+		/**/tesselation_shader->set_uniform("lod", m_render_options.tess_lod);
+		/**/tesselation_shader->set_uniform("adaptive", m_render_options.tess_adaptive);
+		/**/
+		/**/if (m_render_options.tess_wireframe)
+		/**/	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		/**/scene->draw_tesselations(tesselation_shader);
+		/**/if (m_render_options.tess_wireframe)
+		/**/	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -426,6 +435,7 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::POSITION);
 			show_image(c_renderer::METALLIC);
 			show_image(c_renderer::NORMAL);
+			show_image(c_renderer::ADAPTIVE);
 			show_image(c_renderer::DEPTH);
 			ImGui::TreePop();
 		}
@@ -459,12 +469,17 @@ void c_renderer::drawGUI()
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
-		ImGui::DragFloat("Tesselation Alpha", &m_render_options.tess_alpha, 0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat("Tesselation Levels", &m_render_options.tess_levels, 0.01f, 0.0f, 50.0f);
-		if(m_render_options.interpolate_slerp)
-			ImGui::Checkbox("Interpolator: SLERP", &m_render_options.interpolate_slerp);
-		else
-			ImGui::Checkbox("Interpolator: NLERP", &m_render_options.interpolate_slerp);
+
+		if (ImGui::TreeNode("Tesselation"))
+		{
+			ImGui::SliderFloat("Alpha", &m_render_options.tess_alpha, 0.0f, 1.0f);
+			ImGui::DragFloat("Levels", &m_render_options.tess_levels, 0.01f, 1.0f, 50.0f);
+			ImGui::DragFloat("LOD", &m_render_options.tess_lod, 0.01f, 1.0f, 50.0f);
+			ImGui::Checkbox("Adaptive", &m_render_options.tess_adaptive);
+			ImGui::Checkbox("Wireframe", &m_render_options.tess_wireframe);
+			ImGui::TreePop();
+		}
+
 		if (ImGui::TreeNode("Antialiasing"))
 		{
 			ImGui::Checkbox("Do Antialiasing", &m_render_options.do_antialiasing);
@@ -523,6 +538,8 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return g_buffer.m_color_texture[2];
 	case c_renderer::e_texture::NORMAL:
 		return g_buffer.m_color_texture[3];
+	case c_renderer::e_texture::ADAPTIVE:
+		return g_buffer.m_color_texture[4];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:

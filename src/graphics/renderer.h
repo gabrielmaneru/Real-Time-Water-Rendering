@@ -50,6 +50,7 @@ public:
 		POSITION,
 		METALLIC,
 		NORMAL,
+		ADAPTIVE,
 		SELECTION,
 		DEPTH,
 		LIGHT,
@@ -76,26 +77,28 @@ public:
 	{
 		bool render_lights{ false };
 		bool render_curves{ true };
-		bool interpolate_slerp{ true };
 
-		bool do_antialiasing{ true };
+		bool  do_antialiasing{ true };
 		float aa_coef_normal{ 0.05f };
 		float aa_coef_depth{ 0.25f };
-		int aa_sigma{ 5 };
+		int   aa_sigma{ 5 };
 
-		bool do_depth_of_field{ false };
+		bool  do_depth_of_field{ false };
 		float df_plane_focus{ 45.f };
 		float df_aperture{ 45.f };
-		bool df_auto_focus{ false };
+		bool  df_auto_focus{ false };
 
-		bool do_motion_blur{ false };
-		bool mb_camera_blur{ false };
+		bool  do_motion_blur{ false };
+		bool  mb_camera_blur{ false };
 
-		bool do_bloom{ true };
+		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
 
-		float tess_levels{ 2.0f };
-		float tess_alpha{ 2.0f };
+		float tess_levels{ 3.0f };
+		float tess_alpha{ 1.0f };
+		bool  tess_adaptive{ false };
+		bool  tess_wireframe{ false };
+		float tess_lod{ 20.0f };
 	}m_render_options;
 
 	friend class c_editor;

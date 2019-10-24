@@ -16,7 +16,7 @@ void main()
 {
     gl_Position = vec4(attr_pos, 1.0);
 
-    vNormal = attr_norm;
+    vNormal = normalize(attr_norm);
     vTangent = attr_tan;
     vBitangent = attr_bit;
     vUv = attr_uvs;

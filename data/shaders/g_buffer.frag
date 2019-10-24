@@ -28,6 +28,7 @@ layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
 layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
+layout (location = 4) out vec4 attr_adaptive;
 
 void main()
 {

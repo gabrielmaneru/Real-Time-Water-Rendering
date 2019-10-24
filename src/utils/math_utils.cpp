@@ -13,26 +13,23 @@ Author: Gabriel Mañeru - gabriel.m
 quat lerp(const quat& min, const quat& max, const float& coef)
 {
 	// Try Slerp
-	if (renderer->m_render_options.interpolate_slerp)
+	float cos_theta = glm::dot(min, max);
+
+	quat fixed_max;
+	if (cos_theta < 0.0f)
 	{
-		float cos_theta = glm::dot(min, max);
+		fixed_max = -max;
+		cos_theta = -cos_theta;
+	}
+	else
+		fixed_max = max;
 
-		quat fixed_max;
-		if (cos_theta < 0.0f)
-		{
-			fixed_max = -max;
-			cos_theta = -cos_theta;
-		}
-		else
-			fixed_max = max;
-
-		// Avoid Slerp when cos_theta is close to 1
-		if (cos_theta < 1.0f - glm::epsilon<float>())
-		{
-			float theta = glm::acos(cos_theta);
-			return glm::normalize(  (glm::sin((1 - coef)*theta)* min + glm::sin(coef*theta)* fixed_max)
-									/ glm::sin(theta));
-		}
+	// Avoid Slerp when cos_theta is close to 1
+	if (cos_theta < 1.0f - glm::epsilon<float>())
+	{
+		float theta = glm::acos(cos_theta);
+		return glm::normalize(  (glm::sin((1 - coef)*theta)* min + glm::sin(coef*theta)* fixed_max)
+								/ glm::sin(theta));
 	}
 
 	// do NLerp

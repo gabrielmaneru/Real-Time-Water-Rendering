@@ -159,7 +159,7 @@ void c_editor::draw_selected_window()
 		
 		m_selected->draw_GUI();
 		m_selected->m_transform.m_tr.upd();
-		if (ImGui::Button("Delete Object"))
+		if (ImGui::Button("Delete Object") || window_manager->is_key_triggered(GLFW_KEY_DELETE))
 		{
 			for (size_t i = 0; i < scene->m_objects.size(); i++)
 				if (scene->m_objects[i] == m_selected)
