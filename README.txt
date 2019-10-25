@@ -11,12 +11,14 @@ Controls:
 
 
 Options:
-	-Free camera controller using Mouse+Keyboard.
-	-Possibility to Target an Object and rotate around
-	using spherical coordinates.
-	
+	-Buffers>GBuffer>Tesselation Refinement
 	-Recompile Shaders
-	-Render debug curve
+	-Tesselation Alpha
+	-Tesselation Levels
+	-Tesselation LOD distance
+	-Tesselation LOD power
+	-Wireframe mode
+	-Enable Adaptive/LOD
 
 
 Scene:
@@ -27,9 +29,4 @@ Scene:
 
 Object Pick:
 	-Edit Objects/Lights
-	-Animation Interpolator (Animator)
-	-Curve Interpolator (Curve)
-
-Comments:
-	-Catmull implemented with Phantom points
-	-Not much difference between using Nlerp or Slerp, at least with the used animations
+	-Set any object as target tesselation

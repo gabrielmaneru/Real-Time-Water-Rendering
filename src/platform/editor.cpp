@@ -115,21 +115,6 @@ void c_editor::draw_selected_window()
 			m_cur_step = m_snap_step.z;
 			break;
 		}
-
-		const char* current = m_selected->m_model ? m_selected->m_model->m_name.c_str() : "Unknown";
-		if (ImGui::BeginCombo("Mesh", current))
-		{
-			for (size_t n = 0; n < renderer->m_models.size(); n++)
-			{
-				bool is_selected = (m_selected->m_model == renderer->m_models[n]);
-				if (ImGui::Selectable(renderer->m_models[n]->m_name.c_str(), is_selected))
-					m_selected->m_model = renderer->m_models[n];
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-
-		}
 		
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
