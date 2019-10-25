@@ -96,9 +96,11 @@ public:
 
 		float tess_levels{ 3.0f };
 		float tess_alpha{ 1.0f };
-		bool  tess_adaptive{ false };
+		bool  tess_useadaptive{ true };
 		bool  tess_wireframe{ false };
-		float tess_lod{ 20.0f };
+		bool tess_uselod{ true };
+		float tess_lod{ 5.0f };
+		float tess_lodpower{ 50.0f };
 	}m_render_options;
 
 	friend class c_editor;

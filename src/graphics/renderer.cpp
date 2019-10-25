@@ -168,8 +168,10 @@ void c_renderer::update()
 		/**/tesselation_shader->set_uniform("far", scene_cam.m_far);
 		/**/tesselation_shader->set_uniform("alpha", m_render_options.tess_alpha);
 		/**/tesselation_shader->set_uniform("levels", m_render_options.tess_levels);
-		/**/tesselation_shader->set_uniform("lod", m_render_options.tess_lod);
-		/**/tesselation_shader->set_uniform("adaptive", m_render_options.tess_adaptive);
+		/**/tesselation_shader->set_uniform("lod_distance", m_render_options.tess_lod);
+		/**/tesselation_shader->set_uniform("lod_power", m_render_options.tess_lodpower);
+		/**/tesselation_shader->set_uniform("use_adaptive", m_render_options.tess_useadaptive);
+		/**/tesselation_shader->set_uniform("use_lod", m_render_options.tess_uselod);
 		/**/
 		/**/if (m_render_options.tess_wireframe)
 		/**/	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -473,9 +475,11 @@ void c_renderer::drawGUI()
 		if (ImGui::TreeNode("Tesselation"))
 		{
 			ImGui::SliderFloat("Alpha", &m_render_options.tess_alpha, 0.0f, 1.0f);
-			ImGui::DragFloat("Levels", &m_render_options.tess_levels, 0.01f, 1.0f, 50.0f);
-			ImGui::DragFloat("LOD", &m_render_options.tess_lod, 0.01f, 1.0f, 50.0f);
-			ImGui::Checkbox("Adaptive", &m_render_options.tess_adaptive);
+			ImGui::DragFloat("Levels", &m_render_options.tess_levels, 0.01f, 1.0f, 20.0f);
+			ImGui::DragFloat("LOD distance", &m_render_options.tess_lod, 0.01f, 0.01f, 10.0f);
+			ImGui::DragFloat("LOD power", &m_render_options.tess_lodpower, 0.1f, 1.0f, 50.0f);
+			ImGui::Checkbox("Use Adaptive", &m_render_options.tess_useadaptive);
+			ImGui::Checkbox("Use LOD", &m_render_options.tess_uselod);
 			ImGui::Checkbox("Wireframe", &m_render_options.tess_wireframe);
 			ImGui::TreePop();
 		}

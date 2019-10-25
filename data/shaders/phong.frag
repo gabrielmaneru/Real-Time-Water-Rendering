@@ -31,6 +31,27 @@ layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
 layout (location = 4) out vec4 attr_adaptive;
 
+vec3 hue(float x)
+{
+	float angle = mix(270, 0, x);
+	float val = mod(angle, 60) / 60;
+
+	vec3 color;
+	if	(angle < 60)
+		color = vec3( 1.0, val, 0.0 );
+	else if (angle < 120)
+		color = vec3( 1.0-val, 1.0, 0.0 );
+	else if (angle < 180)
+		color = vec3( 0.0, 1.0, val );
+	else if (angle < 240)
+		color = vec3( 0.0, 1.0-val, 1.0);
+	else if (angle < 300)
+		color = vec3( val, 0.0, 1.0 );
+	else
+		color = vec3( 1.0, 0.0, 1.0-val );
+	return color;
+}
+
 void main()
 {
 	vec3 albedo;
@@ -74,7 +95,7 @@ void main()
 	attr_metallic = vec4(metallic, 1.0);
 	attr_normal = vec4(normal, 1.0);
 
-	attr_adaptive = vec4(vec3(adapt_value_tes), 1.0);
+	attr_adaptive = vec4(hue(adapt_value_tes), 1.0);
 	
     gl_FragDepth = (near * far) / (far - near + Position_tes.z);
 	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
