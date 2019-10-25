@@ -23,8 +23,6 @@ Options:
 
 Scene:
 	-Reloading Scene
-	-Animating Lights (Disco fancy mode)
-	-Edit Objects/Lights
 
 
 Object Pick:

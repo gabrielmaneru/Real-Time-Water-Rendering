@@ -94,7 +94,7 @@ public:
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
 
-		float tess_levels{ 3.0f };
+		float tess_levels{ 10.0f };
 		float tess_alpha{ 1.0f };
 		bool  tess_useadaptive{ true };
 		bool  tess_wireframe{ false };
