@@ -44,7 +44,6 @@ float depth_value(int i)
 
 vec2 refinement(int i)
 {
-	float dp0 = depth_value(i);
 	float dp1,dp2;
 	if(i==0)
 	{
@@ -61,19 +60,43 @@ vec2 refinement(int i)
 		dp1 = depth_value(0);
 		dp2 = depth_value(1);
 	}
+
+	float dp0 = depth_value(i);
 	return vec2(mix(dp1,dp2,0.5), (dp0+dp1+dp2)/3.0);
 }
 
-float level_of_detail()
+vec2 level_of_detail(int i)
 {
+	vec3 p1,p2;
+	if(i==0)
+	{
+		p1 = Pj;
+		p2 = Pk;
+	}
+	else if(i==1)
+	{
+		p1 = Pk;
+		p2 = Pi;
+	}
+	else if(i==2)
+	{
+		p1 = Pi;
+		p2 = Pj;
+	}
+
 	mat4 C_to_M = inverse(V*M);
 	vec3 cam = (C_to_M * vec4(0,0,0,1)).xyz;
-	vec3 ave =(gl_in[0].gl_Position.xyz
-			 + gl_in[1].gl_Position.xyz
-			 + gl_in[2].gl_Position.xyz)/3;
+	
+	vec3 ave = mix(p1,p2,0.5);
+	vec3 ave_all = (Pi+Pj+Pk)/3;
+
 	float len = length(cam-ave);
+	float len_all = length(cam-ave_all);
+
 	float lod = 1.0/(max(len/lod_distance,1.0));
-	return pow(lod,lod_power);
+	float lod_all = 1.0/(max(len_all/lod_distance,1.0));
+
+	return pow(vec2(lod, lod_all),vec2(lod_power));
 }
 
 float PI_i(int i, vec3 q)
@@ -96,16 +119,17 @@ void main()
 	PatchData[gl_InvocationID].termJK = PI_i(1,Pk) + PI_i(2,Pj);
 	PatchData[gl_InvocationID].termIK = PI_i(2,Pi) + PI_i(0,Pk);
 
-    // set tess levels
 	vec2 ref = vec2(1.0,1.0);
 	if(use_adaptive)
 		ref = refinement(gl_InvocationID);
-	float lod = 1.0;
+		
+	vec2 lod = vec2(1.0,1.0);
 	if(use_lod)
-		lod = level_of_detail();
+		lod = level_of_detail(gl_InvocationID);
 
-	gl_TessLevelOuter[gl_InvocationID] = lod*ref.x*levels;
-	gl_TessLevelInner[0] = lod*ref.y*levels;
+	gl_TessLevelOuter[gl_InvocationID] = lod.x * ref.x * levels;
+	if(gl_InvocationID == 0)
+		gl_TessLevelInner[0] = lod.y * ref.y * levels;
 	
 	adapt_value_tcs[gl_InvocationID] = depth_value(gl_InvocationID);
 }
