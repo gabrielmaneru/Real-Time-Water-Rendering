@@ -39,14 +39,19 @@ vec3 hue(float x)
 	vec3 color;
 	if	(angle < 60)
 		color = vec3( 1.0, val, 0.0 );
+	
 	else if (angle < 120)
 		color = vec3( 1.0-val, 1.0, 0.0 );
+	
 	else if (angle < 180)
 		color = vec3( 0.0, 1.0, val );
+	
 	else if (angle < 240)
 		color = vec3( 0.0, 1.0-val, 1.0);
+	
 	else if (angle < 300)
 		color = vec3( val, 0.0, 1.0 );
+	
 	else
 		color = vec3( 1.0, 0.0, 1.0-val );
 	return color;

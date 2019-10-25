@@ -107,29 +107,35 @@ float PI_i(int i, vec3 q)
 
 void main()
 {
-    // pass data
+    // Store data
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-	
     Normal_tcs[gl_InvocationID] = vNormal[gl_InvocationID];
     Tangent_tcs[gl_InvocationID] = vTangent[gl_InvocationID];
     Bitangent_tcs[gl_InvocationID] = vBitangent[gl_InvocationID];
     Uv_tcs[gl_InvocationID] = vUv[gl_InvocationID];
 	
+	// Fill patch data
 	PatchData[gl_InvocationID].termIJ = PI_i(0,Pj) + PI_i(1,Pi);
 	PatchData[gl_InvocationID].termJK = PI_i(1,Pk) + PI_i(2,Pj);
 	PatchData[gl_InvocationID].termIK = PI_i(2,Pi) + PI_i(0,Pk);
 
+	// Compute refinement
 	vec2 ref = vec2(1.0,1.0);
 	if(use_adaptive)
 		ref = refinement(gl_InvocationID);
 		
+	// Compute Level of Detail
 	vec2 lod = vec2(1.0,1.0);
 	if(use_lod)
 		lod = level_of_detail(gl_InvocationID);
 
+	// Compute outer level
 	gl_TessLevelOuter[gl_InvocationID] = lod.x * ref.x * levels;
+
+	// One of them computes outer level
 	if(gl_InvocationID == 0)
 		gl_TessLevelInner[0] = lod.y * ref.y * levels;
 	
+	// Pass refinement for color buffer
 	adapt_value_tcs[gl_InvocationID] = depth_value(gl_InvocationID);
 }
