@@ -183,10 +183,6 @@ bool c_scene::load_scene(std::string path)
 					}
 
 					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));
-
-					t = obj.find("tesselate");
-					if (t < obj.size())
-						m_objects[m_objects.size()-1]->m_tesselate = true;
 				}
 			}
 		}
@@ -247,19 +243,13 @@ void c_scene::update()
 			l->m_transform.set_pos(pos);
 		}
 	}
+	for (auto p_obj : m_objects)
+		p_obj->update();
 }
 
 void c_scene::draw_objs(Shader_Program * shader)
 {
 	for (auto p_obj : m_objects)
-		if(!p_obj->m_tesselate)
-			p_obj->draw(shader);
-}
-
-void c_scene::draw_tesselations(Shader_Program * shader)
-{
-	for (auto p_obj : m_objects)
-		if (p_obj->m_tesselate)
 			p_obj->draw(shader);
 }
 
@@ -289,11 +279,11 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 	transform3d tr;
 	for (auto p_obj : m_objects)
 	{
-		if (p_obj->m_curve == nullptr || p_obj->m_curve->m_actual_curve == nullptr)
+		if (p_obj->m_curve_interpolator == nullptr || p_obj->m_curve_interpolator->m_actual_curve == nullptr)
 			continue;
 
 		const size_t evals = 1000;
-		float dur = p_obj->m_curve->m_actual_curve->duration();
+		float dur = p_obj->m_curve_interpolator->m_actual_curve->duration();
 		float step = dur / (float)evals;
 
 		for (size_t i = 0; i < evals; i++)
@@ -301,8 +291,8 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 			float t_0 = step * (float)i;
 			float t_1 = step * (float)(i+1);
 
-			vec3 pos_0 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_actual_curve->evaluate(t_0);
-			vec3 pos_1 = p_obj->m_transform.get_pos() + p_obj->m_curve->m_actual_curve->evaluate(t_1);
+			vec3 pos_0 = p_obj->m_transform.get_pos() + p_obj->m_curve_interpolator->m_actual_curve->evaluate(t_0);
+			vec3 pos_1 = p_obj->m_transform.get_pos() + p_obj->m_curve_interpolator->m_actual_curve->evaluate(t_1);
 
 			mat4 model = glm::translate(mat4(1.0f), lerp(pos_0, pos_1, 0.5f));
 			model = glm::scale(model, abs(pos_1 - pos_0) + vec3(0.1f));
@@ -311,7 +301,7 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 			renderer->get_model("cube")->draw(shader, nullptr);
 		}
 
-		const curve_base* curve= p_obj->m_curve->m_actual_curve;
+		const curve_base* curve= p_obj->m_curve_interpolator->m_actual_curve;
 		if (dynamic_cast<const curve_line*>(curve) != nullptr
 		||  dynamic_cast<const curve_catmull*>(curve) != nullptr)
 		{

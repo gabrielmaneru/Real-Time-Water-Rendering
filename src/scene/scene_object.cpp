@@ -13,14 +13,44 @@ Author: Gabriel Ma�eru - gabriel.m
 #include <platform/window.h>
 
 scene_object::scene_object(std::string mesh, transform3d tr, animator * anim, curve_interpolator * curve_)
-	: renderable(tr, renderer->get_model(mesh)), m_animator(anim), m_curve(curve_) {}
+	: renderable(tr, renderer->get_model(mesh)), m_animator(anim), m_curve_interpolator(curve_) {}
 
 scene_object::~scene_object()
 {
 	if (m_animator) delete m_animator;
-	if (m_curve) delete m_curve;
+	if (m_curve_interpolator) delete m_curve_interpolator;
 	if (editor->m_selected == this)
 		editor->m_selected = nullptr;
+}
+
+void scene_object::update()
+{
+	if (m_curve_interpolator != nullptr)
+	{
+		if (m_curve_interpolator->m_active && m_curve_interpolator->m_actual_curve != nullptr)
+		{
+			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate((float)m_curve_interpolator->m_time);
+			mat4 mat_pos = glm::translate(mat4(1.0), pos);
+
+			double nxt_time = m_curve_interpolator->m_time + 0.1;
+			nxt_time = fmod(nxt_time, m_curve_interpolator->m_actual_curve->duration());
+			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate((float)nxt_time);
+			vec3 front = glm::normalize(pos - nxt);
+
+			m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
+			m_transform.m_tr.parent = mat_pos;
+
+			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->duration());
+		}
+		else
+			m_transform.m_tr.parent = mat4{ 1 };
+	}
+	if (m_animator != nullptr)
+	{
+		if (m_animator->m_active && m_animator->m_current_animation != -1)
+			if(m_model->m_animations.size() > m_animator->m_current_animation)
+				m_animator->update(m_model->m_animations[m_animator->m_current_animation]->m_duration);
+	}
 }
 
 void scene_object::draw_GUI()
@@ -50,64 +80,46 @@ void scene_object::draw_GUI()
 	}
 	if (ImGui::DragFloat("Scale", &m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
 	if (chng)m_transform.m_tr.upd();
-	ImGui::Checkbox("Tesselate", &m_tesselate);
 
 	ImGui::NewLine();
-	if (m_animator)
+	if (ImGui::TreeNode("Animator"))
 	{
-		m_animator->draw_GUI();
-		if (ImGui::Button("Delete Animator"))
+		if (m_animator)
 		{
-			delete m_animator;
-			m_animator = nullptr;
+			m_animator->draw_GUI();
+			if (ImGui::Button("Delete Animator"))
+			{
+				delete m_animator;
+				m_animator = nullptr;
+			}
 		}
+		else if (ImGui::Button("Create Animator"))
+			m_animator = new animator;
+		ImGui::TreePop();
 	}
-	else if (ImGui::Button("Create Animator"))
-		m_animator = new animator;
 
-	ImGui::NewLine();
-	if (m_curve)
+	if (ImGui::TreeNode("Curve Interpolator"))
 	{
-		m_curve->draw_GUI();
-		if (ImGui::Button("Delete Curve Interpolator"))
+		if (m_curve_interpolator)
 		{
-			delete m_curve;
-			m_curve = nullptr;
+			m_curve_interpolator->draw_GUI();
+			if (ImGui::Button("Delete Curve Interpolator"))
+			{
+				delete m_curve_interpolator;
+				m_curve_interpolator = nullptr;
+			}
 		}
+		else if (ImGui::Button("Create Curve Interpolator"))
+			m_curve_interpolator = new curve_interpolator;
+		ImGui::TreePop();
 	}
-	else if (ImGui::Button("Create Curve Interpolator"))
-		m_curve = new curve_interpolator;
-
-	ImGui::NewLine();
-}
-
-void scene_object::update_parent_curve()
-{
-	if (m_curve->m_active && m_curve->m_actual_curve != nullptr)
-	{
-		vec3 pos = m_curve->m_actual_curve->evaluate((float)m_curve->m_time);
-		mat4 mat_pos = glm::translate(mat4(1.0), pos);
-
-		double nxt_time = m_curve->m_time + 0.1;
-		nxt_time = fmod(nxt_time, m_curve->m_actual_curve->duration());
-		vec3 nxt = m_curve->m_actual_curve->evaluate((float)nxt_time);
-		vec3 front = glm::normalize(pos-nxt);
-
-		m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
-		m_transform.m_tr.parent = mat_pos;
-
-		m_curve->update(m_curve->m_actual_curve->duration());
-	}
-	else
-		m_transform.m_tr.parent = mat4{1};
 }
 
 void scene_object::draw(Shader_Program * shader)
 {
 	m_transform.m_tr.save_prev();
 	shader->set_uniform("M", m_transform.m_tr.get_model());
-	if (m_curve != nullptr)
-		update_parent_curve();
+
 	if(m_model != nullptr)
 		m_model->draw(shader, m_animator);
 }
@@ -141,33 +153,25 @@ void interpolator::draw_GUI()
 
 void curve_interpolator::draw_GUI()
 {
-	if (ImGui::TreeNode("Curve"))
+	std::string name = (m_actual_curve == nullptr) ? "None" : m_actual_curve->m_name;
+	if (ImGui::BeginCombo("Mesh", name.c_str()))
 	{
-		std::string name = (m_actual_curve == nullptr) ? "None" : m_actual_curve->m_name;
-		if (ImGui::BeginCombo("Mesh", name.c_str()))
+		for (size_t n = 0; n < renderer->m_curves.size(); n++)
 		{
-			for (size_t n = 0; n < renderer->m_curves.size(); n++)
-			{
-				bool is_selected = m_actual_curve == renderer->m_curves[n];
-				if (ImGui::Selectable(renderer->m_curves[n]->m_name.c_str(), is_selected))
-					m_actual_curve = renderer->m_curves[n];
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-
+			bool is_selected = m_actual_curve == renderer->m_curves[n];
+			if (ImGui::Selectable(renderer->m_curves[n]->m_name.c_str(), is_selected))
+				m_actual_curve = renderer->m_curves[n];
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
 		}
-		interpolator::draw_GUI();
-		ImGui::TreePop();
+		ImGui::EndCombo();
+
 	}
+	interpolator::draw_GUI();
 }
 
 void animator::draw_GUI()
 {
-	if (ImGui::TreeNode("Animator"))
-	{
-		ImGui::SliderInt("AnimNum", &m_current_animation, -1, 0);
-		interpolator::draw_GUI();
-		ImGui::TreePop();
-	}
+	ImGui::SliderInt("AnimNum", &m_current_animation, -1, 0);
+	interpolator::draw_GUI();
 }

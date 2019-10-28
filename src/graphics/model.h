@@ -89,4 +89,5 @@ private:
 	std::vector<bone_data*> m_bones;
 	std::map<std::string, int> m_bone_mapping;
 	std::vector<animation*> m_animations;
+	friend class scene_object;
 };

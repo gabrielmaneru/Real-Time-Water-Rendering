@@ -11,6 +11,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <graphics/renderable.h>
 #include <graphics/shader_program.h>
 #include <graphics/curve.h>
+
 struct interpolator
 {
 	bool m_active{ true };
@@ -36,17 +37,13 @@ class scene_object : public renderable
 {
 public:
 	scene_object(std::string mesh, transform3d tr, animator * anim, curve_interpolator* curve);
-	virtual ~scene_object();
-	virtual void enter() {};
-	virtual void update() {};
-	virtual void draw(Shader_Program*);
-	virtual void exit() {};
+	~scene_object();
+	void update();
+	void draw(Shader_Program*);
 
 	void draw_GUI();
-	void update_parent_curve();
 
-	bool m_tesselate{false};
 	animator* m_animator{ nullptr };
-	curve_interpolator* m_curve{ nullptr };
+	curve_interpolator* m_curve_interpolator{ nullptr };
 
 };

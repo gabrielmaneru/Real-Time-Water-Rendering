@@ -67,7 +67,6 @@ bool c_renderer::init()
 	// Load Programs
 	try {
 		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
-		tesselation_shader = new Shader_Program("./data/shaders/phong.vert", "./data/shaders/phong.tc", "./data/shaders/phong.te", "./data/shaders/phong.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
@@ -143,7 +142,7 @@ void c_renderer::update()
 	scene_cam.save_prev();
 	scene_cam.update();
 
-	if (g_buffer_shader->is_valid() && tesselation_shader->is_valid())
+	if (g_buffer_shader->is_valid())
 	{
 		// G_Buffer Pass	///////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
@@ -161,23 +160,6 @@ void c_renderer::update()
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
 		/**/	scene->draw_debug_curves(g_buffer_shader);
-		/**/
-		/**/tesselation_shader->use();
-		/**/scene_cam.set_uniforms(tesselation_shader);
-		/**/tesselation_shader->set_uniform("near", scene_cam.m_near);
-		/**/tesselation_shader->set_uniform("far", scene_cam.m_far);
-		/**/tesselation_shader->set_uniform("alpha", m_render_options.tess_alpha);
-		/**/tesselation_shader->set_uniform("levels", m_render_options.tess_levels);
-		/**/tesselation_shader->set_uniform("lod_distance", m_render_options.tess_lod);
-		/**/tesselation_shader->set_uniform("lod_power", m_render_options.tess_lodpower);
-		/**/tesselation_shader->set_uniform("use_adaptive", m_render_options.tess_useadaptive);
-		/**/tesselation_shader->set_uniform("use_lod", m_render_options.tess_uselod);
-		/**/
-		/**/if (m_render_options.tess_wireframe)
-		/**/	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		/**/scene->draw_tesselations(tesselation_shader);
-		/**/if (m_render_options.tess_wireframe)
-		/**/	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -465,24 +447,12 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &tesselation_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
-
-		if (ImGui::TreeNode("Tesselation"))
-		{
-			ImGui::SliderFloat("Alpha", &m_render_options.tess_alpha, 0.0f, 1.0f);
-			ImGui::DragFloat("Levels", &m_render_options.tess_levels, 0.01f, 1.0f, 20.0f);
-			ImGui::DragFloat("LOD distance", &m_render_options.tess_lod, 0.01f, 0.01f, 10.0f);
-			ImGui::DragFloat("LOD power", &m_render_options.tess_lodpower, 0.1f, 1.0f, 50.0f);
-			ImGui::Checkbox("Use Adaptive", &m_render_options.tess_useadaptive);
-			ImGui::Checkbox("Use LOD", &m_render_options.tess_uselod);
-			ImGui::Checkbox("Wireframe", &m_render_options.tess_wireframe);
-			ImGui::TreePop();
-		}
 
 		if (ImGui::TreeNode("Antialiasing"))
 		{

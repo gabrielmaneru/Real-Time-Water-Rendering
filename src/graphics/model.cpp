@@ -62,13 +62,6 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 			call= "prev_bones[" + std::to_string(i) + "]";
 			shader->set_uniform(call.c_str(), m_bones[i]->m_prev_transform);
 		}
-
-		// Update Animators (this should be object individually)
-		if (m_animator && m_animator->m_active && m_animator->m_current_animation > -1 && m_animations.size() > 0)
-		{
-			double dur = m_animations[m_animator->m_current_animation]->m_duration;
-			m_animator->update(dur);
-		}
 	}
 
 	// Loop each mesh

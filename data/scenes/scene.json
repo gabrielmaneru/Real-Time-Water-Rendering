@@ -46,8 +46,7 @@
       },
       "scale": {
         "x": 10.0
-      },
-      "tesselate": true
+      }
     }
   ]
 }
