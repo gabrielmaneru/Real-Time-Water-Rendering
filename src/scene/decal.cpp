@@ -1,4 +1,5 @@
 #include "decal.h"
+#include <graphics/renderer.h>
 
 decal::decal(std::string diffuse, std::string normal, transform3d tr)
 	:scene_object("cube", tr,nullptr,nullptr)
@@ -13,19 +14,13 @@ decal::decal(std::string diffuse, std::string normal, transform3d tr)
 void decal::draw(Shader_Program * shader)
 {
 	glActiveTexture(GL_TEXTURE0);
-	shader->set_uniform("albedo_txt_active", true);
 	glBindTexture(GL_TEXTURE_2D, m_diffuse.m_id);
 
-	shader->set_uniform("kmetallic", vec3(0.0f));
-	shader->set_uniform("metallic_txt_active", false);
-
-	shader->set_uniform("kroughness", 0.0f);
-	shader->set_uniform("roughness_txt_active", false);
-
-	shader->set_uniform("kambient", 1.0f);
-	glActiveTexture(GL_TEXTURE3);
-	shader->set_uniform("normal_txt_active", true);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_normal.m_id);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, renderer->get_texture(c_renderer::DEPTH));
 
 	if (m_model)
 	{

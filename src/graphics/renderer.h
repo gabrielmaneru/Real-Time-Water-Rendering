@@ -21,6 +21,7 @@ class c_renderer
 public:
 	// Shaders
 	Shader_Program* g_buffer_shader;
+	Shader_Program* decal_shader;
 	Shader_Program* light_shader;
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
@@ -49,8 +50,8 @@ public:
 		POSITION,
 		METALLIC,
 		NORMAL,
-		ADAPTIVE,
 		SELECTION,
+		LIN_DEPTH,
 		DEPTH,
 		LIGHT,
 		BLUR_CONTROL,
@@ -92,6 +93,9 @@ public:
 
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
+
+		float dc_angle = 0.8f;
+		int dc_mode=0;
 	}m_render_options;
 
 	friend class c_editor;

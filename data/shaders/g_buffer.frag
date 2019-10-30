@@ -28,7 +28,7 @@ layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
 layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
-layout (location = 4) out vec4 attr_adaptive;
+layout (location = 4) out float attr_lindepth;
 
 void main()
 {
@@ -73,6 +73,6 @@ void main()
 	attr_metallic = vec4(metallic, 1.0);
 	attr_normal = vec4(normal, 1.0);
 
-    gl_FragDepth = (near * far) / (far - near + vPosition.z);
-	gl_FragDepth = 1.0f-pow(1.0f-gl_FragDepth,10);	
+    float d = (near * far) / (far - near + vPosition.z);
+	attr_lindepth = 1.0f-pow(1.0f-d,10);	
 }

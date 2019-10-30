@@ -39,11 +39,8 @@ void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textur
 	}
 
 	// Pass Layout
-	std::vector<GLenum> draw_buffers;
-	for (GLenum i = 0; i < (GLenum)m_color_texture.size(); i++)
-		draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + i);
-	GL_CALL(glDrawBuffers((GLsizei)m_color_texture.size(), draw_buffers.data()));
-
+	set_drawbuffers();
+	
 	// Depth Texture
 	{
 		if (depth == 0)
@@ -69,4 +66,17 @@ void framebuffer::setup(GLsizei width, GLsizei height, std::vector<GLint> textur
 		throw "Invalid Framebuffer";
 
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+}
+
+void framebuffer::set_drawbuffers(const std::vector<GLenum>& attachs)
+{
+	if(attachs.size() > 0)
+		GL_CALL(glDrawBuffers((GLsizei)attachs.size(), attachs.data()))
+	else
+	{
+		std::vector<GLenum> draw_buffers;
+		for (GLenum i = 0; i < (GLenum)m_color_texture.size(); i++)
+			draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + i);
+		set_drawbuffers(draw_buffers);
+	}
 }

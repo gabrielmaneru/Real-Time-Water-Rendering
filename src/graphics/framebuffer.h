@@ -13,6 +13,7 @@ Author: Gabriel Mañeru - gabriel.m
 struct framebuffer
 {
 	void setup(GLsizei width, GLsizei height, std::vector<GLint> textures, GLuint depth = 0);
+	void set_drawbuffers(const std::vector<GLenum>& attachs = {});
 
 	GLsizei m_width{0};
 	GLsizei m_height{0};

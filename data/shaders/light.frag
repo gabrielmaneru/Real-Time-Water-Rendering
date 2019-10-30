@@ -32,11 +32,14 @@ void render_ambient()
 	vec4 normal_value = texture(normal_txt, new_uvs);
 	if(normal_value.xyz == vec3(0,0,0))
 		discard;
-
-	vec3 kd = albedo_value.rgb;
-	float ka = position_value.a-1.0;
-
-	out_color = (ka*la)*kd;
+	if(normal_value.xyz == vec3(1,1,1))
+		out_color=vec3(1.0);
+	else
+	{
+		vec3 kd = albedo_value.rgb;
+		float ka = position_value.a-1.0;
+		out_color = (ka*la)*kd;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

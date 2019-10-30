@@ -67,6 +67,7 @@ bool c_renderer::init()
 	// Load Programs
 	try {
 		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
+		decal_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/decal.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
@@ -119,7 +120,7 @@ void c_renderer::update()
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
-			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
+			GL_R16F, GL_RED, GL_FLOAT, GL_NEAREST
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
@@ -156,8 +157,23 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/
 		/**/scene->draw_objs(g_buffer_shader);
-		/**/scene->draw_decals(g_buffer_shader);
-
+		/**/
+		/**/glDepthMask(GL_FALSE);
+		/**/decal_shader->use();
+		/**/scene_cam.set_uniforms(decal_shader);
+		/**/decal_shader->set_uniform("width", (float)g_buffer.m_width);
+		/**/decal_shader->set_uniform("height", (float)g_buffer.m_height);
+		/**/decal_shader->set_uniform("angle", m_render_options.dc_angle);
+		/**/decal_shader->set_uniform("mode", m_render_options.dc_mode);
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1, GL_COLOR_ATTACHMENT0+3 });
+		/**/scene->draw_decals(decal_shader);
+		/**/g_buffer.set_drawbuffers();
+		/**/glDepthMask(GL_TRUE);
+		/**/
+		/**/g_buffer_shader->use();
+		/**/scene_cam.set_uniforms(g_buffer_shader);
+		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
+		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
@@ -363,8 +379,11 @@ void c_renderer::update()
 void c_renderer::shutdown()
 {
 	delete g_buffer_shader;
+	delete decal_shader;
 	delete light_shader;
+	delete blur_shader;
 	delete texture_shader;
+	delete color_shader;
 
 	// Clean Meshes
 	for (auto m : m_models)
@@ -421,7 +440,7 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::POSITION);
 			show_image(c_renderer::METALLIC);
 			show_image(c_renderer::NORMAL);
-			show_image(c_renderer::ADAPTIVE);
+			show_image(c_renderer::LIN_DEPTH);
 			show_image(c_renderer::DEPTH);
 			ImGui::TreePop();
 		}
@@ -449,13 +468,19 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
 
+		if (ImGui::TreeNode("Decals"))
+		{
+			ImGui::SliderInt("View Mode", &m_render_options.dc_mode, 0,2);
+			ImGui::SliderFloat("Angle Threshold", &m_render_options.dc_angle, 0.0f, 1.0f);
+			ImGui::TreePop();
+		}
 		if (ImGui::TreeNode("Antialiasing"))
 		{
 			ImGui::Checkbox("Do Antialiasing", &m_render_options.do_antialiasing);
@@ -514,7 +539,7 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return g_buffer.m_color_texture[2];
 	case c_renderer::e_texture::NORMAL:
 		return g_buffer.m_color_texture[3];
-	case c_renderer::e_texture::ADAPTIVE:
+	case c_renderer::e_texture::LIN_DEPTH:
 		return g_buffer.m_color_texture[4];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
