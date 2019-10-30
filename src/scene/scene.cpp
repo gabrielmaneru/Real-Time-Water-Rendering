@@ -16,6 +16,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <GLFW/glfw3.h>
 #include <platform/window_manager.h>
 c_scene * scene = new c_scene;
+const char end_of_item{ 0x1D };
 bool c_scene::load_scene(std::string path)
 {
 	std::string real_path = "./data/scenes/" + path + ".json";
@@ -54,7 +55,7 @@ bool c_scene::load_scene(std::string path)
 						it++;
 						if (lvl_bra == 1 && lvl_sqbra == 1)
 						{
-							stream.insert(it, 1, 0x1D);
+							stream.insert(it, 1, end_of_item);
 							it++;
 						}
 						break;
@@ -103,34 +104,35 @@ bool c_scene::load_scene(std::string path)
 
 			// Create Objects
 			{
-				size_t obj_location = stream.find("objects");
-				std::string objs = stream.substr(obj_location);
-				objs = objs.substr(objs.find_first_of('[') + 1, objs.find_first_of(']') - objs.find_first_of('['));
+				stream = stream.substr(stream.find("objects"));
+				std::string objs = stream.substr(stream.find_first_of('[') + 1, stream.find_first_of(']') - stream.find_first_of('['));
 				while (!objs.empty())
 				{
-					std::string obj = objs.substr(0, objs.find_first_of(0x1D));
-					objs = objs.substr(objs.find_first_of(0x1D)+2);
+					std::string obj = objs.substr(0, objs.find_first_of(end_of_item));
+					objs = objs.substr(objs.find_first_of(end_of_item) + 2);
 
 					// Get Mesh
 					std::string mesh_name = obj.substr(obj.find("mesh") + 5, obj.find_first_of(',') - obj.find("mesh") - 5);
 
 					// Get Transform
-					vec3 pos{-1.0};
+					vec3 pos{ -1.0 };
 					obj = obj.substr(obj.find("translation"));
 					pos.x = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
-					pos.y = (float)std::atof(obj.substr(obj.find_first_of('y')+2, obj.find_first_of('z') - obj.find_first_of('y')-3).c_str());
-					pos.z = (float)std::atof(obj.substr(obj.find_first_of('z')+2, obj.find_first_of('}') - obj.find_first_of('z')-2).c_str());
+					pos.y = (float)std::atof(obj.substr(obj.find_first_of('y') + 2, obj.find_first_of('z') - obj.find_first_of('y') - 3).c_str());
+					pos.z = (float)std::atof(obj.substr(obj.find_first_of('z') + 2, obj.find_first_of('}') - obj.find_first_of('z') - 2).c_str());
 					vec3 rot{ -1.0 };
 					obj = obj.substr(obj.find("rotate"));
 					rot.x = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
 					rot.y = (float)std::atof(obj.substr(obj.find_first_of('y') + 2, obj.find_first_of('z') - obj.find_first_of('y') - 3).c_str());
 					rot.z = (float)std::atof(obj.substr(obj.find_first_of('z') + 2, obj.find_first_of('}') - obj.find_first_of('z') - 2).c_str());
-					float scl{ -1.0 };
+					vec3 scl{ -1.0 };
 					obj = obj.substr(obj.find("scale"));
-					scl = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
+					scl.x = (float)std::atof(obj.substr(obj.find_first_of('x') + 2, obj.find_first_of('y') - obj.find_first_of('x') - 3).c_str());
+					scl.y = (float)std::atof(obj.substr(obj.find_first_of('y') + 2, obj.find_first_of('z') - obj.find_first_of('y') - 3).c_str());
+					scl.z = (float)std::atof(obj.substr(obj.find_first_of('z') + 2, obj.find_first_of('}') - obj.find_first_of('z') - 2).c_str());
 					transform3d tr;
 					tr.set_tr(pos, scl, normalize(quat(glm::radians(rot))));
-					
+
 					// Get Animator
 					animator* anim{ nullptr };
 					auto t = obj.find("animator");
@@ -185,6 +187,43 @@ bool c_scene::load_scene(std::string path)
 					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));
 				}
 			}
+
+			// Create Decals
+			/*{
+				stream = stream.substr(stream.find("decals"));
+				std::string dcls = stream.substr(stream.find_first_of('[') + 1, stream.find_first_of(']') - stream.find_first_of('['));
+				while (!dcls.empty())
+				{
+					std::string dcl = dcls.substr(0, dcls.find_first_of(end_of_item));
+					dcls = dcls.substr(dcls.find_first_of(end_of_item) + 2);
+
+					// Get Texture
+					dcl = dcl.substr(dcl.find("diffuse"));
+					std::string diffuse_txt = dcl.substr(dcl.find("diffuse") + 8, dcl.find_first_of(',') - 8);
+					std::string normal_txt = dcl.substr(dcl.find("normal") + 7, dcl.find_first_of(',') - 8);
+
+					// Get Transform
+					vec3 pos{ -1.0 };
+					dcl = dcl.substr(dcl.find("translation"));
+					pos.x = (float)std::atof(dcl.substr(dcl.find_first_of('x') + 2, dcl.find_first_of('y') - dcl.find_first_of('x') - 3).c_str());
+					pos.y = (float)std::atof(dcl.substr(dcl.find_first_of('y') + 2, dcl.find_first_of('z') - dcl.find_first_of('y') - 3).c_str());
+					pos.z = (float)std::atof(dcl.substr(dcl.find_first_of('z') + 2, dcl.find_first_of('}') - dcl.find_first_of('z') - 2).c_str());
+					vec3 rot{ -1.0 };
+					dcl = dcl.substr(dcl.find("rotate"));
+					rot.x = (float)std::atof(dcl.substr(dcl.find_first_of('x') + 2, dcl.find_first_of('y') - dcl.find_first_of('x') - 3).c_str());
+					rot.y = (float)std::atof(dcl.substr(dcl.find_first_of('y') + 2, dcl.find_first_of('z') - dcl.find_first_of('y') - 3).c_str());
+					rot.z = (float)std::atof(dcl.substr(dcl.find_first_of('z') + 2, dcl.find_first_of('}') - dcl.find_first_of('z') - 2).c_str());
+					vec3 scl{ -1.0 };
+					dcl = dcl.substr(dcl.find("scale"));
+					scl.x = (float)std::atof(dcl.substr(dcl.find_first_of('x') + 2, dcl.find_first_of('y') - dcl.find_first_of('x') - 3).c_str());
+					scl.y = (float)std::atof(dcl.substr(dcl.find_first_of('y') + 2, dcl.find_first_of('z') - dcl.find_first_of('y') - 3).c_str());
+					scl.z = (float)std::atof(dcl.substr(dcl.find_first_of('z') + 2, dcl.find_first_of('}') - dcl.find_first_of('z') - 2).c_str());
+					transform3d tr;
+					tr.set_tr(pos, scl, normalize(quat(glm::radians(rot))));
+					
+					m_decals.push_back(new decal(diffuse_txt, normal_txt, tr));
+				}
+			}*/
 		}
 
 		file.close();
@@ -199,27 +238,27 @@ bool c_scene::init()
 		return false;
 
 	transform3d tr;
-	tr.set_scl(.5f);
+	tr.set_scl(vec3(.5f));
 	{
 		light_data ld;
 		ld.m_att_factor = { 0.f,0.001f,0.001f };
-		tr.set_pos({ 5,22,7 });
+		tr.set_pos({ 7,22,5 });
 		m_lights.push_back(new light(tr, ld));
-		tr.set_pos({ 3.5f,65.0f,-99.0f });
+		tr.set_pos({ -99.0f,65.0f,3.5f });
 		ld.m_diffuse = { 1,0,1 };
 		m_lights.push_back(new light(tr, ld));
 	}
 	light_data ld;
 	for (int i = 0; i < m_num_lights/2; i++)
 	{
-		tr.set_pos({ random_float(17.5f, 32.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
+		tr.set_pos({ random_float(-106.f, 94.f), random_float(0.f, 50.f),random_float(17.5f, 32.5f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
 		m_lights.push_back(new light(tr, ld));
 	}
 
 	for (int i = 0; i < m_num_lights/2; i++)
 	{
-		tr.set_pos({ random_float(-27.5f, -12.5f), random_float(0.f, 50.f),random_float(-106.f, 94.f) });
+		tr.set_pos({ random_float(-106.f, 94.f), random_float(0.f, 50.f),random_float(-27.5f, -12.5f) });
 		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
 		m_lights.push_back(new light(tr, ld));
 	}
@@ -237,9 +276,9 @@ void c_scene::update()
 			vec3 pos = l->m_transform.get_pos();
 			pos.y += 0.5f*sin(l->time);
 			l->time += 1/60.f;
-			pos.z += 1.0f;
-			if (pos.z > 94.f)
-				pos.z -= 200.f;
+			pos.x += 1.0f;
+			if (pos.x > 94.f)
+				pos.x -= 200.f;
 			l->m_transform.set_pos(pos);
 		}
 	}
@@ -263,7 +302,7 @@ void c_scene::draw_lights(Shader_Program * shader)
 void c_scene::draw_debug_lights(Shader_Program * shader)
 {
 	transform3d tr;
-	tr.set_scl(.5f);
+	tr.set_scl(vec3(.5f));
 
 	for (auto p_li : m_lights)
 	{

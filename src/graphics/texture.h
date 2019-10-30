@@ -15,5 +15,6 @@ struct Texture
 	int m_width;
 	int m_height;
 	void loadFromFile(const char * str, bool gamma_correction);
+	static std::string filter_name(const std::string&);
 	std::string m_path;
 };

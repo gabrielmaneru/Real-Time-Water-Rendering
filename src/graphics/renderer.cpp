@@ -97,13 +97,13 @@ bool c_renderer::init()
 
 	// Materials
 	Model::m_def_materials.push_back(new Material{ "default",
-		vec3(0.0, 1.0, 0.0),{},
-		vec3(0.0f),{},
-		0.5f,{},
-		1.0f,{}});
+		{},"Metal_Grill_009_basecolor.jpg",
+		{},"Metal_Grill_009_height.png",
+		{},"Metal_Grill_009_height.png",
+		1.0f,"Metal_Grill_009_normal.jpg" });
 
 	// Setup Cameras
-	scene_cam.m_eye = { 4,16,44 };
+	scene_cam.m_eye = { 29,16,-4 };
 	scene_cam.update();
 	return true;
 }

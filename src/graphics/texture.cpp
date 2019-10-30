@@ -50,3 +50,15 @@ void Texture::loadFromFile(const char * str, bool gamma_correction)
 	// Free the image data
 	stbi_image_free(data);
 }
+
+std::string Texture::filter_name(const std::string& name)
+{
+	size_t start = name.find_last_of('/') + 1;
+	if (start > name.size()) start = 0;
+	if (start == 0)
+	{
+		start = name.find_last_of('\\') + 1;
+		if (start > name.size()) start = 0;
+	}
+	return "./data/textures/" + name.substr(start);
+}

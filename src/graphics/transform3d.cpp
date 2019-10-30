@@ -17,7 +17,7 @@ mat4 transform3d::Transform::get_model() const
 
 		m_model = m_model*glm::mat4_cast(m_rot);
 
-		m_model = glm::scale(m_model, vec3{ m_scl });
+		m_model = glm::scale(m_model, m_scl);
 		should_update = false;
 	}
 	return parent * m_model;

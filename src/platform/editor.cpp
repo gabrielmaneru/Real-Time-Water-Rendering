@@ -138,7 +138,7 @@ void c_editor::draw_selected_window()
 			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
 			break;
 		case ImGuizmo::SCALE:
-			m_selected->m_transform.m_tr.m_scl = (matrixScale[0] + matrixScale[1] + matrixScale[2]) / 3.0f;
+			m_selected->m_transform.m_tr.m_scl = vec3(matrixScale[0], matrixScale[1], matrixScale[2]);
 			break;
 		}
 		

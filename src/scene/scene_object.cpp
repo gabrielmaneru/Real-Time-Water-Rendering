@@ -78,7 +78,7 @@ void scene_object::draw_GUI()
 		m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
 		chng = true;
 	}
-	if (ImGui::DragFloat("Scale", &m_transform.m_tr.m_scl, .1f, .001f, 99999999.f))chng = true;
+	if (ImGui::DragFloat3("Scale", &m_transform.m_tr.m_scl.x, .1f, .001f, 99999999.f))chng = true;
 	if (chng)m_transform.m_tr.upd();
 
 	ImGui::NewLine();

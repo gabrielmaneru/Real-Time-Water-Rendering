@@ -15,7 +15,7 @@ constexpr struct {
 	vec3 front{ 0,0,-1 };
 	vec3 up{ 0,1,0 };
 	vec4 viewrect{ -1,1,-1,1 };
-	float yaw{ -90.0f };
+	float yaw{ 180.0f };
 	float pitch{ 0.0f };
 
 }def_cam;

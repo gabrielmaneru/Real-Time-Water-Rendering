@@ -70,7 +70,8 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 		if (use_mat)
 		{
 			// Load Material (hardcoded)
-			if(m_meshes[i]->m_material_idx == default_material)
+			if(m_meshes[i]->m_material_idx == default_material
+			|| m_materials[m_meshes[i]->m_material_idx].m_name == "(null)")
 				m_def_materials[0]->set_uniform(shader);
 			else
 				m_materials[m_meshes[i]->m_material_idx].set_uniform(shader);
@@ -328,19 +329,9 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	aiString str;
 	material->GetTexture(type, 0, &str);
 
-	std::string name = str.C_Str();
-	size_t start = name.find_last_of('/') + 1;
-	if (start > name.size()) start = 0;
-	if(start == 0)
-	{
-		start = name.find_last_of('\\') + 1;
-		if (start > name.size()) start = 0;
-	}
-	name = "./data/textures/" + name.substr(start);
-
 	Texture texture;
-	texture.loadFromFile(name.c_str(), type == aiTextureType_DIFFUSE);
-	texture.m_path = str.C_Str();
+	texture.m_path = Texture::filter_name(str.C_Str());
+	texture.loadFromFile(texture.m_path.c_str(), type == aiTextureType_DIFFUSE);
 	return texture;
 }
 
