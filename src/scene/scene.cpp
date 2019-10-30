@@ -189,7 +189,7 @@ bool c_scene::load_scene(std::string path)
 			}
 
 			// Create Decals
-			/*{
+			{
 				stream = stream.substr(stream.find("decals"));
 				std::string dcls = stream.substr(stream.find_first_of('[') + 1, stream.find_first_of(']') - stream.find_first_of('['));
 				while (!dcls.empty())
@@ -223,7 +223,7 @@ bool c_scene::load_scene(std::string path)
 					
 					m_decals.push_back(new decal(diffuse_txt, normal_txt, tr));
 				}
-			}*/
+			}
 		}
 
 		file.close();
@@ -297,6 +297,13 @@ void c_scene::draw_lights(Shader_Program * shader)
 	shader->set_uniform("la", light_data::m_ambient);
 	for (auto p_li : m_lights)
 		p_li->draw(shader);
+}
+
+void c_scene::draw_decals(Shader_Program * shader)
+{
+	//shader->set_uniform("la", light_data::m_ambient);
+	for (auto p_d : m_decals)
+		p_d->draw(shader);
 }
 
 void c_scene::draw_debug_lights(Shader_Program * shader)

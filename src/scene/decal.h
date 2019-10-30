@@ -8,4 +8,6 @@ class decal : public scene_object
 	Texture m_normal;
 public:
 	decal(std::string diffuse, std::string normal, transform3d tr);
+	virtual ~decal() = default;
+	void draw(Shader_Program*);
 };

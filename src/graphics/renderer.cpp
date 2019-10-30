@@ -156,6 +156,8 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/
 		/**/scene->draw_objs(g_buffer_shader);
+		/**/scene->draw_decals(g_buffer_shader);
+
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
