@@ -22,6 +22,9 @@ void decal::draw(Shader_Program * shader)
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, renderer->get_texture(c_renderer::DEPTH));
 
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, renderer->get_texture(c_renderer::POSITION));
+
 	if (m_model)
 	{
 		shader->set_uniform("M", m_transform.get_model());

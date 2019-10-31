@@ -155,10 +155,10 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
-		/**/
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/
-		/**/glDepthMask(GL_FALSE);
+		/**/if (m_render_options.dc_mode == 0)
+		/**/	GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/decal_shader->use();
 		/**/scene_cam.set_uniforms(decal_shader);
 		/**/decal_shader->set_uniform("width", (float)g_buffer.m_width);
@@ -168,7 +168,8 @@ void c_renderer::update()
 		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1, GL_COLOR_ATTACHMENT0+3 });
 		/**/scene->draw_decals(decal_shader);
 		/**/g_buffer.set_drawbuffers();
-		/**/glDepthMask(GL_TRUE);
+		/**/if(m_render_options.dc_mode==0)
+		/**/	GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/
 		/**/g_buffer_shader->use();
 		/**/scene_cam.set_uniforms(g_buffer_shader);
