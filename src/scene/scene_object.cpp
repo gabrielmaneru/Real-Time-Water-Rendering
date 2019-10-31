@@ -32,12 +32,15 @@ void scene_object::update()
 			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate((float)m_curve_interpolator->m_time);
 			mat4 mat_pos = glm::translate(mat4(1.0), pos);
 
-			double nxt_time = m_curve_interpolator->m_time + 0.1;
+			double nxt_time = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state? 0.1:-0.1);
 			nxt_time = fmod(nxt_time, m_curve_interpolator->m_actual_curve->duration());
 			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate((float)nxt_time);
-			vec3 front = glm::normalize(pos - nxt);
-
-			m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
+			vec3 front = pos - nxt;
+			if (glm::length2(front) > glm::epsilon<float>())
+			{
+				front = glm::normalize(pos - nxt);
+				m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
+			}
 			m_transform.m_tr.parent = mat_pos;
 
 			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->duration());
@@ -154,7 +157,7 @@ void interpolator::draw_GUI()
 void curve_interpolator::draw_GUI()
 {
 	std::string name = (m_actual_curve == nullptr) ? "None" : m_actual_curve->m_name;
-	if (ImGui::BeginCombo("Mesh", name.c_str()))
+	if (ImGui::BeginCombo("Curve", name.c_str()))
 	{
 		for (size_t n = 0; n < renderer->m_curves.size(); n++)
 		{

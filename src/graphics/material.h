@@ -22,6 +22,7 @@ struct Material
 		vec3 metalli_v, std::string metallic_path,
 		float roughness_v, std::string roughness_path,
 		float ambient_v, std::string normal_path);
+	Material(const Material&) = default;
 	void set_uniform(Shader_Program*)const;
 	std::string m_name;
 

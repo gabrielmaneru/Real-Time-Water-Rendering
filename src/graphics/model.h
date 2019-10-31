@@ -65,7 +65,7 @@ struct animation
 class Model
 {
 public:
-	Model(const std::string&);
+	Model(const std::string&, const std::vector<std::string>& = {});
 	~Model();
 	void draw(Shader_Program *, animator* m_animator, bool use_mat = true)const;
 

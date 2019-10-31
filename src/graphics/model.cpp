@@ -23,9 +23,17 @@ mat4 to_glm(aiMatrix4x4 m)
 	return glm::transpose(glm::make_mat4(&m.a1));
 }
 
-Model::Model(const std::string & path)
+
+Model::Model(const std::string & path, const std::vector<std::string>& def_mats)
 {
 	load_obj(path);
+	if (def_mats.size())
+	{
+		for (int i = 0; i < def_mats.size() && i < m_materials.size(); i++)
+			for (auto pMat : m_def_materials)
+				if (pMat->m_name == def_mats[i])
+					m_materials[i] = Material(*pMat);
+	}
 	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }
 

@@ -75,6 +75,26 @@ bool c_renderer::init()
 	}
 	catch (const std::string & log) { std::cout << log; }
 
+	// Materials
+	Model::m_def_materials.push_back(new Material{ "default",
+		{0.0,1.0,0.0},{},
+		vec3{1.0},{},
+		{1.0f},{},
+		1.0f,{}
+		});
+	Model::m_def_materials.push_back(new Material{ "plastic",
+		{},"plasticpattern1-albedo.png",
+		{},"Dielectric_metallic.tga",
+		{},"plasticpattern1-roughness2.png",
+		1.0f,"plasticpattern1-normal2b.png"
+		});
+	Model::m_def_materials.push_back(new Material{ "copper",
+		{},"plasticpattern1-albedo.png",
+		{},"oxidized-copper-metal.png",
+		{},"oxidized-coppper-roughness.png",
+		1.0f,"oxidized-copper-normal-ue.png"
+		});
+
 	// Load Resources
 	try
 	{
@@ -85,6 +105,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
+		m_models.push_back(new Model("./data/meshes/sneak.dae", {"copper","plastic"}));
 		m_models.push_back(new Model("./data/meshes/suzanne.obj"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
@@ -94,15 +115,9 @@ bool c_renderer::init()
 	m_curves.push_back(new curve_line("line"));
 	m_curves.push_back(new curve_hermite("hermite"));
 	m_curves.push_back(new curve_catmull("catmull"));
+	m_curves.push_back(new curve_catmull("walk"));
 	m_curves.push_back(new curve_bezier("bezier"));
-
-	// Materials
-	Model::m_def_materials.push_back(new Material{ "default",
-		{},"Metal_Grill_009_basecolor.jpg",
-		{},"Metal_Grill_009_height.png",
-		{},"Metal_Grill_009_height.png",
-		1.0f,"Metal_Grill_009_normal.jpg" });
-
+	
 	// Setup Cameras
 	scene_cam.m_eye = { 29,16,-4 };
 	scene_cam.update();
