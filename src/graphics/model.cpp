@@ -9,6 +9,7 @@ Author: Gabriel Mañeru - gabriel.m
 
 #include "model.h"
 #include "gl_error.h"
+#include "graphics/renderer.h"
 #include <platform/editor.h>
 #include <utils/math_utils.h>
 #include <scene/scene_object.h>
@@ -67,8 +68,11 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 			std::string call("bones[" + std::to_string(i) + "]");
 			shader->set_uniform(call.c_str(), m_bones[i]->m_final_transform);
 
-			call= "prev_bones[" + std::to_string(i) + "]";
-			shader->set_uniform(call.c_str(), m_bones[i]->m_prev_transform);
+			if (shader == renderer->color_shader)
+			{
+				call= "prev_bones[" + std::to_string(i) + "]";
+				shader->set_uniform(call.c_str(), m_bones[i]->m_prev_transform);
+			}
 		}
 	}
 
