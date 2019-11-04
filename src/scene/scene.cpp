@@ -331,22 +331,22 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 		const size_t evals = 1000;
 		float dur = p_obj->m_curve_interpolator->m_actual_curve->duration();
 		float step = dur / (float)evals;
-
+		
 		for (size_t i = 0; i < evals; i++)
 		{
 			float t_0 = step * (float)i;
 			float t_1 = step * (float)(i+1);
-
+		
 			vec3 pos_0 = p_obj->m_transform.get_pos() + p_obj->m_curve_interpolator->m_actual_curve->evaluate(t_0);
 			vec3 pos_1 = p_obj->m_transform.get_pos() + p_obj->m_curve_interpolator->m_actual_curve->evaluate(t_1);
-
+		
 			mat4 model = glm::translate(mat4(1.0f), lerp(pos_0, pos_1, 0.5f));
 			model = glm::scale(model, abs(pos_1 - pos_0) + vec3(0.1f));
 			shader->set_uniform("M", model);
-
-			renderer->get_model("cube")->draw(shader, nullptr);
+		
+			renderer->get_model("sphere")->draw(shader, nullptr);
 		}
-
+		
 		const curve_base* curve= p_obj->m_curve_interpolator->m_actual_curve;
 		if (dynamic_cast<const curve_line*>(curve) != nullptr
 		||  dynamic_cast<const curve_catmull*>(curve) != nullptr)
@@ -354,9 +354,11 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 			for (auto p : curve->m_frames)
 			{
 				mat4 model = glm::translate(mat4(1.0f), p_obj->m_transform.get_pos() + p.first);
-				model = glm::scale(model, vec3(0.5f));
+				model = glm::scale(model, vec3(0.5f, 0.3f, 0.5f));
 				shader->set_uniform("M", model);
+				renderer->set_debug_color({ 0,0,1 });
 				renderer->get_model("sphere")->draw(shader, nullptr);
+				renderer->reset_debug_color();
 			}
 		}
 		else
@@ -367,17 +369,32 @@ void c_scene::draw_debug_curves(Shader_Program * shader)
 			{
 				vec3 P0 = p_obj->m_transform.get_pos() + curve->m_frames[i].first;
 				vec3 P1 = p_obj->m_transform.get_pos() + curve->m_frames[i + 3].first;
-
+		
 				mat4 model = glm::translate(mat4(1.0f), P0);
-				model = glm::scale(model, vec3(0.5f));
+				model = glm::scale(model, vec3(0.5f, 0.3f, 0.5f));
 				shader->set_uniform("M", model);
 				renderer->get_model("sphere")->draw(shader, nullptr);
-
+		
 				model = glm::translate(mat4(1.0f), P1);
-				model = glm::scale(model, vec3(0.5f));
+				model = glm::scale(model, vec3(0.5f, 0.3f, 0.5f));
 				shader->set_uniform("M", model);
+				renderer->set_debug_color({ 0,0,1 });
 				renderer->get_model("sphere")->draw(shader, nullptr);
+				renderer->reset_debug_color();
 			}
+		}
+
+		for (auto& k : p_obj->m_curve_interpolator->m_actual_curve->m_length_table)
+		{
+			vec3 pos = p_obj->m_transform.get_pos()
+			+ p_obj->m_curve_interpolator->m_actual_curve->evaluate(k.m_param_value * dur);
+
+			mat4 model = glm::translate(mat4(1.0f), pos);
+			model = glm::scale(model, vec3(0.3f, 0.5f, 0.3f));
+			shader->set_uniform("M", model);
+			renderer->set_debug_color({ 1,0,0 });
+			renderer->get_model("sphere")->draw(shader, nullptr);
+			renderer->reset_debug_color();
 		}
 	}
 }

@@ -51,11 +51,17 @@ curve_base::curve_base(std::string path)
 	}
 }
 
-void curve_base::do_adaptive_forward_differencing()
+void curve_base::do_adaptive_forward_differencing(float separation)
 {
+	m_length_table.clear();
+
 	std::function<float(float, float)> alen =
 	[&](float a, float b)->float
-	{	return glm::length(evaluate(b) - evaluate(a));	};
+	{
+		vec3 pos_a = evaluate(a);
+		vec3 pos_b = evaluate(b);
+		return glm::length(pos_b - pos_a);
+	};
 
 	std::list<key_arclength> temp_list;
 
@@ -73,20 +79,70 @@ void curve_base::do_adaptive_forward_differencing()
 		float m_b = alen(mid_dt, b->m_param_value);
 		float delta = a_m + m_b - b->m_arclength;
 
-		if (delta > 0.1f)
+		auto mid = temp_list.insert(b, { mid_dt, a_m });
+		b->m_arclength = m_b;
+
+		if (delta > separation)
 		{
-			auto mid = temp_list.insert(b, { mid_dt, a_m });
-			b->m_arclength = m_b;
 			subdivide(a, mid);
 			subdivide(mid,b);
-			qeotinqoit//TODO
 		}
 	};
+	subdivide(start, end);
+
+	float acc = 0.0f;
+	float max_t = temp_list.back().m_param_value;
+	for (auto& k : temp_list)
+	{
+		m_length_table.push_back({ k.m_param_value / max_t, acc + k.m_arclength });
+		acc += k.m_arclength;
+	}
+}
+
+float curve_base::distance_to_time(float d)const
+{
+	float d_clamped = fmod(d, max_distance());
+
+	size_t it = 0;
+	size_t step = 2;
+	while (true)
+	{
+		if (it > m_length_table.size() - 2)
+		{
+			it = m_length_table.size() - 2;
+			break;
+		}
+
+		if (m_length_table[it  ].m_arclength <= d
+		&&  m_length_table[it+1].m_arclength >= d)
+			break;
+
+		size_t step_ = (size_t)(0.5f + m_length_table.size() / (float)step);
+		if (m_length_table[it].m_arclength > d)
+			it -= step_;
+		else
+			it += step_;
+
+		step *= 2;
+	}
+	return map(d, m_length_table[it].m_arclength, m_length_table[it + 1].m_arclength,
+	m_length_table[it].m_param_value, m_length_table[it + 1].m_param_value) * duration();
 }
 
 float curve_base::duration() const
 {
 	return m_frames.back().second;
+}
+
+float curve_base::max_distance() const
+{
+	return m_length_table.back().m_arclength;
+}
+
+curve_line::curve_line(std::string s)
+	:curve_base(s)
+{
+	do_adaptive_forward_differencing(0.1f);
 }
 
 vec3 curve_line::evaluate(float t)const
@@ -103,6 +159,12 @@ vec3 curve_line::evaluate(float t)const
 			return map(t, m_frames[i].second, m_frames[i + 1].second,
 				m_frames[i].first, m_frames[i + 1].first);
 	return{};
+}
+
+curve_hermite::curve_hermite(std::string s)
+	:curve_base(s)
+{
+	do_adaptive_forward_differencing(0.1f);
 }
 
 vec3 curve_hermite::evaluate(float t)const
@@ -128,6 +190,12 @@ vec3 curve_hermite::evaluate(float t)const
 			return (2.0f*(P0 - P1) + T0 + T1)*(c*c*c) + (3.0f*(P1 - P0) - 2.0f*T0 - T1)*(c*c) + T0 * c + P0;
 		}
 	return{};
+}
+
+curve_catmull::curve_catmull(std::string s)
+	:curve_base(s)
+{
+	do_adaptive_forward_differencing(0.1f);
 }
 
 vec3 curve_catmull::evaluate(float t)const
@@ -179,6 +247,12 @@ vec3 curve_catmull::evaluate(float t)const
 			return (2.0f*(P1 - P2) + C0 + C1)*(c*c*c) + (3.0f*(P2 - P1) - 2.0f*C0 - C1)*(c*c) + C0 * c + P1;
 		}
 	return{};
+}
+
+curve_bezier::curve_bezier(std::string s)
+	:curve_base(s)
+{
+	do_adaptive_forward_differencing(0.1f);
 }
 
 vec3 curve_bezier::evaluate(float t)const

@@ -56,7 +56,7 @@ void main()
 	
 	vec3 dx = normalize(dFdx(view_point.xyz));
 	vec3 dy = normalize(dFdy(view_point.xyz));
-	vec3 norm = normalize(cross(dx,dy));
+	vec3 norm = cross(dx,dy);
 
 	vec3 front_box = vec3(0.0,0.0,-1.0);
 	mat3 normalMtx = inverse(transpose(mat3(V*M)));

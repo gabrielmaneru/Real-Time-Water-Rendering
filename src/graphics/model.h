@@ -72,7 +72,7 @@ public:
 	std::string m_name;
 	std::vector<Mesh*> m_meshes;
 
-	static std::vector<const Material*> m_def_materials;
+	static std::vector<Material*> m_def_materials;
 
 private:
 	void load_obj(const std::string&);

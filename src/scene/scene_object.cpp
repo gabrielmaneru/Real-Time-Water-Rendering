@@ -29,12 +29,14 @@ void scene_object::update()
 	{
 		if (m_curve_interpolator->m_active && m_curve_interpolator->m_actual_curve != nullptr)
 		{
-			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate((float)m_curve_interpolator->m_time);
+			float time = m_curve_interpolator->m_actual_curve->distance_to_time(m_curve_interpolator->m_time);
+			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate(time);
 			mat4 mat_pos = glm::translate(mat4(1.0), pos);
 
-			double nxt_time = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state? 0.1:-0.1);
-			nxt_time = fmod(nxt_time, m_curve_interpolator->m_actual_curve->duration());
-			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate((float)nxt_time);
+			double nxt_dist = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state?m_curve_interpolator->m_speed:-m_curve_interpolator->m_speed);
+			nxt_dist = fmod(nxt_dist, m_curve_interpolator->m_actual_curve->max_distance());
+			time = m_curve_interpolator->m_actual_curve->distance_to_time((float)nxt_dist);
+			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate(time);
 			vec3 front = pos - nxt;
 			if (glm::length2(front) > glm::epsilon<float>())
 			{
@@ -43,7 +45,7 @@ void scene_object::update()
 			}
 			m_transform.m_tr.parent = mat_pos;
 
-			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->duration());
+			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->max_distance());
 		}
 		else
 			m_transform.m_tr.parent = mat4{ 1 };
@@ -150,7 +152,7 @@ void interpolator::draw_GUI()
 	ImGui::Checkbox("Active", &m_active);
 	if (ImGui::Checkbox("Playback", &m_playback))m_playback_state = true;
 	float sp = (float)m_speed;
-	if (ImGui::SliderFloat("Speed", &sp, 0.01f, 10.0f)) m_speed = (double)sp;
+	if (ImGui::DragFloat("Speed", &sp, 0.01f, -1000.f,1000.f)) m_speed = (double)sp;
 	ImGui::Text(("Time:" + std::to_string(m_time)).c_str());
 }
 
