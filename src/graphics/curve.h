@@ -10,12 +10,20 @@ Author: Gabriel Mañeru - gabriel.m
 #include <utils/math_utils.h>
 #include <vector>
 using keyframe = std::pair<vec3, float>;
+struct key_arclength
+{
+	float m_param_value;
+	float m_arclength;
+};
 struct curve_base
 {
 	curve_base(std::string);
 	virtual vec3 evaluate(float t)const = 0;
+	void do_adaptive_forward_differencing();
+
 	float duration()const;
 	std::vector<keyframe> m_frames;
+	std::vector<key_arclength> m_length_table;
 	std::string m_name;
 };
 

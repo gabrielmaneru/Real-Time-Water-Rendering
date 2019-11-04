@@ -8,6 +8,8 @@ Author: Gabriel Mañeru - gabriel.m
 - End Header --------------------------------------------------------*/
 #include "curve.h"
 #include <fstream>
+#include <list>
+#include <functional>
 
 curve_base::curve_base(std::string path)
 {
@@ -47,6 +49,39 @@ curve_base::curve_base(std::string path)
 		file.close();
 		m_name = path;
 	}
+}
+
+void curve_base::do_adaptive_forward_differencing()
+{
+	std::function<float(float, float)> alen =
+	[&](float a, float b)->float
+	{	return glm::length(evaluate(b) - evaluate(a));	};
+
+	std::list<key_arclength> temp_list;
+
+	temp_list.push_back({ duration(), alen(0.0,duration())});
+	auto end = temp_list.begin();
+
+	temp_list.push_front({ 0.0, 0.0 });
+	auto start = temp_list.begin();
+
+	std::function<void(std::list<key_arclength>::iterator, std::list<key_arclength>::iterator)> subdivide =
+		[&](std::list<key_arclength>::iterator a, std::list<key_arclength>::iterator b)->void
+	{
+		float mid_dt = (a->m_param_value + b->m_param_value) * 0.5f;
+		float a_m = alen(a->m_param_value, mid_dt);
+		float m_b = alen(mid_dt, b->m_param_value);
+		float delta = a_m + m_b - b->m_arclength;
+
+		if (delta > 0.1f)
+		{
+			auto mid = temp_list.insert(b, { mid_dt, a_m });
+			b->m_arclength = m_b;
+			subdivide(a, mid);
+			subdivide(mid,b);
+			qeotinqoit//TODO
+		}
+	};
 }
 
 float curve_base::duration() const
