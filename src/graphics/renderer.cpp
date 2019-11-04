@@ -492,7 +492,10 @@ void c_renderer::drawGUI()
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
-
+		static float s_separation = 0.1f;
+		if (ImGui::SliderFloat("Sep", &s_separation, 0.000001, 2, "%.6f"))
+			for (auto& c : m_curves)
+				c->do_adaptive_forward_differencing(s_separation);
 		if (ImGui::TreeNode("Decals"))
 		{
 			ImGui::SliderInt("View Mode", &m_render_options.dc_mode, 0,2);
@@ -543,6 +546,16 @@ void c_renderer::drawGUI()
 		}
 		ImGui::TreePop();
 	}
+}
+
+void c_renderer::set_debug_color(vec3 c)
+{
+	Model::m_def_materials[0]->m_albedo = c;
+}
+
+void c_renderer::reset_debug_color()
+{
+	Model::m_def_materials[0]->m_albedo = { 0,1,0 };
 }
 
 GLuint c_renderer::get_texture(e_texture ref)

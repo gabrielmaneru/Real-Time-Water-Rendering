@@ -45,7 +45,7 @@
         "curve": "walk",
         "active": 1,
         "playback": 0,
-        "speed": 0.7
+        "speed": 10.0
       }
     }
   ], 

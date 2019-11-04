@@ -67,7 +67,8 @@ public:
 	void update();
 	void shutdown();
 	void drawGUI();
-
+	void set_debug_color(vec3 c);
+	void reset_debug_color();
 	GLuint get_texture(e_texture ref);
 	void set_texture(e_texture ref) { m_txt_cur = ref; }
 	const Model* get_model(std::string s);

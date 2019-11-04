@@ -16,7 +16,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <platform/window_manager.h>
 #include <platform/window.h>
 
-std::vector<const Material*> Model::m_def_materials{};
+std::vector<Material*> Model::m_def_materials{};
 
 mat4 to_glm(aiMatrix4x4 m)
 {
