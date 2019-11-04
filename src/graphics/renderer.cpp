@@ -181,6 +181,8 @@ void c_renderer::update()
 		/**/decal_shader->set_uniform("angle", m_render_options.dc_angle);
 		/**/decal_shader->set_uniform("mode", m_render_options.dc_mode);
 		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1, GL_COLOR_ATTACHMENT0+3 });
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
 		/**/scene->draw_decals(decal_shader);
 		/**/g_buffer.set_drawbuffers();
 		/**/if(m_render_options.dc_mode==0)

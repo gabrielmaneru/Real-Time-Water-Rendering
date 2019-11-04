@@ -301,7 +301,6 @@ void c_scene::draw_lights(Shader_Program * shader)
 
 void c_scene::draw_decals(Shader_Program * shader)
 {
-	//shader->set_uniform("la", light_data::m_ambient);
 	for (auto p_d : m_decals)
 		p_d->draw(shader);
 }

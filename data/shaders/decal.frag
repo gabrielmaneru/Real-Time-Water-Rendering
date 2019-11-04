@@ -1,15 +1,8 @@
 #version 440
-in vec3 vNormal;
-in vec3 vTangent;
-in vec3 vBitangent;
-in vec3 vPosition;
-in float vMotion;
-in vec2 vUv;
 
 layout (binding = 0) uniform sampler2D albedo_txt;
 layout (binding = 1) uniform sampler2D normal_txt;
 layout (binding = 2) uniform sampler2D depth_txt;
-layout (binding = 3) uniform sampler2D position_txt;
 
 uniform mat4 M;
 uniform mat4 V;
