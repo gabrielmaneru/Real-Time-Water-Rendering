@@ -19,11 +19,12 @@ struct curve_base
 {
 	curve_base(std::string);
 	virtual vec3 evaluate(float t)const=0;
-	void do_adaptive_forward_differencing(float separation);
+	void do_adaptive_forward_differencing();
 	float distance_to_time(float d)const;
 	float duration()const;
 	float max_distance()const;
 
+	static float m_epsilon;
 	std::vector<keyframe> m_frames;
 	std::vector<key_arclength> m_length_table;
 	std::string m_name;

@@ -491,11 +491,51 @@ void c_renderer::drawGUI()
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
-		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
-		static float s_separation = 0.1f;
-		if (ImGui::SliderFloat("Sep", &s_separation, 0.000001, 2, "%.6f"))
+
+		if(ImGui::TreeNode("Curves"))
+		{
+			ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
+			if (ImGui::SliderFloat("Curve Epsilon", &curve_base::m_epsilon, 0.0000001, 10, "%.7f", 10.f))
+				for (auto& c : m_curves)
+					c->do_adaptive_forward_differencing();
+
+			ImGui::NewLine();
 			for (auto& c : m_curves)
-				c->do_adaptive_forward_differencing(s_separation);
+			{
+				if (ImGui::TreeNode(c->m_name.c_str()))
+				{
+					ImGui::Columns(3, "mixed");
+					ImGui::Text("Index");
+					ImGui::NextColumn();
+
+					ImGui::Text("Parameter");
+					ImGui::NextColumn();
+
+					ImGui::Text("Distance");
+					ImGui::Columns(1);
+					ImGui::Separator();
+
+					int i = 0;
+					for (auto& k : c->m_length_table)
+					{
+						ImGui::Columns(3, "mixed");
+						ImGui::Text(std::to_string(i).c_str());
+						ImGui::NextColumn();
+
+						ImGui::Text(std::to_string(k.m_param_value).c_str());
+						ImGui::NextColumn();
+
+						ImGui::Text(std::to_string(k.m_arclength).c_str());
+						ImGui::Columns(1);
+						ImGui::Separator();
+						i++;
+						
+					}
+					ImGui::TreePop();
+				}
+			}
+			ImGui::TreePop();
+		}
 		if (ImGui::TreeNode("Decals"))
 		{
 			ImGui::SliderInt("View Mode", &m_render_options.dc_mode, 0,2);

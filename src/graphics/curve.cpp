@@ -11,6 +11,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <list>
 #include <functional>
 
+float curve_base::m_epsilon = 0.01f;
 curve_base::curve_base(std::string path)
 {
 	std::string real_path = "./data/curves/" + path + ".txt";
@@ -51,28 +52,19 @@ curve_base::curve_base(std::string path)
 	}
 }
 
-void curve_base::do_adaptive_forward_differencing(float separation)
+void curve_base::do_adaptive_forward_differencing()
 {
 	m_length_table.clear();
 
-	std::function<float(float, float)> alen =
-	[&](float a, float b)->float
+	std::list<key_arclength> temp_list;
+
+	std::function<float(float, float)> alen = [&](float a, float b)->float
 	{
 		vec3 pos_a = evaluate(a);
 		vec3 pos_b = evaluate(b);
 		return glm::length(pos_b - pos_a);
 	};
-
-	std::list<key_arclength> temp_list;
-
-	temp_list.push_back({ duration(), alen(0.0,duration())});
-	auto end = temp_list.begin();
-
-	temp_list.push_front({ 0.0, 0.0 });
-	auto start = temp_list.begin();
-
-	std::function<void(std::list<key_arclength>::iterator, std::list<key_arclength>::iterator)> subdivide =
-		[&](std::list<key_arclength>::iterator a, std::list<key_arclength>::iterator b)->void
+	std::function<void(std::list<key_arclength>::iterator, std::list<key_arclength>::iterator)> subdivide = [&](std::list<key_arclength>::iterator a, std::list<key_arclength>::iterator b)->void
 	{
 		float mid_dt = (a->m_param_value + b->m_param_value) * 0.5f;
 		float a_m = alen(a->m_param_value, mid_dt);
@@ -82,12 +74,19 @@ void curve_base::do_adaptive_forward_differencing(float separation)
 		auto mid = temp_list.insert(b, { mid_dt, a_m });
 		b->m_arclength = m_b;
 
-		if (delta > separation)
+		if (delta > m_epsilon)
 		{
 			subdivide(a, mid);
-			subdivide(mid,b);
+			subdivide(mid, b);
 		}
 	};
+
+	temp_list.push_back({ duration(), alen(0.0,duration())});
+	auto end = temp_list.begin();
+
+	temp_list.push_front({ 0.0, 0.0 });
+	auto start = temp_list.begin();
+
 	subdivide(start, end);
 
 	float acc = 0.0f;
@@ -142,7 +141,7 @@ float curve_base::max_distance() const
 curve_line::curve_line(std::string s)
 	:curve_base(s)
 {
-	do_adaptive_forward_differencing(0.1f);
+	do_adaptive_forward_differencing();
 }
 
 vec3 curve_line::evaluate(float t)const
@@ -164,7 +163,7 @@ vec3 curve_line::evaluate(float t)const
 curve_hermite::curve_hermite(std::string s)
 	:curve_base(s)
 {
-	do_adaptive_forward_differencing(0.1f);
+	do_adaptive_forward_differencing();
 }
 
 vec3 curve_hermite::evaluate(float t)const
@@ -195,7 +194,7 @@ vec3 curve_hermite::evaluate(float t)const
 curve_catmull::curve_catmull(std::string s)
 	:curve_base(s)
 {
-	do_adaptive_forward_differencing(0.1f);
+	do_adaptive_forward_differencing();
 }
 
 vec3 curve_catmull::evaluate(float t)const
@@ -252,7 +251,7 @@ vec3 curve_catmull::evaluate(float t)const
 curve_bezier::curve_bezier(std::string s)
 	:curve_base(s)
 {
-	do_adaptive_forward_differencing(0.1f);
+	do_adaptive_forward_differencing();
 }
 
 vec3 curve_bezier::evaluate(float t)const
