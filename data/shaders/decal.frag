@@ -32,18 +32,14 @@ void main()
 	}
 
 	vec2 txt_uvs = vec2(gl_FragCoord.x/width, gl_FragCoord.y/height);
-	//float depth = texture(depth_txt, txt_uvs).x;
-	
-	//vec4 point = vec4(txt_uvs.x, txt_uvs.y, depth,1.0);
-	//point = inverse(P) * point;
-	//point /= point.w;
-	//point = inverse(V*M) * point;
+	float depth = texture(depth_txt, txt_uvs).x;
+	vec4 view_point = vec4(txt_uvs * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+	view_point = inverse(P) * view_point;
+	view_point /= view_point.w;
+	vec4 model_point = inverse(V) * view_point;
+	model_point = inverse(M) * model_point;
 
-	vec3 view_pos = texture(position_txt, txt_uvs).xyz;
-	vec4 point = vec4(view_pos, 1.0);
-	point = inverse(V*M) * point;
-
-	if(abs(point.x) > 0.5 || abs(point.y) > 0.5 || abs(point.z) > 0.5)
+	if(abs(model_point.x) > 0.5 || abs(model_point.y) > 0.5 || abs(model_point.z) > 0.5)
 		discard;
 
 	if(mode==2)
@@ -53,21 +49,25 @@ void main()
 		return;
 	}
 
-	vec2 model_uv = point.xy+vec2(0.5);
+	vec2 model_uv = model_point.xy+vec2(0.5);
 	vec4 txt = texture(albedo_txt, model_uv);
 	if(txt.a < 0.5)
 		discard;
-	vec3 albedo = txt.rgb;
 	
-	vec3 dx = normalize(dFdx(view_pos));
-	vec3 dy = normalize(dFdy(view_pos));
+	vec3 dx = normalize(dFdx(view_point.xyz));
+	vec3 dy = normalize(dFdy(view_point.xyz));
 	vec3 norm = normalize(cross(dx,dy));
-	if(dot(norm,normalize(vNormal)) < angle)
+
+	vec3 front_box = vec3(0.0,0.0,-1.0);
+	mat3 normalMtx = inverse(transpose(mat3(V*M)));
+	front_box = normalMtx*front_box;
+
+	if(dot(norm,normalize(front_box)) < angle)
 		discard;
 
-	mat3 tbn = mat3(dx,dy,norm);
+	mat3 tbn = mat3(-dx,dy,norm);
 	norm = normalize(tbn * (2.0 * texture(normal_txt, model_uv).xyz - 1.0));
 
-	attr_albedo = vec4(albedo, 1.0);
+	attr_albedo = vec4(txt.rgb, 1.0);
 	attr_normal = vec4(norm, 1.0);	
 }

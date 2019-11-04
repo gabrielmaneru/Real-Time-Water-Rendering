@@ -486,7 +486,7 @@ void c_renderer::drawGUI()
 		{
 			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
-				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2]);
+				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
 		}
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 		ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
