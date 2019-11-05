@@ -24,8 +24,7 @@ mat4 to_glm(aiMatrix4x4 m)
 	return glm::transpose(glm::make_mat4(&m.a1));
 }
 
-
-Model::Model(const std::string & path, const std::vector<std::string>& def_mats)
+Model::Model(const std::string & path, const std::vector<std::string>& def_mats, const std::vector<size_t>& skip_meshes, const std::vector<std::pair<size_t, size_t>>& break_animation)
 {
 	load_obj(path);
 	if (def_mats.size())
@@ -34,6 +33,60 @@ Model::Model(const std::string & path, const std::vector<std::string>& def_mats)
 			for (auto pMat : m_def_materials)
 				if (pMat->m_name == def_mats[i])
 					m_materials[i] = Material(*pMat);
+	}
+	if (skip_meshes.size())
+	{
+		for (int i = skip_meshes.size() - 1; i >= 0; i--)
+			m_meshes.erase(m_meshes.begin()+skip_meshes[i]);
+	}
+	if (break_animation.size())
+	{
+		for (auto s : break_animation)
+		{
+			const animation * copy_anim = m_animations[0];
+			animation * anim = new animation;
+			double dur{ 0.0 };
+
+			// Copy channels
+			for (const auto copy_c : copy_anim->m_channels)
+			{
+				channel& c = anim->m_channels[copy_c.first];
+				size_t a, b;
+				// Add Positions
+				a = min(s.first, copy_c.second.m_key_position.size() - 1);
+				b = min(s.second, copy_c.second.m_key_position.size() - 1);
+				c.m_key_position = std::vector<key_vec3>(copy_c.second.m_key_position.begin() + a,
+					copy_c.second.m_key_position.begin() + b+1);
+				for (auto& k : c.m_key_position)
+					k.second -= c.m_key_position[0].second;
+				if (c.m_key_position.back().second > dur)
+					dur = c.m_key_position.back().second;
+
+				// Add Rotations
+				a = min(s.first, copy_c.second.m_key_rotation.size() - 1);
+				b = min(s.second, copy_c.second.m_key_rotation.size() - 1);
+				c.m_key_rotation = std::vector<key_quat>(copy_c.second.m_key_rotation.begin() + a,
+					copy_c.second.m_key_rotation.begin() + b+1);
+				for (auto& k : c.m_key_rotation)
+					k.second -= c.m_key_rotation[0].second;
+				if (c.m_key_rotation.back().second > dur)
+					dur = c.m_key_rotation.back().second;
+
+				// Add Scales
+				a = min(s.first, copy_c.second.m_key_scaling.size() - 1);
+				b = min(s.second, copy_c.second.m_key_scaling.size() - 1);
+				c.m_key_scaling = std::vector<key_vec3>(copy_c.second.m_key_scaling.begin() + a,
+					copy_c.second.m_key_scaling.begin() + b+1);
+				for (auto& k : c.m_key_scaling)
+					k.second -= c.m_key_scaling[0].second;
+				if (c.m_key_scaling.back().second > dur)
+					dur = c.m_key_scaling.back().second;
+			}
+			anim->m_duration = dur;
+			anim->m_tick_per_second = copy_anim->m_tick_per_second;
+			m_animations.push_back(anim);
+		}
+		
 	}
 	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }
@@ -411,6 +464,11 @@ vec3 channel::lerp_position(double time)const
 	if (m_key_position.size() == 1)
 		return m_key_position[0].first;
 
+	if (time <= m_key_position[0].second)
+		return m_key_position[0].first;
+	if (time >= m_key_position[m_key_rotation.size() - 1].second)
+		return m_key_position[m_key_rotation.size() - 1].first;
+
 	for (size_t i = 0; i < m_key_position.size() - 1; i++)
 		if (time < m_key_position[i + 1].second)
 			return map(time, m_key_position[i].second, m_key_position[i + 1].second,
@@ -424,6 +482,11 @@ quat channel::lerp_rotation(double time)const
 	if (m_key_rotation.size() == 1)
 		return m_key_rotation[0].first;
 
+	if (time <= m_key_rotation[0].second)
+		return m_key_rotation[0].first;
+	if (time >= m_key_rotation[m_key_rotation.size() - 1].second)
+		return m_key_rotation[m_key_rotation.size() - 1].first;
+
 	for (size_t i = 0; i < m_key_rotation.size() - 1; i++)
 		if (time < m_key_rotation[i + 1].second)
 			return map(time, m_key_rotation[i].second, m_key_rotation[i + 1].second,
@@ -436,6 +499,11 @@ vec3 channel::lerp_scaling(double time)const
 	assert(m_key_scaling.size() > 0);
 	if (m_key_scaling.size() == 1)
 		return m_key_scaling[0].first;
+
+	if (time <= m_key_scaling[0].second)
+		return m_key_scaling[0].first;
+	if (time >= m_key_scaling[m_key_rotation.size() - 1].second)
+		return m_key_scaling[m_key_rotation.size() - 1].first;
 
 	for (size_t i = 0; i < m_key_scaling.size() - 1; i++)
 		if (time < m_key_scaling[i + 1].second)

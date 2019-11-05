@@ -177,6 +177,7 @@ void curve_interpolator::draw_GUI()
 
 void animator::draw_GUI()
 {
-	ImGui::SliderInt("AnimNum", &m_current_animation, -1, 0);
+	
+	ImGui::SliderInt("AnimNum", &m_current_animation, -1, 5);
 	interpolator::draw_GUI();
 }
