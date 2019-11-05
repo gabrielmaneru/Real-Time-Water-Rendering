@@ -403,7 +403,7 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 void Model::update(node * node_, animator * m_animator, mat4 parent) const
 {
 	mat4 node_transformation = node_->m_transformation;
-	if (m_animator && m_animator->m_current_animation != -1 && m_animations.size() > 0)
+	if (m_animator && m_animations.size() > 0 && m_animator->m_current_animation != -1 && m_animator->m_current_animation < m_animations.size())
 	{
 		animation* anim = m_animations[m_animator->m_current_animation];
 

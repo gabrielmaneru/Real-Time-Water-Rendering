@@ -218,9 +218,14 @@ bool c_scene::load_scene(std::string path)
 					scl.x = (float)std::atof(dcl.substr(dcl.find_first_of('x') + 2, dcl.find_first_of('y') - dcl.find_first_of('x') - 3).c_str());
 					scl.y = (float)std::atof(dcl.substr(dcl.find_first_of('y') + 2, dcl.find_first_of('z') - dcl.find_first_of('y') - 3).c_str());
 					scl.z = (float)std::atof(dcl.substr(dcl.find_first_of('z') + 2, dcl.find_first_of('}') - dcl.find_first_of('z') - 2).c_str());
+
 					transform3d tr;
-					tr.set_tr(pos, scl, normalize(quat(glm::radians(rot))));
-					
+					tr.m_tr.m_model = glm::translate(mat4(1.0f), pos);
+					tr.m_tr.m_model = glm::rotate(tr.m_tr.m_model, glm::radians(rot.x), vec3(1, 0, 0));
+					tr.m_tr.m_model = glm::rotate(tr.m_tr.m_model, glm::radians(rot.y), vec3(0, 1, 0));
+					tr.m_tr.m_model = glm::rotate(tr.m_tr.m_model, glm::radians(rot.z), vec3(0, 0, 1));
+					tr.m_tr.m_model = glm::scale(tr.m_tr.m_model, scl);
+					tr.m_tr.should_update = false;
 					m_decals.push_back(new decal(diffuse_txt, normal_txt, tr));
 				}
 			}

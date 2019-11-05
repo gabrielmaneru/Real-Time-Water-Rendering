@@ -29,8 +29,8 @@ void main()
 	vec4 view_point = vec4(txt_uvs * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
 	view_point = inverse(P) * view_point;
 	view_point /= view_point.w;
-	vec4 model_point = inverse(V) * view_point;
-	model_point = inverse(M) * model_point;
+	vec4 world_point = inverse(V) * view_point;
+	vec4 model_point = inverse(M) * world_point;
 
 	if(abs(model_point.x) > 0.5 || abs(model_point.y) > 0.5 || abs(model_point.z) > 0.5)
 		discard;
@@ -47,20 +47,25 @@ void main()
 	if(txt.a < 0.5)
 		discard;
 	
-	vec3 dx = normalize(dFdx(view_point.xyz));
-	vec3 dy = normalize(dFdy(view_point.xyz));
-	vec3 norm = cross(dx,dy);
+	vec3 world_t = normalize(dFdx(world_point.xyz));
+	vec3 world_b = normalize(dFdy(world_point.xyz));
+	vec3 world_n = cross(world_t,world_b);
 
 	vec3 front_box = vec3(0.0,0.0,-1.0);
-	mat3 normalMtx = inverse(transpose(mat3(V*M)));
-	front_box = normalMtx*front_box;
+	mat3 modelMtx = inverse(transpose(mat3(M)));
+	front_box = modelMtx*front_box;
 
-	if(dot(norm,normalize(front_box)) < angle)
+	if(dot(world_n, front_box) < angle)
 		discard;
-
-	mat3 tbn = mat3(-dx,dy,norm);
-	norm = normalize(tbn * (2.0 * texture(normal_txt, model_uv).xyz - 1.0));
+		
+	mat3 viewMtx = inverse(transpose(mat3(M)));
+	vec3 view_t = viewMtx * world_t;
+	vec3 view_b = viewMtx * world_b;
+	vec3 view_n = viewMtx * world_n;
+	
+	mat3 tbn = mat3(-view_t,view_b,view_n);
+	view_n = normalize(tbn * (2.0 * texture(normal_txt, model_uv).xyz - 1.0));
 
 	attr_albedo = vec4(txt.rgb, 1.0);
-	attr_normal = vec4(norm, 1.0);	
+	attr_normal = vec4(view_n, 1.0);	
 }
