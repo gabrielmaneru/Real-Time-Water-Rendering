@@ -47,21 +47,14 @@ void main()
 	if(txt.a < 0.5)
 		discard;
 	
-	vec3 world_t = normalize(dFdx(world_point.xyz));
-	vec3 world_b = normalize(dFdy(world_point.xyz));
-	vec3 world_n = cross(world_t,world_b);
+	vec3 view_t = normalize(dFdx(view_point.xyz));
+	vec3 view_b = normalize(dFdy(view_point.xyz));
+	vec3 view_n = normalize(cross(view_t,view_b));
+	view_b = normalize(cross(view_n,view_t));
 
-	vec3 front_box = vec3(0.0,0.0,-1.0);
-	mat3 modelMtx = inverse(transpose(mat3(M)));
-	front_box = modelMtx*front_box;
-
-	if(dot(world_n, front_box) < angle)
+	mat3 mvMtx = inverse(transpose(mat3(V*M)));
+	if(dot(view_n, normalize(mvMtx * vec3(0,0,-1))) < angle)
 		discard;
-		
-	mat3 viewMtx = inverse(transpose(mat3(M)));
-	vec3 view_t = viewMtx * world_t;
-	vec3 view_b = viewMtx * world_b;
-	vec3 view_n = viewMtx * world_n;
 	
 	mat3 tbn = mat3(-view_t,view_b,view_n);
 	view_n = normalize(tbn * (2.0 * texture(normal_txt, model_uv).xyz - 1.0));
