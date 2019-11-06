@@ -13,7 +13,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <imgui/imgui.h>
 
 vec3 light_data::m_ambient = vec3{ 0.0f };
-float light_data::m_att_max{ 0.01f };
+float light_data::m_att_max{ 0.05f };
 
 void light_data::drawGUI()
 {

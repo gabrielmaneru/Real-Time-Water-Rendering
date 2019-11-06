@@ -15,6 +15,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <graphics/renderer.h>
 #include <GLFW/glfw3.h>
 #include <platform/window_manager.h>
+#include <platform/editor.h>
 c_scene * scene = new c_scene;
 const char end_of_item{ 0x1D };
 bool c_scene::load_scene(std::string path)
@@ -242,51 +243,22 @@ bool c_scene::init()
 	if (!load_scene(m_scene_name))
 		return false;
 
+	light_data ld;
+	ld.m_diffuse = { 0.2,0.2,0.6 };
 	transform3d tr;
 	tr.set_scl(vec3(.5f));
+
+	for (int i = 0; i < m_num_lights; i++)
 	{
-		light_data ld;
-		ld.m_att_factor = { 0.f,0.001f,0.001f };
-		tr.set_pos({ 7,22,5 });
-		m_lights.push_back(new light(tr, ld));
-		tr.set_pos({ -99.0f,65.0f,3.5f });
-		ld.m_diffuse = { 1,0,1 };
-		m_lights.push_back(new light(tr, ld));
-	}
-	light_data ld;
-	for (int i = 0; i < m_num_lights/2; i++)
-	{
-		tr.set_pos({ random_float(-106.f, 94.f), random_float(0.f, 50.f),random_float(17.5f, 32.5f) });
-		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
+		tr.set_pos({ random_float(-62.5f, 12.5f), random_float(0.0f, 1.0f),random_float(-26.5f, 18.5f) });
 		m_lights.push_back(new light(tr, ld));
 	}
 
-	for (int i = 0; i < m_num_lights/2; i++)
-	{
-		tr.set_pos({ random_float(-106.f, 94.f), random_float(0.f, 50.f),random_float(-27.5f, -12.5f) });
-		ld.m_diffuse = { random_float(0.3f, 1.f), random_float(0.3f, 1.f),random_float(0.3f, 1.f) };
-		m_lights.push_back(new light(tr, ld));
-	}
-	for (auto& l : m_lights)
-		l->time = random_float(0.0f, glm::pi<float>());
 	return true;
 }
 
 void c_scene::update()
 {
-	if (m_animated_scene)
-	{
-		for (auto& l : m_lights)
-		{
-			vec3 pos = l->m_transform.get_pos();
-			pos.y += 0.5f*sin(l->time);
-			l->time += 1/60.f;
-			pos.x += 1.0f;
-			if (pos.x > 94.f)
-				pos.x -= 200.f;
-			l->m_transform.set_pos(pos);
-		}
-	}
 	for (auto p_obj : m_objects)
 		p_obj->update();
 }
@@ -429,7 +401,6 @@ void c_scene::drawGUI()
 			shutdown();
 			init();
 		}
-		ImGui::Checkbox("Animate Scene", &m_animated_scene);
 		ImGui::InputInt("Num Lights", &m_num_lights);
 		if ((m_lights.size() > 1) && ImGui::TreeNode("Change ALL Light Values"))
 		{
@@ -458,17 +429,9 @@ void c_scene::drawGUI()
 				? m_objects[i]->m_model->m_name
 				: "Unknown";
 
-			if (ImGui::TreeNode(tree_name.c_str()))
-			{
-				m_objects[i]->draw_GUI();
-				if (ImGui::Button("Delete Object"))
-				{
-					delete m_objects[i];
-					m_objects.erase(m_objects.begin() + i);
-					i--;
-				}
-				ImGui::TreePop();
-			}
+			bool is_selected = m_objects[i] == editor->m_selected;
+			if (ImGui::Selectable(tree_name.c_str(), is_selected))
+				editor->m_selected = m_objects[i];
 			ImGui::PopID();
 		}
 		ImGui::TreePop();

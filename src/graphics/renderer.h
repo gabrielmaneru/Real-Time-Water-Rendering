@@ -95,8 +95,9 @@ public:
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
 
-		float dc_angle = 0.8f;
-		int dc_mode=0;
+		float dc_angle{ 0.8f };
+		int dc_mode{ 0 };
+		bool dc_active{ true };
 	}m_render_options;
 
 	friend class c_editor;

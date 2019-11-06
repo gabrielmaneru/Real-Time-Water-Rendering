@@ -86,7 +86,7 @@ Model::Model(const std::string & path, const std::vector<std::string>& def_mats,
 			anim->m_tick_per_second = copy_anim->m_tick_per_second;
 			m_animations.push_back(anim);
 		}
-		
+		m_animations.erase(m_animations.begin());
 	}
 	m_name = path.substr(path.find_last_of('/') + 1, path.find_last_of('.') - path.find_last_of('/') - 1);
 }

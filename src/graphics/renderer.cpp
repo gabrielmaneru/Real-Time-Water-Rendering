@@ -118,7 +118,7 @@ bool c_renderer::init()
 
 		// Complex
 		m_models.push_back(new Model("./data/meshes/sneak.dae", { "copper","plastic" }));
-		m_models.push_back(new Model("./data/meshes/shark.dae", { "shark_2","shark_1" }, { 0 }, { {1,5},{5,10},{10,17} }));
+		m_models.push_back(new Model("./data/meshes/shark.dae", { "shark_2","shark_1" }, {0}, { {12,17} }));
 		m_models.push_back(new Model("./data/meshes/suzanne.obj"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
@@ -129,6 +129,7 @@ bool c_renderer::init()
 	m_curves.push_back(new curve_hermite("hermite"));
 	m_curves.push_back(new curve_catmull("catmull"));
 	m_curves.push_back(new curve_catmull("walk"));
+	m_curves.push_back(new curve_catmull("swim"));
 	m_curves.push_back(new curve_bezier("bezier"));
 	
 	// Setup Cameras
@@ -185,21 +186,24 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
 		/**/
-		/**/if (m_render_options.dc_mode == 0)
-		/**/	GL_CALL(glEnable(GL_DEPTH_TEST));
-		/**/decal_shader->use();
-		/**/scene_cam.set_uniforms(decal_shader);
-		/**/decal_shader->set_uniform("width", (float)g_buffer.m_width);
-		/**/decal_shader->set_uniform("height", (float)g_buffer.m_height);
-		/**/decal_shader->set_uniform("angle", m_render_options.dc_angle);
-		/**/decal_shader->set_uniform("mode", m_render_options.dc_mode);
-		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1, GL_COLOR_ATTACHMENT0+3 });
-		/**/glActiveTexture(GL_TEXTURE2);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
-		/**/scene->draw_decals(decal_shader);
-		/**/g_buffer.set_drawbuffers();
-		/**/if(m_render_options.dc_mode==0)
-		/**/	GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/if(m_render_options.dc_active)
+		/**/{
+		/**/	if (m_render_options.dc_mode == 0)
+		/**/		GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/	decal_shader->use();
+		/**/	scene_cam.set_uniforms(decal_shader);
+		/**/	decal_shader->set_uniform("width", (float)g_buffer.m_width);
+		/**/	decal_shader->set_uniform("height", (float)g_buffer.m_height);
+		/**/	decal_shader->set_uniform("angle", m_render_options.dc_angle);
+		/**/	decal_shader->set_uniform("mode", m_render_options.dc_mode);
+		/**/	g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1, GL_COLOR_ATTACHMENT0+3 });
+		/**/	glActiveTexture(GL_TEXTURE2);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
+		/**/	scene->draw_decals(decal_shader);
+		/**/	g_buffer.set_drawbuffers();
+		/**/	if(m_render_options.dc_mode==0)
+		/**/		GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/}
 		/**/
 		/**/g_buffer_shader->use();
 		/**/scene_cam.set_uniforms(g_buffer_shader);
@@ -551,6 +555,7 @@ void c_renderer::drawGUI()
 		}
 		if (ImGui::TreeNode("Decals"))
 		{
+			ImGui::Checkbox("Active", &m_render_options.dc_active);
 			ImGui::SliderInt("View Mode", &m_render_options.dc_mode, 0,2);
 			ImGui::SliderFloat("Angle Threshold", &m_render_options.dc_angle, 0.0f, 1.0f);
 			ImGui::TreePop();
