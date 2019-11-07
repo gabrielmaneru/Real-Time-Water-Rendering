@@ -29,32 +29,21 @@ void scene_object::update()
 	{
 		if (m_curve_interpolator->m_active && m_curve_interpolator->m_actual_curve != nullptr)
 		{
-			float time = m_curve_interpolator->m_actual_curve->distance_to_time((float)m_curve_interpolator->m_time);
-			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate(time);
+			const curve_base * c = m_curve_interpolator->m_actual_curve;
+
+			float time = c->distance_to_time((float)m_curve_interpolator->m_time);
+			vec3 pos = c->evaluate(time);
 			mat4 mat_pos = glm::translate(mat4(1.0), pos);
-
-			double nxt_dist = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state ? m_curve_interpolator->m_speed : -m_curve_interpolator->m_speed) / 60.0f;
-			nxt_dist = fmod(nxt_dist, m_curve_interpolator->m_actual_curve->max_distance());
-			time = m_curve_interpolator->m_actual_curve->distance_to_time((float)nxt_dist);
-			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate(time);
-
-			double prev_dist = m_curve_interpolator->m_time - (m_curve_interpolator->m_playback_state ? m_curve_interpolator->m_speed : -m_curve_interpolator->m_speed) / 60.0f;
-			prev_dist = fmod(prev_dist, m_curve_interpolator->m_actual_curve->max_distance());
-			time = m_curve_interpolator->m_actual_curve->distance_to_time((float)prev_dist);
-			vec3 prev = m_curve_interpolator->m_actual_curve->evaluate(time);
-
-			vec3 front = prev - nxt;
-			if (glm::length2(front) > glm::epsilon<float>())
-			{
-				front = glm::normalize(pos - nxt);
-				m_transform.set_rot(glm::normalize(glm::quatLookAt(front, vec3{ 0,1,0 })));
-			}
 			m_transform.m_tr.parent = mat_pos;
+
+			std::pair<vec3, vec3> derivatives = c->evaluate_derivatives(time);
+			vec3 up = glm::cross(derivatives.first, derivatives.second);
+			m_transform.set_rot(glm::normalize(glm::quatLookAt(derivatives.first, up)));
 
 			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->max_distance());
 		}
 		else
-			m_transform.m_tr.parent = mat4{ 1 };
+			m_transform.m_tr.parent = mat4{ 1 }, m_transform.set_rot({});
 	}
 	if (m_animator != nullptr)
 	{

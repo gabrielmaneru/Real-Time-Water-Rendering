@@ -19,7 +19,8 @@ struct curve_bezier;
 struct curve_base
 {
 	curve_base(std::string);
-	virtual vec3 evaluate(float t)const=0;
+	virtual vec3 evaluate(float t)const = 0;
+	std::pair<vec3,vec3> evaluate_derivatives(float t)const;
 	void do_adaptive_forward_differencing();
 	float distance_to_time(float d)const;
 	float duration()const;
