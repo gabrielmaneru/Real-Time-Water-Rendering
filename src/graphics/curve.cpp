@@ -131,8 +131,10 @@ float curve_base::distance_to_time(float d)const
 
 		step *= 2;
 	}
-	return map(d, m_length_table[it].m_arclength, m_length_table[it + 1].m_arclength,
-	m_length_table[it].m_param_value, m_length_table[it + 1].m_param_value) * duration();
+	float param_value = map(d, m_length_table[it].m_arclength, m_length_table[it + 1].m_arclength,
+		m_length_table[it].m_param_value, m_length_table[it + 1].m_param_value);
+	float eased_value = m_ease->evaluate_for_x(param_value).y;
+	return eased_value * duration();
 }
 
 float curve_base::duration() const
@@ -395,8 +397,8 @@ void curve_base::draw_easing()
 				&&  m_ease->m_frames[i + 3].first.x > m.x)
 				{
 					keyframe p{ vec3(m,0),m.x };
-					keyframe t0{ vec3(m + vec2(-0.1),0),m.x };
-					keyframe t1{ vec3(m + vec2(0.1),0),m.x };
+					keyframe t0{ vec3(m + vec2(-0.025),0),m.x };
+					keyframe t1{ vec3(m + vec2(0.025),0),m.x };
 
 					t0.first.x = glm::clamp<float>(t0.first.x, 0, 1);
 					t0.first.y = glm::clamp<float>(t0.first.y, 0, 1);
@@ -575,4 +577,22 @@ vec3 curve_bezier::evaluate(float t)const
 			return lerp(r, s, c);
 		}
 	return{};
+}
+
+vec3 curve_bezier::evaluate_for_x(float x) const
+{
+	x = fmod(x, 1.0f);
+	float it{ 0.0f };
+	float step{ 2 };
+	const size_t num_div{ 100 };
+
+	for(size_t i = 0; i < num_div; i++)
+	{
+		if (evaluate(it).x <= x)
+			it += 1/step;
+		else
+			it -= 1/step;
+		step *= 2;
+	}
+	return evaluate(it);
 }

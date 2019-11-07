@@ -33,11 +33,17 @@ void scene_object::update()
 			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate(time);
 			mat4 mat_pos = glm::translate(mat4(1.0), pos);
 
-			double nxt_dist = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state?m_curve_interpolator->m_speed:-m_curve_interpolator->m_speed)/60.0f;
+			double nxt_dist = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state ? m_curve_interpolator->m_speed : -m_curve_interpolator->m_speed) / 60.0f;
 			nxt_dist = fmod(nxt_dist, m_curve_interpolator->m_actual_curve->max_distance());
 			time = m_curve_interpolator->m_actual_curve->distance_to_time((float)nxt_dist);
 			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate(time);
-			vec3 front = pos - nxt;
+
+			double prev_dist = m_curve_interpolator->m_time - (m_curve_interpolator->m_playback_state ? m_curve_interpolator->m_speed : -m_curve_interpolator->m_speed) / 60.0f;
+			prev_dist = fmod(prev_dist, m_curve_interpolator->m_actual_curve->max_distance());
+			time = m_curve_interpolator->m_actual_curve->distance_to_time((float)prev_dist);
+			vec3 prev = m_curve_interpolator->m_actual_curve->evaluate(time);
+
+			vec3 front = prev - nxt;
 			if (glm::length2(front) > glm::epsilon<float>())
 			{
 				front = glm::normalize(pos - nxt);

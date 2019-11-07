@@ -59,4 +59,5 @@ struct curve_bezier : public curve_base
 	curve_bezier(std::string s);
 	curve_bezier(vec4 simple);
 	vec3 evaluate(float t)const override;
+	vec3 evaluate_for_x(float x)const;
 };
