@@ -153,7 +153,6 @@ void curve_base::draw_easing()
 	ImGuiWindow * window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)return;
 
-	bool hovered = ImGui::IsItemHovered();
 	ImGui::Dummy(ImVec2(0, 3));
 
 	const float avail = ImGui::GetContentRegionAvailWidth();
@@ -167,6 +166,7 @@ void curve_base::draw_easing()
 
 	// Render Back
 	ImGui::RenderFrame(bb.Min, bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
+	bool hovered = ImGui::IsItemHovered();
 
 	// Render Grid
 	draw_list->AddLine(
@@ -207,6 +207,10 @@ void curve_base::draw_easing()
 	std::function<vec2(vec2)> to_screen = [&](vec2 v)->vec2
 	{
 		return { v.x * (bb.Max.x - bb.Min.x) + bb.Min.x, (1 - v.y) * (bb.Max.y - bb.Min.y) + bb.Min.y };
+	};
+	std::function<vec2(vec2)> to_ndc = [&](vec2 v)->vec2
+	{
+		return{ (v.x - bb.Min.x) / (bb.Max.x - bb.Min.x),1 - (v.y - bb.Min.y) / (bb.Max.y - bb.Min.y) };
 	};
 	const float radius = 15;
 	ImVec2 mouse = io.MousePos;
@@ -275,11 +279,10 @@ void curve_base::draw_easing()
 	}
 
 	// Draw grabbers
-	float inc = hovered ? 0.5f : 1.0f;
-	ImVec4 red(1.0f, 0.0f, 0.0f, inc);
-	ImVec4 green(0.0f, 1.0f, 0.0f, inc);
-	ImVec4 blue(0.0f, 0.0f, 1.0f, inc);
-	ImVec4 gray(0.4f, 0.4f, 0.4f, inc);
+	ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+	ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
+	ImVec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
+	ImVec4 gray(0.4f, 0.4f, 0.4f, 1.0f);
 	for (size_t i = 0; i < m_ease->m_frames.size(); i += 3)
 	{
 		if (i == 0)
@@ -306,6 +309,38 @@ void curve_base::draw_easing()
 		}
 		else
 		{
+			vec2 t0 = m_ease->m_frames[i - 1].first;
+			vec2 p1 = m_ease->m_frames[i].first;
+			vec2 t2 = m_ease->m_frames[i + 1].first;
+			t0 = to_screen(t0);
+			p1 = to_screen(p1);
+			t2 = to_screen(t2);
+
+			draw_list->AddLine({ p1.x,p1.y }, { t0.x, t0.y }, ImColor(gray), 4);
+			draw_list->AddLine({ p1.x,p1.y }, { t2.x, t2.y }, ImColor(gray), 4);
+			draw_list->AddCircleFilled({ t0.x,t0.y }, radius, ImColor(gray));
+			draw_list->AddCircleFilled({ t0.x,t0.y }, radius *3.0f / 4.0f, ImColor(blue));
+			draw_list->AddCircleFilled({ t2.x,t2.y }, radius, ImColor(gray));
+			draw_list->AddCircleFilled({ t2.x,t2.y }, radius *3.0f / 4.0f, ImColor(red));
+			draw_list->AddCircleFilled({ p1.x,p1.y }, radius, ImColor(gray));
+			draw_list->AddCircleFilled({ p1.x,p1.y }, radius *3.0f / 4.0f, ImColor(green));
+		}
+	}
+
+	// Create new node
+	if (ImGui::IsMouseDoubleClicked(0) && hovered)
+	{
+		vec2 m = to_ndc({ mouse.x,mouse.y });
+		if (m.x > 0 && m.y > 0 && m.x < 1 && m.y < 1)
+		{
+			for (size_t i = 0; i < m_ease->m_frames.size() - 3; i += 3)
+			{
+				if (m_ease->m_frames[i].first.x < m.x
+				&&  m_ease->m_frames[i + 3].first.x > m.x)
+				{
+					m_ease->m_frames.insert(eeg)
+				}
+			}
 		}
 	}
 }
