@@ -118,7 +118,7 @@ bool c_renderer::init()
 
 		// Complex
 		m_models.push_back(new Model("./data/meshes/sneak.dae", { "copper","plastic" }));
-		m_models.push_back(new Model("./data/meshes/shark.dae", { "shark_2","shark_1" }, {0}, { {12,17} }));
+		m_models.push_back(new Model("./data/meshes/shark.dae", { "shark_2","shark_1" }, { 0,2 }, { {12,17} }));
 		m_models.push_back(new Model("./data/meshes/suzanne.obj"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
@@ -512,7 +512,12 @@ void c_renderer::drawGUI()
 		if(ImGui::TreeNode("Curves"))
 		{
 			ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
+			bool updt{ false };
 			if (ImGui::SliderFloat("Curve Epsilon", &curve_base::m_epsilon, 0.0000001, 10, "%.7f", 10.f))
+				updt = true;
+			if (ImGui::InputInt("Forced Subdivision", &curve_base::m_forced_subdivision, 1, 10))
+				updt = true, curve_base::m_forced_subdivision = max(0, curve_base::m_forced_subdivision);
+			if(updt)
 				for (auto& c : m_curves)
 					c->do_adaptive_forward_differencing();
 
@@ -521,32 +526,39 @@ void c_renderer::drawGUI()
 			{
 				if (ImGui::TreeNode(c->m_name.c_str()))
 				{
-					ImGui::Columns(3, "mixed");
-					ImGui::Text("Index");
-					ImGui::NextColumn();
+					c->draw_easing();
 
-					ImGui::Text("Parameter");
-					ImGui::NextColumn();
+					ImGui::NewLine();
 
-					ImGui::Text("Distance");
-					ImGui::Columns(1);
-					ImGui::Separator();
-
-					int i = 0;
-					for (auto& k : c->m_length_table)
+					if (ImGui::TreeNode("Table"))
 					{
 						ImGui::Columns(3, "mixed");
-						ImGui::Text(std::to_string(i).c_str());
+						ImGui::Text("Index");
 						ImGui::NextColumn();
 
-						ImGui::Text(std::to_string(k.m_param_value).c_str());
+						ImGui::Text("Parameter");
 						ImGui::NextColumn();
 
-						ImGui::Text(std::to_string(k.m_arclength).c_str());
+						ImGui::Text("Distance");
 						ImGui::Columns(1);
 						ImGui::Separator();
-						i++;
+						int i = 0;
+						for (auto& k : c->m_length_table)
+						{
+							ImGui::Columns(3, "mixed");
+							ImGui::Text(std::to_string(i).c_str());
+							ImGui::NextColumn();
+
+							ImGui::Text(std::to_string(k.m_param_value).c_str());
+							ImGui::NextColumn();
+
+							ImGui::Text(std::to_string(k.m_arclength).c_str());
+							ImGui::Columns(1);
+							ImGui::Separator();
+							i++;
 						
+						}
+						ImGui::TreePop();
 					}
 					ImGui::TreePop();
 				}

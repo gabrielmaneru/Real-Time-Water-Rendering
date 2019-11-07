@@ -15,6 +15,7 @@ struct key_arclength
 	float m_param_value;
 	float m_arclength;
 };
+struct curve_bezier;
 struct curve_base
 {
 	curve_base(std::string);
@@ -23,11 +24,15 @@ struct curve_base
 	float distance_to_time(float d)const;
 	float duration()const;
 	float max_distance()const;
+	void draw_easing();
 
 	static float m_epsilon;
+	static int m_forced_subdivision;
 	std::vector<keyframe> m_frames;
 	std::vector<key_arclength> m_length_table;
 	std::string m_name;
+	size_t point_stride;
+	mutable curve_bezier* m_ease{nullptr};
 };
 
 struct curve_line : public curve_base
@@ -51,5 +56,6 @@ struct curve_catmull : public curve_base
 struct curve_bezier : public curve_base
 {
 	curve_bezier(std::string s);
+	curve_bezier(vec4 simple);
 	vec3 evaluate(float t)const override;
 };
