@@ -513,7 +513,7 @@ void c_renderer::drawGUI()
 		{
 			ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
 			bool updt{ false };
-			if (ImGui::SliderFloat("Curve Epsilon", &curve_base::m_epsilon, 0.0000001, 10, "%.7f", 10.f))
+			if (ImGui::SliderFloat("Curve Epsilon", &curve_base::m_epsilon, 0.0000001f, 10, "%.7f", 10.f))
 				updt = true;
 			if (ImGui::InputInt("Forced Subdivision", &curve_base::m_forced_subdivision, 1, 10))
 				updt = true, curve_base::m_forced_subdivision = max(0, curve_base::m_forced_subdivision);
@@ -526,6 +526,7 @@ void c_renderer::drawGUI()
 			{
 				if (ImGui::TreeNode(c->m_name.c_str()))
 				{
+					ImGui::Checkbox("Break Tangents", &curve_base::m_break_tangents);
 					c->draw_easing();
 
 					ImGui::NewLine();

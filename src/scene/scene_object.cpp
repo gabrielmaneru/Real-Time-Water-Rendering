@@ -29,11 +29,11 @@ void scene_object::update()
 	{
 		if (m_curve_interpolator->m_active && m_curve_interpolator->m_actual_curve != nullptr)
 		{
-			float time = m_curve_interpolator->m_actual_curve->distance_to_time(m_curve_interpolator->m_time);
+			float time = m_curve_interpolator->m_actual_curve->distance_to_time((float)m_curve_interpolator->m_time);
 			vec3 pos = m_curve_interpolator->m_actual_curve->evaluate(time);
 			mat4 mat_pos = glm::translate(mat4(1.0), pos);
 
-			double nxt_dist = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state?m_curve_interpolator->m_speed:-m_curve_interpolator->m_speed);
+			double nxt_dist = m_curve_interpolator->m_time + (m_curve_interpolator->m_playback_state?m_curve_interpolator->m_speed:-m_curve_interpolator->m_speed)/60.0f;
 			nxt_dist = fmod(nxt_dist, m_curve_interpolator->m_actual_curve->max_distance());
 			time = m_curve_interpolator->m_actual_curve->distance_to_time((float)nxt_dist);
 			vec3 nxt = m_curve_interpolator->m_actual_curve->evaluate(time);

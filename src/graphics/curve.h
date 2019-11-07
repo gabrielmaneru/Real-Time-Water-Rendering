@@ -28,6 +28,7 @@ struct curve_base
 
 	static float m_epsilon;
 	static int m_forced_subdivision;
+	static bool m_break_tangents;
 	std::vector<keyframe> m_frames;
 	std::vector<key_arclength> m_length_table;
 	std::string m_name;

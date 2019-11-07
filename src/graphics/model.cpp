@@ -36,7 +36,7 @@ Model::Model(const std::string & path, const std::vector<std::string>& def_mats,
 	}
 	if (skip_meshes.size())
 	{
-		for (int i = skip_meshes.size() - 1; i >= 0; i--)
+		for (int i = (int)skip_meshes.size() - 1; i >= 0; i--)
 			m_meshes.erase(m_meshes.begin()+skip_meshes[i]);
 	}
 	if (break_animation.size())

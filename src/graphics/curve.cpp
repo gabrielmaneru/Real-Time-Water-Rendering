@@ -15,6 +15,7 @@ Author: Gabriel Mañeru - gabriel.m
 
 float curve_base::m_epsilon = 0.01f;
 int curve_base::m_forced_subdivision = 1;
+bool curve_base::m_break_tangents = false;
 curve_base::curve_base(std::string path)
 {
 	std::string real_path = "./data/curves/" + path + ".txt";
@@ -152,47 +153,55 @@ void curve_base::draw_easing()
 	ImDrawList * draw_list = ImGui::GetWindowDrawList();
 	ImGuiWindow * window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)return;
-
 	ImGui::Dummy(ImVec2(0, 3));
-
 	const float avail = ImGui::GetContentRegionAvailWidth();
 	ImVec2 canvas(avail, avail);
-	
 	ImRect bb(window->DC.CursorPos, ImVec2{ window->DC.CursorPos.x + canvas.x, window->DC.CursorPos.y + canvas.y });
 	ImGui::ItemSize(bb);
 	if (!ImGui::ItemAdd(bb, 0))return;
-	
 	const ImGuiID id = window->GetID(label);
+	std::function<vec2(vec2)> to_screen = [&](vec2 v)->vec2
+	{
+		return { v.x * (bb.Max.x - bb.Min.x) + bb.Min.x, (1 - v.y) * (bb.Max.y - bb.Min.y) + bb.Min.y };
+	};
+	std::function<vec2(vec2)> to_ndc = [&](vec2 v)->vec2
+	{
+		return{ (v.x - bb.Min.x) / (bb.Max.x - bb.Min.x),1 - (v.y - bb.Min.y) / (bb.Max.y - bb.Min.y) };
+	};
+	const float radius = 15;
+	ImVec2 mouse = io.MousePos;
 
 	// Render Back
 	ImGui::RenderFrame(bb.Min, bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 	bool hovered = ImGui::IsItemHovered();
 
 	// Render Grid
-	draw_list->AddLine(
-		ImVec2(bb.Min.x + canvas.x * .25f, bb.Min.y),
-		ImVec2(bb.Min.x + canvas.x * .25f, bb.Max.y),
-		ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	draw_list->AddLine(
-		ImVec2(bb.Min.x + canvas.x * .5f, bb.Min.y),
-		ImVec2(bb.Min.x + canvas.x * .5f, bb.Max.y),
-		ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	draw_list->AddLine(
-		ImVec2(bb.Min.x + canvas.x * .75f, bb.Min.y),
-		ImVec2(bb.Min.x + canvas.x * .75f, bb.Max.y),
-		ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	draw_list->AddLine(
-		ImVec2(bb.Min.x, bb.Min.y + canvas.y * .25f),
-		ImVec2(bb.Max.x, bb.Min.y + canvas.y * .25f),
-		ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	draw_list->AddLine(
-		ImVec2(bb.Min.x, bb.Min.y + canvas.y * .5f),
-		ImVec2(bb.Max.x, bb.Min.y + canvas.y * .5f),
-		ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	draw_list->AddLine(
-		ImVec2(bb.Min.x, bb.Min.y + canvas.y * .75f),
-		ImVec2(bb.Max.x, bb.Min.y + canvas.y * .75f),
-		ImGui::GetColorU32(ImGuiCol_TextDisabled));
+	{
+		draw_list->AddLine(
+			ImVec2(bb.Min.x + canvas.x * .25f, bb.Min.y),
+			ImVec2(bb.Min.x + canvas.x * .25f, bb.Max.y),
+			ImGui::GetColorU32(ImGuiCol_TextDisabled));
+		draw_list->AddLine(
+			ImVec2(bb.Min.x + canvas.x * .5f, bb.Min.y),
+			ImVec2(bb.Min.x + canvas.x * .5f, bb.Max.y),
+			ImGui::GetColorU32(ImGuiCol_TextDisabled));
+		draw_list->AddLine(
+			ImVec2(bb.Min.x + canvas.x * .75f, bb.Min.y),
+			ImVec2(bb.Min.x + canvas.x * .75f, bb.Max.y),
+			ImGui::GetColorU32(ImGuiCol_TextDisabled));
+		draw_list->AddLine(
+			ImVec2(bb.Min.x, bb.Min.y + canvas.y * .25f),
+			ImVec2(bb.Max.x, bb.Min.y + canvas.y * .25f),
+			ImGui::GetColorU32(ImGuiCol_TextDisabled));
+		draw_list->AddLine(
+			ImVec2(bb.Min.x, bb.Min.y + canvas.y * .5f),
+			ImVec2(bb.Max.x, bb.Min.y + canvas.y * .5f),
+			ImGui::GetColorU32(ImGuiCol_TextDisabled));
+		draw_list->AddLine(
+			ImVec2(bb.Min.x, bb.Min.y + canvas.y * .75f),
+			ImVec2(bb.Max.x, bb.Min.y + canvas.y * .75f),
+			ImGui::GetColorU32(ImGuiCol_TextDisabled));
+	}
 
 	// Evaluate curve
 	const size_t samples{ 128 };
@@ -204,68 +213,112 @@ void curve_base::draw_easing()
 	}
 
 	// Handle grabbing
-	std::function<vec2(vec2)> to_screen = [&](vec2 v)->vec2
 	{
-		return { v.x * (bb.Max.x - bb.Min.x) + bb.Min.x, (1 - v.y) * (bb.Max.y - bb.Min.y) + bb.Min.y };
-	};
-	std::function<vec2(vec2)> to_ndc = [&](vec2 v)->vec2
-	{
-		return{ (v.x - bb.Min.x) / (bb.Max.x - bb.Min.x),1 - (v.y - bb.Min.y) / (bb.Max.y - bb.Min.y) };
-	};
-	const float radius = 15;
-	ImVec2 mouse = io.MousePos;
-	std::vector<vec2>pos;
-	std::vector<float>distsq;
-	for (size_t i = 0; i < m_ease->m_frames.size(); i+=3)
-	{
-		if (i == 0)
+		std::vector<vec2>pos;
+		std::vector<float>distsq;
+		for (size_t i = 0; i < m_ease->m_frames.size(); i+=3)
 		{
-			vec2 p0 = m_ease->m_frames[0].first;
-			pos.push_back(to_screen(p0));
+			if (i == 0)
+			{
+				vec2 p0 = m_ease->m_frames[0].first;
+				pos.push_back(to_screen(p0));
 
-			vec2 t1 = m_ease->m_frames[1].first;
-			pos.push_back(to_screen(t1));
+				vec2 t1 = m_ease->m_frames[1].first;
+				pos.push_back(to_screen(t1));
+			}
+			else if (i == m_ease->m_frames.size() - 1)
+			{
+				vec2 t0 = m_ease->m_frames[i-1].first;
+				pos.push_back(to_screen(t0));
+
+				vec2 p1 = m_ease->m_frames[i].first;
+				pos.push_back(to_screen(p1));
+			}
+			else
+			{
+				vec2 t0 = m_ease->m_frames[i - 1].first;
+				pos.push_back(to_screen(t0));
+
+				vec2 p1 = m_ease->m_frames[i].first;
+				pos.push_back(to_screen(p1));
+
+				vec2 t2 = m_ease->m_frames[i + 1].first;
+				pos.push_back(to_screen(t2));
+			}
 		}
-		else if (i == m_ease->m_frames.size() - 1)
+		float min_dist{ FLT_MAX };
+		size_t idx;
+		for (size_t i = 0; i < pos.size(); i++)
 		{
-			vec2 t0 = m_ease->m_frames[i-1].first;
-			pos.push_back(to_screen(t0));
-
-			vec2 p1 = m_ease->m_frames[i].first;
-			pos.push_back(to_screen(p1));
+			float d = (pos[i].x - mouse.x)*(pos[i].x - mouse.x) + (pos[i].y - mouse.y)*(pos[i].y - mouse.y);
+			if (d < min_dist)
+				min_dist = d, idx = i;
 		}
-		else
+		if (hovered && min_dist < (4 * radius * 4 * radius))
 		{
-			vec2 t0 = m_ease->m_frames[i - 1].first;
-			pos.push_back(to_screen(t0));
+			ImGui::SetTooltip("(%4.3f, %4.3f)", pos[idx].x, pos[idx].y);
 
-			vec2 p1 = m_ease->m_frames[i].first;
-			pos.push_back(to_screen(p1));
+			if (ImGui::IsMouseClicked(0) || ImGui::IsMouseDragging(0))
+			{
+				float dx = io.MouseDelta.x / canvas.x;
+				float dy = -io.MouseDelta.y / canvas.y;
 
-			vec2 t2 = m_ease->m_frames[i + 1].first;
-			pos.push_back(to_screen(t2));
-		}
-	}
-	float min_dist{ FLT_MAX };
-	size_t idx;
-	for (size_t i = 0; i < pos.size(); i++)
-	{
-		float d = (pos[i].x - mouse.x)*(pos[i].x - mouse.x) + (pos[i].y - mouse.y)*(pos[i].y - mouse.y);
-		if (d < min_dist)
-			min_dist = d, idx = i;
-	}
-	if (min_dist < (4 * radius * 4 * radius))
-	{
-		ImGui::SetTooltip("(%4.3f, %4.3f)", pos[idx].x, pos[idx].y);
+				if (idx % 3 == 0)
+				{
+					vec2 new_pos = to_ndc(pos[idx]);
+					new_pos = { glm::clamp<float>(new_pos.x+dx, 0, 1), glm::clamp<float>(new_pos.y+dy, 0, 1) };
+					m_ease->m_frames[idx].first = vec3(new_pos, 0);
+					m_ease->m_frames[idx].second = new_pos.x;
 
-		if (ImGui::IsMouseClicked(0) || ImGui::IsMouseDragging(0))
-		{
-			float dx = io.MouseDelta.x / canvas.x;
-			float dy = -io.MouseDelta.y / canvas.y;
-			m_ease->m_frames[idx].first = vec3(
-				glm::clamp<float>(m_ease->m_frames[idx].first.x+dx,0,1),
-				glm::clamp<float>(m_ease->m_frames[idx].first.y + dy, 0, 1),
-				0);
+					if (idx > 0)
+					{
+						vec2 new_tan = to_ndc(pos[idx-1]);
+						new_tan = { glm::clamp<float>(new_tan.x + dx, 0, 1), glm::clamp<float>(new_tan.y + dy, 0, 1) };
+						m_ease->m_frames[idx-1].first = vec3(new_tan, 0);
+						m_ease->m_frames[idx-1].second = new_pos.x;
+					}
+					if (idx < pos.size() - 1)
+					{
+						vec2 new_tan = to_ndc(pos[idx + 1]);
+						new_tan = { glm::clamp<float>(new_tan.x + dx, 0, 1), glm::clamp<float>(new_tan.y + dy, 0, 1) };
+						m_ease->m_frames[idx+1].first = vec3(new_tan, 0);
+						m_ease->m_frames[idx+1].second = new_pos.x;
+					}
+				}
+				else if (idx % 3 == 1)
+				{
+					vec2 new_tan = to_ndc(pos[idx]);
+					new_tan = { glm::clamp<float>(new_tan.x + dx, 0, 1), glm::clamp<float>(new_tan.y + dy, 0, 1) };
+					m_ease->m_frames[idx].first = vec3(new_tan, 0);
+
+					if (!m_break_tangents && idx > 1)
+					{
+						vec2 mid_pos = to_ndc(pos[idx - 1]);
+						vec2 mirror = 2.0f * (mid_pos - new_tan) + new_tan;
+						mirror = { glm::clamp<float>(mirror.x, 0, 1), glm::clamp<float>(mirror.y, 0, 1) };
+						m_ease->m_frames[idx - 2].first = vec3(mirror, 0);
+					}
+				}
+				else if (idx % 3 == 2)
+				{
+					vec2 new_tan = to_ndc(pos[idx]);
+					new_tan = { glm::clamp<float>(new_tan.x + dx, 0, 1), glm::clamp<float>(new_tan.y + dy, 0, 1) };
+					m_ease->m_frames[idx].first = vec3(new_tan, 0);
+
+					if (!m_break_tangents && idx < pos.size() - 2)
+					{
+						vec2 mid_pos = to_ndc(pos[idx+1]);
+						vec2 mirror = 2.0f * (mid_pos - new_tan) + new_tan;
+						mirror = { glm::clamp<float>(mirror.x, 0, 1), glm::clamp<float>(mirror.y, 0, 1) };
+						m_ease->m_frames[idx + 2].first = vec3(mirror, 0);
+					}
+				}
+			}
+			else if (ImGui::IsMouseClicked(1) && m_ease->m_frames.size() > 4)
+			{
+				if((idx % 3 == 0) && idx > 2 && idx < m_ease->m_frames.size() - 3)
+					m_ease->m_frames.erase(m_ease->m_frames.begin() + idx - 1, m_ease->m_frames.begin() + idx + 2);
+			}
 		}
 	}
 
@@ -279,51 +332,56 @@ void curve_base::draw_easing()
 	}
 
 	// Draw grabbers
-	ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
-	ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
-	ImVec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
-	ImVec4 gray(0.4f, 0.4f, 0.4f, 1.0f);
-	for (size_t i = 0; i < m_ease->m_frames.size(); i += 3)
 	{
-		if (i == 0)
+		ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+		ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
+		ImVec4 blue(0.0f, 0.0f, 1.0f, 1.0f);
+		ImVec4 gray(0.4f, 0.4f, 0.4f, 1.0f);
+		for (size_t i = 0; i < m_ease->m_frames.size(); i += 3)
 		{
-			vec2 p0 = m_ease->m_frames[0].first;
-			vec2 t1 = m_ease->m_frames[1].first;
-			p0 = to_screen(p0);
-			t1 = to_screen(t1);
+			if (i == 0)
+			{
+				vec2 p0 = m_ease->m_frames[0].first;
+				vec2 t1 = m_ease->m_frames[1].first;
 
-			draw_list->AddLine({p0.x,p0.y}, { t1.x, t1.y }, ImColor(gray), 4);
-			draw_list->AddCircleFilled({ t1.x,t1.y }, radius, ImColor(gray));
-			draw_list->AddCircleFilled({ t1.x,t1.y }, radius *3.0f / 4.0f, ImColor(blue));
-		}
-		else if (i == m_ease->m_frames.size() - 1)
-		{
-			vec2 t0 = m_ease->m_frames[i - 1].first;
-			vec2 p1 = m_ease->m_frames[i].first;
-			t0 = to_screen(t0);
-			p1 = to_screen(p1);
+				p0 = to_screen(p0);
+				t1 = to_screen(t1);
 
-			draw_list->AddLine({ p1.x,p1.y }, { t0.x, t0.y }, ImColor(gray), 4);
-			draw_list->AddCircleFilled({ t0.x,t0.y }, radius, ImColor(gray));
-			draw_list->AddCircleFilled({ t0.x,t0.y }, radius *3.0f / 4.0f, ImColor(red));
-		}
-		else
-		{
-			vec2 t0 = m_ease->m_frames[i - 1].first;
-			vec2 p1 = m_ease->m_frames[i].first;
-			vec2 t2 = m_ease->m_frames[i + 1].first;
-			t0 = to_screen(t0);
-			p1 = to_screen(p1);
-			t2 = to_screen(t2);
+				draw_list->AddLine({p0.x,p0.y}, { t1.x, t1.y }, ImColor(gray), 4);
+				draw_list->AddCircleFilled({ t1.x,t1.y }, radius, ImColor(gray));
+				draw_list->AddCircleFilled({ t1.x,t1.y }, radius *3.0f / 4.0f, ImColor(blue));
+			}
+			else if (i == m_ease->m_frames.size() - 1)
+			{
+				vec2 t0 = m_ease->m_frames[i - 1].first;
+				vec2 p1 = m_ease->m_frames[i].first;
 
-			draw_list->AddLine({ p1.x,p1.y }, { t0.x, t0.y }, ImColor(gray), 4);
-			draw_list->AddLine({ p1.x,p1.y }, { t2.x, t2.y }, ImColor(gray), 4);
-			draw_list->AddCircleFilled({ t0.x,t0.y }, radius, ImColor(gray));
-			draw_list->AddCircleFilled({ t0.x,t0.y }, radius *3.0f / 4.0f, ImColor(blue));
-			draw_list->AddCircleFilled({ t2.x,t2.y }, radius, ImColor(gray));
-			draw_list->AddCircleFilled({ t2.x,t2.y }, radius *3.0f / 4.0f, ImColor(red));
-			draw_list->AddCircleFilled({ p1.x,p1.y }, radius, ImColor(gray));
-			draw_list->AddCircleFilled({ p1.x,p1.y }, radius *3.0f / 4.0f, ImColor(green));
+				t0 = to_screen(t0);
+				p1 = to_screen(p1);
+
+				draw_list->AddLine({ p1.x,p1.y }, { t0.x, t0.y }, ImColor(gray), 4);
+				draw_list->AddCircleFilled({ t0.x,t0.y }, radius, ImColor(gray));
+				draw_list->AddCircleFilled({ t0.x,t0.y }, radius *3.0f / 4.0f, ImColor(red));
+			}
+			else
+			{
+				vec2 t0 = m_ease->m_frames[i - 1].first;
+				vec2 p1 = m_ease->m_frames[i].first;
+				vec2 t2 = m_ease->m_frames[i + 1].first;
+
+				t0 = to_screen(t0);
+				p1 = to_screen(p1);
+				t2 = to_screen(t2);
+
+				draw_list->AddLine({ p1.x,p1.y }, { t0.x, t0.y }, ImColor(gray), 4);
+				draw_list->AddLine({ p1.x,p1.y }, { t2.x, t2.y }, ImColor(gray), 4);
+				draw_list->AddCircleFilled({ t0.x,t0.y }, radius, ImColor(gray));
+				draw_list->AddCircleFilled({ t0.x,t0.y }, radius *3.0f / 4.0f, ImColor(blue));
+				draw_list->AddCircleFilled({ t2.x,t2.y }, radius, ImColor(gray));
+				draw_list->AddCircleFilled({ t2.x,t2.y }, radius *3.0f / 4.0f, ImColor(red));
+				draw_list->AddCircleFilled({ p1.x,p1.y }, radius, ImColor(gray));
+				draw_list->AddCircleFilled({ p1.x,p1.y }, radius *3.0f / 4.0f, ImColor(green));
+			}
 		}
 	}
 
@@ -332,16 +390,21 @@ void curve_base::draw_easing()
 	{
 		vec2 m = to_ndc({ mouse.x,mouse.y });
 		if (m.x > 0 && m.y > 0 && m.x < 1 && m.y < 1)
-		{
 			for (size_t i = 0; i < m_ease->m_frames.size() - 3; i += 3)
-			{
 				if (m_ease->m_frames[i].first.x < m.x
 				&&  m_ease->m_frames[i + 3].first.x > m.x)
 				{
-					m_ease->m_frames.insert(eeg)
+					keyframe p{ vec3(m,0),m.x };
+					keyframe t0{ vec3(m + vec2(-0.1),0),m.x };
+					keyframe t1{ vec3(m + vec2(0.1),0),m.x };
+
+					t0.first.x = glm::clamp<float>(t0.first.x, 0, 1);
+					t0.first.y = glm::clamp<float>(t0.first.y, 0, 1);
+					t1.first.x = glm::clamp<float>(t1.first.x, 0, 1);
+					t1.first.y = glm::clamp<float>(t1.first.y, 0, 1);
+
+					m_ease->m_frames.insert(m_ease->m_frames.begin() + i + 2, { t0,p,t1 });
 				}
-			}
-		}
 	}
 }
 
