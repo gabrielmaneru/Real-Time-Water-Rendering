@@ -11,6 +11,7 @@ Author: Gabriel Ma�eru - gabriel.m
 #include <imgui/imgui.h>
 #include <platform/editor.h>
 #include <platform/window.h>
+#include <iostream>
 
 scene_object::scene_object(std::string mesh, transform3d tr, animator * anim, curve_interpolator * curve_)
 	: renderable(tr, renderer->get_model(mesh)), m_animator(anim), m_curve_interpolator(curve_) {}
@@ -37,8 +38,9 @@ void scene_object::update()
 			m_transform.m_tr.parent = mat_pos;
 
 			std::pair<vec3, vec3> derivatives = c->evaluate_derivatives(time);
-			vec3 up = glm::cross(derivatives.first, derivatives.second);
-			m_transform.set_rot(glm::normalize(glm::quatLookAt(derivatives.first, up)));
+			//vec3 up = glm::cross(derivatives.first, derivatives.second);
+			std::cout << "x: " << std::to_string(derivatives.first.x) << " ; y: " << std::to_string(derivatives.first.z) << std::endl;
+			m_transform.set_rot(glm::normalize(glm::quatLookAt(derivatives.first, {0,1,0})));
 
 			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->max_distance());
 		}

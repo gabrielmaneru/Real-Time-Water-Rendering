@@ -58,18 +58,20 @@ curve_base::curve_base(std::string path)
 
 std::pair<vec3,vec3> curve_base::evaluate_derivatives(float t) const
 {
-	vec3 front_derivative = evaluate(t+0.001f) - evaluate(t-0.0001);
-	vec3 back_derivative = evaluate(t+0.0001f) - evaluate(t-0.001f);
+	vec3 p_0 = evaluate(t + 0.001f);
+	vec3 p_1 = evaluate(t - 0.0001f);
+	vec3 front_derivative = normalize(p_0-p_1);
+	//vec3 back_derivative = evaluate(t+0.0001f) - evaluate(t-0.001f);
+	//
+	//vec3 average_derivative = glm::normalize(0.5f*front_derivative - 0.5f*back_derivative);
+	//vec3 second_derivative = glm::normalize(front_derivative) - glm::normalize(back_derivative);
+	//
+	//if (glm::length2(second_derivative) < glm::epsilon<float>())
+	//	second_derivative = glm::normalize(glm::cross(average_derivative, { 0,1,0 }));
+	//else
+	//	second_derivative = glm::normalize(second_derivative);
 
-	vec3 average_derivative = glm::normalize(0.5f*front_derivative - 0.5f*back_derivative);
-	vec3 second_derivative = glm::normalize(front_derivative) - glm::normalize(back_derivative);
-
-	if (glm::length2(second_derivative) < glm::epsilon<float>())
-		second_derivative = glm::normalize(glm::cross(average_derivative, { 0,1,0 }));
-	else
-		second_derivative = glm::normalize(second_derivative);
-
-	return { average_derivative, second_derivative };
+	return { normalize(front_derivative), front_derivative };
 }
 
 void curve_base::do_adaptive_forward_differencing()
