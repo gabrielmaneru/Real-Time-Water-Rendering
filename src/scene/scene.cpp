@@ -243,14 +243,14 @@ bool c_scene::init()
 	if (!load_scene(m_scene_name))
 		return false;
 
-	light_data ld;
-	ld.m_diffuse = { 0.2,0.2,0.6 };
 	transform3d tr;
 	tr.set_scl(vec3(.5f));
 
+	light_data ld;
 	for (int i = 0; i < m_num_lights; i++)
 	{
-		tr.set_pos({ random_float(-62.5f, 12.5f), random_float(0.0f, 1.0f),random_float(-26.5f, 18.5f) });
+		tr.set_pos({ random_float(-107.0f, 93.0f), random_float(0.0f, 100.0f),random_float(-54.0f, 46.0f) });
+		ld.m_diffuse= { random_float(0.0f, 1.0f), random_float(0.0f, 1.0f),random_float(0.0f, 1.0f) };
 		m_lights.push_back(new light(tr, ld));
 	}
 

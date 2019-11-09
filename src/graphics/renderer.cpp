@@ -94,18 +94,6 @@ bool c_renderer::init()
 		{},"oxidized-coppper-roughness.png",
 		1.0f,"oxidized-copper-normal-ue.png"
 		});
-	Model::m_def_materials.push_back(new Material{ "shark_1",
-		{},"Sharktexture002.png",
-		vec3{0.0f},{},
-		{0.0f},{},
-		1.0f,{}
-		});
-	Model::m_def_materials.push_back(new Material{ "shark_2",
-		{},"Sharkmouthtexture002.png",
-		vec3{1.0f},{},
-		{0.0f},{},
-		1.0f,{}
-		});
 
 	// Load Resources
 	try
@@ -117,9 +105,6 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		m_models.push_back(new Model("./data/meshes/sneak.dae", { "copper","plastic" }));
-		m_models.push_back(new Model("./data/meshes/shark.dae", { "shark_2","shark_1" }, { 0,2 }, { {12,17} }));
-		m_models.push_back(new Model("./data/meshes/suzanne.obj"));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }

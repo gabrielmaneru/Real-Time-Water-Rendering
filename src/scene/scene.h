@@ -19,7 +19,7 @@ class c_scene
 	std::vector<light*> m_lights;
 	std::vector<decal*> m_decals;
 	std::string m_scene_name{"scene"};
-	int m_num_lights = 100;
+	int m_num_lights = 300;
 	bool load_scene(std::string);
 
 public:
