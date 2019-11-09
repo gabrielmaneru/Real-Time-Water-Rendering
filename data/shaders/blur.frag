@@ -15,79 +15,75 @@ subroutine uniform Execution_Type execution;
 layout (location = 0) out vec3 attr_1;
 layout (location = 1) out vec3 attr_2;
 
-uniform int sigma=1;
+uniform int pass;
 uniform float width;
 uniform float height;
-const float gaussian[][]= float[][](
-	float[](0.000036,0.000363,0.001446,0.002291,0.003676,0.014662,0.023226,0.058488,0.092651,0.146768),//sigma=1
-	float[](0.005084,0.009377,0.013539,0.015302,0.017296,0.024972,0.028224,0.036054,0.040749,0.046056),//sigma=2
-	float[](0.011362,0.014962,0.017649,0.018648,0.019703,0.023240,0.024556,0.027413,0.028964,0.030603),//sigma=3
-	float[](0.014786,0.017272,0.018961,0.019559,0.020177,0.022149,0.022849,0.024314,0.025082,0.025874),//sigma=4
-	float[](0.016641,0.018385,0.019518,0.019911,0.020312,0.021564,0.021998,0.022893,0.023354,0.023824)//sigma=5
-	);
+uniform int blur_mode;
+uniform float bilat_threshold;
+const float gaussian[]= float[](0.129001,0.142521,0.151303,0.15435);
+vec3 get_color(vec2 off)
+{
+	return clamp(texture2D(texture1, vUv + off).rgb,vec3(0,0,0),vec3(1,1,1));
+}
+float bilateral(vec2 off)
+{
+	if(abs(texture2D(texture3, vUv).r - texture2D(texture3, vUv + off).r) < bilat_threshold)
+		return 1.0f;
+	else 
+		return 0.0f;
+}
 vec3 blur_3()
 {
 	float w = 1.0/width;
 	float h = 1.0/height;
 	
 	vec3 sum=vec3(0.0);
-	int idx = sigma-1;
-	sum+=gaussian[idx][0]*clamp(texture2D(texture1, vUv + vec2(-3*w,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2(-2*w,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2(-w,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][3]*clamp(texture2D(texture1, vUv + vec2(0.0,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2( w,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2( 2*w,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][0]*clamp(texture2D(texture1, vUv + vec2( 3*w,	-3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2(-3*w,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][4]*clamp(texture2D(texture1, vUv + vec2(-2*w,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2(-w,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][6]*clamp(texture2D(texture1, vUv + vec2(0.0,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2( w,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][4]*clamp(texture2D(texture1, vUv + vec2( 2*w,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2( 3*w,	-2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2(-3*w,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2(-2*w,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][7]*clamp(texture2D(texture1, vUv + vec2(-w,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][8]*clamp(texture2D(texture1, vUv + vec2(0.0,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][7]*clamp(texture2D(texture1, vUv + vec2( w,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2( 2*w,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2( 3*w,	-h)).rgb,vec3(0,0,0),vec3(1,1,1));
-
-	sum+=gaussian[idx][3]*clamp(texture2D(texture1, vUv + vec2(-3*w,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][6]*clamp(texture2D(texture1, vUv + vec2(-2*w,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][8]*clamp(texture2D(texture1, vUv + vec2(-w,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][9]*clamp(texture2D(texture1, vUv + vec2(0.0,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][8]*clamp(texture2D(texture1, vUv + vec2( w,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][6]*clamp(texture2D(texture1, vUv + vec2( 2*w,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][3]*clamp(texture2D(texture1, vUv + vec2( 3*w,	0.0)).rgb,vec3(0,0,0),vec3(1,1,1));
-
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2(-3*w,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2(-2*w,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][7]*clamp(texture2D(texture1, vUv + vec2(-w,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][8]*clamp(texture2D(texture1, vUv + vec2(0.0,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][7]*clamp(texture2D(texture1, vUv + vec2( w,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2( 2*w,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2( 3*w,	h)).rgb,vec3(0,0,0),vec3(1,1,1));
-
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2(-3*w,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][4]*clamp(texture2D(texture1, vUv + vec2(-2*w,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2(-w,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][6]*clamp(texture2D(texture1, vUv + vec2(0.0,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][5]*clamp(texture2D(texture1, vUv + vec2( w,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][4]*clamp(texture2D(texture1, vUv + vec2( 2*w,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2( 3*w,	2*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-
-	sum+=gaussian[idx][0]*clamp(texture2D(texture1, vUv + vec2(-3*w,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2(-2*w,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2(-w,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][3]*clamp(texture2D(texture1, vUv + vec2(0.0,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][2]*clamp(texture2D(texture1, vUv + vec2( w,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][1]*clamp(texture2D(texture1, vUv + vec2( 2*w,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-	sum+=gaussian[idx][0]*clamp(texture2D(texture1, vUv + vec2( 3*w,	3*h)).rgb,vec3(0,0,0),vec3(1,1,1));
-
+	if(blur_mode == 0)
+	{
+		if(pass == 0)
+		{
+			sum += gaussian[0] * get_color(vec2(-3*w,   0));
+			sum += gaussian[1] * get_color(vec2(-2*w,   0));
+			sum += gaussian[2] * get_color(vec2(  -w,   0));
+			sum += gaussian[3] * get_color(vec2(   0,   0));
+			sum += gaussian[2] * get_color(vec2(   w,   0));
+			sum += gaussian[1] * get_color(vec2( 2*w,   0));
+			sum += gaussian[0] * get_color(vec2( 3*w,   0));
+		}
+		else
+		{
+			sum += gaussian[0] * get_color(vec2(   0,-3*w));
+			sum += gaussian[1] * get_color(vec2(   0,-2*w));
+			sum += gaussian[2] * get_color(vec2(   0,  -w));
+			sum += gaussian[3] * get_color(vec2(   0,   0));
+			sum += gaussian[2] * get_color(vec2(   0,   w));
+			sum += gaussian[1] * get_color(vec2(   0, 2*w));
+			sum += gaussian[0] * get_color(vec2(   0, 3*w));
+		}
+	}
+	else
+	{
+		if(pass == 0)
+		{
+			sum += gaussian[0] * bilateral(vec2(-3*w,   0)) * get_color(vec2(-3*w,   0));
+			sum += gaussian[1] * bilateral(vec2(-2*w,   0)) * get_color(vec2(-2*w,   0));
+			sum += gaussian[2] * bilateral(vec2(  -w,   0)) * get_color(vec2(  -w,   0));
+			sum += gaussian[3] * bilateral(vec2(   0,   0)) * get_color(vec2(   0,   0));
+			sum += gaussian[2] * bilateral(vec2(   w,   0)) * get_color(vec2(   w,   0));
+			sum += gaussian[1] * bilateral(vec2( 2*w,   0)) * get_color(vec2( 2*w,   0));
+			sum += gaussian[0] * bilateral(vec2( 3*w,   0)) * get_color(vec2( 3*w,   0));
+		}
+		else
+		{
+			sum += gaussian[0] * bilateral(vec2(   0,-3*w)) * get_color(vec2(   0,-3*w));
+			sum += gaussian[1] * bilateral(vec2(   0,-2*w)) * get_color(vec2(   0,-2*w));
+			sum += gaussian[2] * bilateral(vec2(   0,  -w)) * get_color(vec2(   0,  -w));
+			sum += gaussian[3] * bilateral(vec2(   0,   0)) * get_color(vec2(   0,   0));
+			sum += gaussian[2] * bilateral(vec2(   0,   w)) * get_color(vec2(   0,   w));
+			sum += gaussian[1] * bilateral(vec2(   0, 2*w)) * get_color(vec2(   0, 2*w));
+			sum += gaussian[0] * bilateral(vec2(   0, 3*w)) * get_color(vec2(   0, 3*w));
+		}
+	}
 	return sum;
 }
 
@@ -187,12 +183,20 @@ void do_bloom_blur()
 
 
 //----Final-blur-----------------------------------------------------
+uniform int final_mode;
 subroutine (Execution_Type)
 void do_final_blur()
 {
-	vec3 sum = blur_3();
-	attr_1 = mix(texture2D(texture1, vUv).rgb, sum, clamp(length(texture2D(texture2, vUv).rgb),0,1));
-	attr_1 += texture2D(texture3, vUv).rgb;
+
+	if(final_mode == 0)
+		attr_1 = texture2D(texture1, vUv).rgb;
+	else if (final_mode == 1)
+	{
+		vec3 sum = blur_3();
+		attr_1 = mix(texture2D(texture1, vUv).rgb, sum, clamp(length(texture2D(texture2, vUv).rgb),0,1));
+	}
+	else
+		attr_1 = texture2D(texture1, vUv).rgb + texture2D(texture3, vUv).rgb;
 }
 //-------------------------------------------------------------------
 

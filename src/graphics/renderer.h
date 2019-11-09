@@ -56,8 +56,10 @@ public:
 		LIGHT,
 		BLUR_CONTROL,
 		BLOOM,
-		BLUR_RESULT
-	}m_txt_cur{ BLUR_RESULT };
+		BLOOM2,
+		BLUR,
+		BLUR2
+	}m_txt_cur{ BLUR };
 	
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
@@ -82,7 +84,6 @@ public:
 		bool  do_antialiasing{ true };
 		float aa_coef_normal{ 0.05f };
 		float aa_coef_depth{ 0.25f };
-		int   aa_sigma{ 5 };
 
 		bool  do_depth_of_field{ false };
 		float df_plane_focus{ 45.f };
@@ -94,6 +95,11 @@ public:
 
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
+
+		int   blur_bloom_iterations{ 1 };
+		int   blur_general_iterations{ 1 };
+		int   blur_mode{ 0 };
+		float bilat_threshold{ 0.01f };
 
 		float dc_angle{ 0.8f };
 		int dc_mode{ 0 };

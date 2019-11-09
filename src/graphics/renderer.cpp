@@ -143,10 +143,12 @@ void c_renderer::update()
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR
 			});
 		bloom_buffer.setup(window_manager->get_width()/2, window_manager->get_height()/2, {
+			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR,
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR
 			});
 		blur_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
-			GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST
+			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR,
+			GL_RGB16F, GL_RGB, GL_FLOAT, GL_LINEAR
 			});
 	}
 
@@ -273,6 +275,8 @@ void c_renderer::update()
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, blur_control_buffer.m_width, blur_control_buffer.m_height));
 		/**/blur_shader->use();
+		/**/blur_shader->set_uniform("blur_mode", m_render_options.blur_mode);
+		/**/blur_shader->set_uniform("bilat_threshold", m_render_options.bilat_threshold);
 		/**/ortho_cam.set_uniforms(blur_shader);
 		/**/GL_CALL(glEnable(GL_BLEND));
 		/**/
@@ -314,9 +318,11 @@ void c_renderer::update()
 		/**/// Bloom Filter
 		/**/if (m_render_options.do_bloom)
 		/**/ {
-		/**/	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, blur_buffer.m_fbo));
+		/**/	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, bloom_buffer.m_fbo));
 		/**/	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/	GL_CALL(glViewport(0, 0, blur_buffer.m_width, blur_buffer.m_height));
+		/**/	GL_CALL(glViewport(0, 0, bloom_buffer.m_width, bloom_buffer.m_height));
+		/**/	// Get Luminance Color
+		/**/	bloom_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
 		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_bloom");
 		/**/	blur_shader->set_uniform("bloom_coef", m_render_options.bl_coef);
 		/**/	glActiveTexture(GL_TEXTURE0);
@@ -324,16 +330,23 @@ void c_renderer::update()
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
 		/**/	glFlush;
 		/**/	glFinish;
-		/**/	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, bloom_buffer.m_fbo));
-		/**/	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/	GL_CALL(glViewport(0, 0, bloom_buffer.m_width, bloom_buffer.m_height));
 		/**/	blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_bloom_blur");
-		/**/	blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
-		/**/	blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
-		/**/	blur_shader->set_uniform("sigma", m_render_options.aa_sigma);
-		/**/	glActiveTexture(GL_TEXTURE0);
-		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_RESULT));
-		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/	blur_shader->set_uniform("width", (float)bloom_buffer.m_width);
+		/**/	blur_shader->set_uniform("height", (float)bloom_buffer.m_height);
+		/**/	for (int i = 0; i < m_render_options.blur_bloom_iterations; i++)
+		/**/	{
+		/**/		bloom_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
+		/**/		blur_shader->set_uniform("pass", 0);
+		/**/		glActiveTexture(GL_TEXTURE0);
+		/**/		glBindTexture(GL_TEXTURE_2D, get_texture(BLOOM));
+		/**/		m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/		bloom_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
+		/**/		blur_shader->set_uniform("pass", 1);
+		/**/		glActiveTexture(GL_TEXTURE0);
+		/**/		glBindTexture(GL_TEXTURE_2D, get_texture(BLOOM2));
+		/**/		m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/	}
+		/**/	bloom_buffer.set_drawbuffers();	
 		/**/}
 		/**/else
 		/**/{
@@ -349,13 +362,33 @@ void c_renderer::update()
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, blur_buffer.m_width, blur_buffer.m_height));
 		/**/blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_final_blur");
-		/**/blur_shader->set_uniform("width", (float)blur_control_buffer.m_width);
-		/**/blur_shader->set_uniform("height", (float)blur_control_buffer.m_height);
-		/**/blur_shader->set_uniform("sigma", m_render_options.aa_sigma);
-		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/blur_shader->set_uniform("width", (float)blur_buffer.m_width);
+		/**/blur_shader->set_uniform("height", (float)blur_buffer.m_height);
 		/**/glActiveTexture(GL_TEXTURE1);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_CONTROL));
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
+		/**/blur_shader->set_uniform("final_mode", 0);
+		/**/blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/for (int i = 0; i < m_render_options.blur_general_iterations; i++)
+		/**/{
+		/**/	blur_shader->set_uniform("final_mode", 1);
+		/**/	blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
+		/**/	glActiveTexture(GL_TEXTURE0);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR2));
+		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/	blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1 });
+		/**/	glActiveTexture(GL_TEXTURE0);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR));
+		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/}
+		/**/blur_shader->set_uniform("final_mode", 2);
+		/**/blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR2));
 		/**/glActiveTexture(GL_TEXTURE2);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLOOM));
 		/**/m_models[2]->m_meshes[0]->draw(blur_shader);
@@ -475,7 +508,9 @@ void c_renderer::drawGUI()
 		{
 			show_image(c_renderer::BLUR_CONTROL);
 			show_image(c_renderer::BLOOM);
-			show_image(c_renderer::BLUR_RESULT);
+			show_image(c_renderer::BLOOM2);
+			show_image(c_renderer::BLUR);
+			show_image(c_renderer::BLUR2);
 			ImGui::TreePop();
 		}
 		ImGui::TreePop();
@@ -589,7 +624,6 @@ void c_renderer::drawGUI()
 			ImGui::Checkbox("Do Antialiasing", &m_render_options.do_antialiasing);
 			ImGui::SliderFloat("Normal Coefficient", &m_render_options.aa_coef_normal, 0.0f, 1.0f);
 			ImGui::SliderFloat("Depth Coefficient", &m_render_options.aa_coef_depth, 0.0f, 1.0f);
-			ImGui::SliderInt("Gaussian Sigma", &m_render_options.aa_sigma, 1, 5);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Depth of Field"))
@@ -624,6 +658,23 @@ void c_renderer::drawGUI()
 		{
 			ImGui::Checkbox("Do Bloom", &m_render_options.do_bloom);
 			ImGui::SliderFloat("Brightness Threshold", &m_render_options.bl_coef, 0.0f, 2.0f);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Blur"))
+		{
+			ImGui::SliderInt("Blur Bloom Iterations", &m_render_options.blur_bloom_iterations, 0, 10);
+			ImGui::SliderInt("Blur General Iterations", &m_render_options.blur_general_iterations, 0, 10);
+			static const char* modes[] = { "7x7 Gaussian", "7x7 Gaussian Bilateral" };
+			if (ImGui::BeginCombo("Mode", modes[m_render_options.blur_mode]))
+			{
+				for (int n = 0; n < (int)IM_ARRAYSIZE(modes); n++)
+				{
+					if (ImGui::Selectable(modes[n], n == m_render_options.blur_mode))
+						m_render_options.blur_mode = n;
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::InputFloat("Bilateral Threshold", &m_render_options.bilat_threshold);
 			ImGui::TreePop();
 		}
 		ImGui::TreePop();
@@ -664,8 +715,12 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return blur_control_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLOOM:
 		return bloom_buffer.m_color_texture[0];
-	case c_renderer::e_texture::BLUR_RESULT:
+	case c_renderer::e_texture::BLOOM2:
+		return bloom_buffer.m_color_texture[1];
+	case c_renderer::e_texture::BLUR:
 		return blur_buffer.m_color_texture[0];
+	case c_renderer::e_texture::BLUR2:
+		return blur_buffer.m_color_texture[1];
 	}
 	return 0;
 }
