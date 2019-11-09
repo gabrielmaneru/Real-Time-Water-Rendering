@@ -18,7 +18,8 @@ struct interpolator
 	bool m_playback{ false };
 	bool m_playback_state{ true };
 	double m_time{ 0.0 };
-	double m_speed{ 1.0 };
+	double m_spd{ 1.0 };
+	double m_max_speed{ 1.0 };
 	void update(double max_t);
 	void draw_GUI();
 };
@@ -45,5 +46,4 @@ public:
 
 	animator* m_animator{ nullptr };
 	curve_interpolator* m_curve_interpolator{ nullptr };
-
 };

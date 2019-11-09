@@ -125,12 +125,9 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 	
 	// Curves
-	m_curves.push_back(new curve_line("line"));
-	m_curves.push_back(new curve_hermite("hermite"));
-	m_curves.push_back(new curve_catmull("catmull"));
 	m_curves.push_back(new curve_catmull("walk"));
 	m_curves.push_back(new curve_catmull("swim"));
-	m_curves.push_back(new curve_bezier("bezier"));
+	m_curves.push_back(new curve_catmull("swim2"));
 	
 	// Setup Cameras
 	scene_cam.m_eye = { 29,16,-4 };
@@ -449,7 +446,7 @@ void c_renderer::drawGUI()
 			{
 				for (size_t n = 0; n < scene->m_objects.size(); n++)
 				{
-					if (ImGui::Selectable(scene->m_objects[n]->m_model->m_name.c_str(), false))
+					if (ImGui::Selectable((std::to_string(n) + "_" + scene->m_objects[n]->m_model->m_name).c_str(), false))
 						scene_cam.use_target(scene->m_objects[n]);
 				}
 				ImGui::EndCombo();
@@ -513,7 +510,7 @@ void c_renderer::drawGUI()
 		{
 			ImGui::Checkbox("Render Curves", &m_render_options.render_curves);
 			bool updt{ false };
-			if (ImGui::SliderFloat("Curve Epsilon", &curve_base::m_epsilon, 0.0000001f, 10, "%.7f", 10.f))
+			if (ImGui::SliderFloat("Curve Epsilon", &curve_base::m_epsilon, 0.0001f, 10, "%.4f", 10.f))
 				updt = true;
 			if (ImGui::InputInt("Forced Subdivision", &curve_base::m_forced_subdivision, 1, 10))
 				updt = true, curve_base::m_forced_subdivision = max(0, curve_base::m_forced_subdivision);
@@ -526,10 +523,12 @@ void c_renderer::drawGUI()
 			{
 				if (ImGui::TreeNode(c->m_name.c_str()))
 				{
-					ImGui::Checkbox("Break Tangents", &curve_base::m_break_tangents);
-					c->draw_easing();
-
-					ImGui::NewLine();
+					if (ImGui::TreeNode("Easeing"))
+					{
+						ImGui::Checkbox("Break Tangents", &curve_base::m_break_tangents);
+						c->draw_easing();
+						ImGui::TreePop();
+					}
 
 					if (ImGui::TreeNode("Table"))
 					{
@@ -558,6 +557,33 @@ void c_renderer::drawGUI()
 							ImGui::Separator();
 							i++;
 						
+						}
+						ImGui::TreePop();
+					}
+
+					if (ImGui::TreeNode("View"))
+					{
+						if (c->m_target)
+						{
+							std::string name = c->m_target->m_model
+								? c->m_target->m_model->m_name
+								: "Unknown";
+							ImGui::Text(("View target: " + name).c_str());
+							ImGui::SameLine();
+							if (ImGui::Button("Release"))
+								c->m_target = nullptr;
+						}
+						else
+						{
+							if (ImGui::BeginCombo("Target", "Select Obj"))
+							{
+								for (size_t n = 0; n < scene->m_objects.size(); n++)
+								{
+									if (ImGui::Selectable((std::to_string(n)+"_"+scene->m_objects[n]->m_model->m_name).c_str(), false))
+										c->m_target = scene->m_objects[n];
+								}
+								ImGui::EndCombo();
+							}
 						}
 						ImGui::TreePop();
 					}

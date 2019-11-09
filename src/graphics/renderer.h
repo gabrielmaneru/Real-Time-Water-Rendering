@@ -77,7 +77,7 @@ public:
 	struct Options
 	{
 		bool render_lights{ false };
-		bool render_curves{ true };
+		bool render_curves{ false };
 
 		bool  do_antialiasing{ true };
 		float aa_coef_normal{ 0.05f };

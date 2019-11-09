@@ -150,7 +150,7 @@ bool c_scene::load_scene(std::string path)
 						s = obj.substr(obj.find("playback") + 9, obj.find("speed") - obj.find("playback") - 10);
 						anim->m_playback = (bool)std::atoi(s.c_str());
 						s = obj.substr(obj.find("speed") + 6, obj.find("}") - obj.find("speed") - 6);
-						anim->m_speed = (double)std::atof(s.c_str());
+						anim->m_max_speed = (double)std::atof(s.c_str());
 					}
 
 					curve_interpolator * m_curve{ nullptr };
@@ -182,7 +182,7 @@ bool c_scene::load_scene(std::string path)
 						s = obj.substr(obj.find("playback") + 9, obj.find("speed") - obj.find("playback") - 10);
 						m_curve->m_playback = (bool)std::atoi(s.c_str());
 						s = obj.substr(obj.find("speed") + 6, obj.find("}") - obj.find("speed") - 6);
-						m_curve->m_speed = (double)std::atof(s.c_str());
+						m_curve->m_max_speed = (double)std::atof(s.c_str());
 					}
 
 					m_objects.push_back(new scene_object(mesh_name, tr, anim, m_curve));

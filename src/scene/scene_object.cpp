@@ -12,6 +12,7 @@ Author: Gabriel Ma�eru - gabriel.m
 #include <platform/editor.h>
 #include <platform/window.h>
 #include <iostream>
+#include <glm/gtx/rotate_vector.hpp>
 
 scene_object::scene_object(std::string mesh, transform3d tr, animator * anim, curve_interpolator * curve_)
 	: renderable(tr, renderer->get_model(mesh)), m_animator(anim), m_curve_interpolator(curve_) {}
@@ -32,16 +33,36 @@ void scene_object::update()
 		{
 			const curve_base * c = m_curve_interpolator->m_actual_curve;
 
-			float time = c->distance_to_time((float)m_curve_interpolator->m_time);
-			vec3 pos = c->evaluate(time);
+			// Update Position
+			vec2 time = c->distance_to_time((float)m_curve_interpolator->m_time);
+			vec3 pos = c->evaluate(time.x);
 			mat4 mat_pos = glm::translate(mat4(1.0), pos);
 			m_transform.m_tr.parent = mat_pos;
 
-			std::pair<vec3, vec3> derivatives = c->evaluate_derivatives(time);
-			//vec3 up = glm::cross(derivatives.first, derivatives.second);
-			std::cout << "x: " << std::to_string(derivatives.first.x) << " ; y: " << std::to_string(derivatives.first.z) << std::endl;
-			m_transform.set_rot(glm::normalize(glm::quatLookAt(derivatives.first, {0,1,0})));
+			// Rotate using Frenet Frame
+			if (c->m_target == nullptr)
+			{
+				std::pair<vec3, vec3> derivatives = c->evaluate_derivatives(time.x);
+				vec3 up { 0,1,0 };
 
+				if(derivatives.second != vec3(0))
+				{
+					vec3 right = glm::normalize(glm::cross({ 0,1,0 }, derivatives.first));
+					float angle = glm::dot(derivatives.second, right);
+					up = glm::rotate(up, angle, derivatives.first);
+				}
+
+				m_transform.set_rot(glm::normalize(glm::quatLookAt(derivatives.first, up)));
+			}
+			// Rotate looking at target
+			else
+			{
+				vec3 target = c->m_target->m_transform.get_real_pos();
+				vec3 cur = m_transform.get_real_pos();
+				m_transform.set_rot(glm::normalize(glm::quatLookAt(normalize(vec3(cur-target)), {0,1,0})));
+			}
+
+			m_curve_interpolator->m_spd = m_curve_interpolator->m_max_speed;
 			m_curve_interpolator->update(m_curve_interpolator->m_actual_curve->max_distance());
 		}
 		else
@@ -50,8 +71,20 @@ void scene_object::update()
 	if (m_animator != nullptr)
 	{
 		if (m_animator->m_active && m_animator->m_current_animation != -1)
-			if(m_model->m_animations.size() > m_animator->m_current_animation)
+			if (m_model->m_animations.size() > m_animator->m_current_animation)
+			{
+				// Update animator based on curve interpolator
+				if (m_curve_interpolator != nullptr && m_curve_interpolator->m_active && m_curve_interpolator->m_actual_curve != nullptr)
+				{
+					const curve_base * c = m_curve_interpolator->m_actual_curve;
+
+					vec2 time = c->distance_to_time((float)m_curve_interpolator->m_time);
+					m_animator->m_spd = m_animator->m_max_speed * time.y;
+				}
+				else
+					m_animator->m_spd = m_animator->m_max_speed;
 				m_animator->update(m_model->m_animations[m_animator->m_current_animation]->m_duration);
+			}
 	}
 }
 
@@ -129,9 +162,9 @@ void scene_object::draw(Shader_Program * shader)
 void interpolator::update(double max_t)
 {
 	if (!m_playback || m_playback_state)
-		m_time += m_speed / window::frameTime;
+		m_time += m_spd / window::frameTime;
 	else
-		m_time -= m_speed / window::frameTime;
+		m_time -= m_spd / window::frameTime;
 
 	if (m_playback)
 	{
@@ -141,15 +174,15 @@ void interpolator::update(double max_t)
 			m_time = -m_time, m_playback_state = true;
 	}
 	else
-		m_time = fmod(m_time, max_t);
+		m_time = fmod(max_t + m_time, max_t);
 }
 
 void interpolator::draw_GUI()
 {
 	ImGui::Checkbox("Active", &m_active);
 	if (ImGui::Checkbox("Playback", &m_playback))m_playback_state = true;
-	float sp = (float)m_speed;
-	if (ImGui::DragFloat("Speed", &sp, 0.01f, -1000.f,1000.f)) m_speed = (double)sp;
+	float sp = (float)m_max_speed;
+	if (ImGui::DragFloat("Speed", &sp, 0.01f, -1000.f,1000.f)) m_max_speed = (double)sp;
 	ImGui::Text(("Time:" + std::to_string(m_time)).c_str());
 }
 

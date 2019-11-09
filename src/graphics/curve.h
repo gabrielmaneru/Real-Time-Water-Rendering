@@ -16,13 +16,14 @@ struct key_arclength
 	float m_arclength;
 };
 struct curve_bezier;
+class scene_object;
 struct curve_base
 {
 	curve_base(std::string);
 	virtual vec3 evaluate(float t)const = 0;
 	std::pair<vec3,vec3> evaluate_derivatives(float t)const;
 	void do_adaptive_forward_differencing();
-	float distance_to_time(float d)const;
+	vec2 distance_to_time(float d)const;
 	float duration()const;
 	float max_distance()const;
 	void draw_easing();
@@ -35,6 +36,7 @@ struct curve_base
 	std::string m_name;
 	size_t point_stride;
 	mutable curve_bezier* m_ease{nullptr};
+	scene_object* m_target{nullptr};
 };
 
 struct curve_line : public curve_base

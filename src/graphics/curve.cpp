@@ -58,43 +58,64 @@ curve_base::curve_base(std::string path)
 
 std::pair<vec3,vec3> curve_base::evaluate_derivatives(float t) const
 {
-	vec3 p_0 = evaluate(t + 0.001f);
-	vec3 p_1 = evaluate(t - 0.0001f);
-	vec3 front_derivative = normalize(p_0-p_1);
-	//vec3 back_derivative = evaluate(t+0.0001f) - evaluate(t-0.001f);
-	//
-	//vec3 average_derivative = glm::normalize(0.5f*front_derivative - 0.5f*back_derivative);
-	//vec3 second_derivative = glm::normalize(front_derivative) - glm::normalize(back_derivative);
-	//
-	//if (glm::length2(second_derivative) < glm::epsilon<float>())
-	//	second_derivative = glm::normalize(glm::cross(average_derivative, { 0,1,0 }));
-	//else
-	//	second_derivative = glm::normalize(second_derivative);
+	// Evaluate time
+	vec3 p_prev = evaluate(t - 0.05f);
+	vec3 p_curr = evaluate(t);
+	vec3 p_next = evaluate(t + 0.05f);
 
-	return { normalize(front_derivative), front_derivative };
+	// Compute first derivative
+	vec3 front_derivative = p_curr - p_next;
+	front_derivative = (glm::length2(front_derivative) > glm::epsilon<float>()) ? glm::normalize(front_derivative) : vec3(0);
+	vec3 back_derivative = p_prev - p_curr;
+	back_derivative = (glm::length2(back_derivative) > glm::epsilon<float>()) ? glm::normalize(back_derivative) : vec3(0);
+	vec3 first_derivative = glm::normalize(front_derivative + back_derivative);
+
+	// Compute second derivative
+	vec3 second_derivative;
+	float dot = glm::dot(front_derivative, back_derivative);
+	if (front_derivative == vec3(0) || back_derivative == vec3(0) || (1.0 - dot) < glm::epsilon<float>())
+		second_derivative = vec3(0);
+	else
+		second_derivative = front_derivative - back_derivative;
+
+	return { first_derivative, second_derivative };
 }
 
 void curve_base::do_adaptive_forward_differencing()
 {
+	// Clear previous table
 	m_length_table.clear();
 
+	// Lambda that computes the arclenght
 	std::function<float(float, float)> alen = [&](float a, float b)->float
 	{
 		vec3 pos_a = evaluate(a);
 		vec3 pos_b = evaluate(b);
 		return glm::length(pos_b - pos_a);
 	};
+	// Recursive lambda that subdivides the curve
 	std::function<void(key_arclength&,int)> subdivide = [&](key_arclength& left, int lvl)->void
 	{
+		// Get previously inserted key
 		const key_arclength right = m_length_table.back();
+
+		// Compute mid time
 		float mid_dt = (right.m_param_value + left.m_param_value) * 0.5f;
+
+		// Compute arclengths
 		float a_m = alen(right.m_param_value, mid_dt);
 		float m_b = alen(mid_dt, left.m_param_value);
+
+		// Computes algorithm delta
 		float delta = a_m + m_b - left.m_arclength;
 
+		// Creat mid key and update leftkey arclenght
 		key_arclength mid{ mid_dt, a_m };
 		left.m_arclength = m_b;
-		if (m_epsilon < delta || lvl < m_forced_subdivision)
+
+		//Check subdivision condition
+		float e = m_epsilon / glm::pow(2, lvl);
+		if (e < delta || lvl < m_forced_subdivision)
 		{
 			subdivide(mid,lvl+1);
 			m_length_table.push_back(mid);
@@ -102,14 +123,23 @@ void curve_base::do_adaptive_forward_differencing()
 		}
 	};
 
+	// Insert initial point
 	m_length_table.push_back({ 0.0, 0.0 });
+
+	// Iterate per segment
 	for (size_t i = 0; i < m_frames.size() - point_stride; i += point_stride)
 	{
+		// Get keys
 		keyframe right = m_frames[i];
 		keyframe left = m_frames[i + point_stride];
+
+		// Create left key
 		key_arclength left_key{ left.second, alen(right.second, left.second) };
 
+		// Start recursion preceding leftkey
 		subdivide(left_key, 0);
+
+		// Add leftkey
 		m_length_table.push_back(left_key);
 	}
 
@@ -117,42 +147,59 @@ void curve_base::do_adaptive_forward_differencing()
 	float max_t = m_length_table.back().m_param_value;
 	for (auto& k : m_length_table)
 	{
+		// Normalize parameter
 		k.m_param_value /= max_t;
+
+		// Compute total distance from the start of the curve
 		acc += k.m_arclength;
 		k.m_arclength = acc;
 	}
 }
 
-float curve_base::distance_to_time(float d)const
+vec2 curve_base::distance_to_time(float d)const
 {
-	float d_clamped = fmod(d, max_distance());
-
+	// Initalize binary search
 	size_t it = 0;
 	size_t step = 2;
+
+	// Iterate
 	while (true)
 	{
+		//Bounding condition
 		if (it > m_length_table.size() - 2)
 		{
 			it = m_length_table.size() - 2;
 			break;
 		}
 
+		// Ending condition
 		if (m_length_table[it  ].m_arclength <= d
 		&&  m_length_table[it+1].m_arclength >= d)
 			break;
 
+		// Update iterator
 		size_t step_ = (size_t)(0.5f + m_length_table.size() / (float)step);
 		if (m_length_table[it].m_arclength > d)
 			it -= step_;
 		else
 			it += step_;
 
+		// Update step
 		step *= 2;
 	}
+	// Interpolate to compute the parametric value
 	float param_value = map(d, m_length_table[it].m_arclength, m_length_table[it + 1].m_arclength,
 		m_length_table[it].m_param_value, m_length_table[it + 1].m_param_value);
+
+	// Ease the value
 	float eased_value = m_ease->evaluate_for_x(param_value).y;
-	return eased_value * duration();
+	
+	// Compute the easing derivative for synchronising the animator
+	float eased_prev = m_ease->evaluate_for_x(param_value - 0.01f).y;
+	float eased_next = m_ease->evaluate_for_x(param_value + 0.01f).y;
+	float derivative = (eased_next - eased_prev) / (0.02f);
+
+	return { eased_value * duration(), derivative };
 }
 
 float curve_base::duration() const
@@ -167,11 +214,15 @@ float curve_base::max_distance() const
 
 void curve_base::draw_easing()
 {
-	const char * label = "Ease";
+	// Get ImGui data
 	const ImGuiStyle& style = ImGui::GetStyle();
 	const ImGuiIO& io = ImGui::GetIO();
+	ImVec2 mouse = io.MousePos;
 	ImDrawList * draw_list = ImGui::GetWindowDrawList();
 	ImGuiWindow * window = ImGui::GetCurrentWindow();
+	const float radius = 15;
+
+	// Initialize ImGui
 	if (window->SkipItems)return;
 	ImGui::Dummy(ImVec2(0, 3));
 	const float avail = ImGui::GetContentRegionAvailWidth();
@@ -179,7 +230,8 @@ void curve_base::draw_easing()
 	ImRect bb(window->DC.CursorPos, ImVec2{ window->DC.CursorPos.x + canvas.x, window->DC.CursorPos.y + canvas.y });
 	ImGui::ItemSize(bb);
 	if (!ImGui::ItemAdd(bb, 0))return;
-	const ImGuiID id = window->GetID(label);
+
+	// Utility functions
 	std::function<vec2(vec2)> to_screen = [&](vec2 v)->vec2
 	{
 		return { v.x * (bb.Max.x - bb.Min.x) + bb.Min.x, (1 - v.y) * (bb.Max.y - bb.Min.y) + bb.Min.y };
@@ -188,10 +240,8 @@ void curve_base::draw_easing()
 	{
 		return{ (v.x - bb.Min.x) / (bb.Max.x - bb.Min.x),1 - (v.y - bb.Min.y) / (bb.Max.y - bb.Min.y) };
 	};
-	const float radius = 15;
-	ImVec2 mouse = io.MousePos;
 
-	// Render Back
+	// Render Back Frame
 	ImGui::RenderFrame(bb.Min, bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 	bool hovered = ImGui::IsItemHovered();
 
@@ -234,6 +284,7 @@ void curve_base::draw_easing()
 
 	// Handle grabbing
 	{
+		// Extract bezier points
 		std::vector<vec2>pos;
 		std::vector<float>distsq;
 		for (size_t i = 0; i < m_ease->m_frames.size(); i+=3)
@@ -266,6 +317,7 @@ void curve_base::draw_easing()
 				pos.push_back(to_screen(t2));
 			}
 		}
+		// Find closest to mouse
 		float min_dist{ FLT_MAX };
 		size_t idx;
 		for (size_t i = 0; i < pos.size(); i++)
@@ -274,6 +326,7 @@ void curve_base::draw_easing()
 			if (d < min_dist)
 				min_dist = d, idx = i;
 		}
+		// Interact with it
 		if (hovered && min_dist < (4 * radius * 4 * radius))
 		{
 			ImGui::SetTooltip("(%4.3f, %4.3f)", pos[idx].x, pos[idx].y);
@@ -283,6 +336,7 @@ void curve_base::draw_easing()
 				float dx = io.MouseDelta.x / canvas.x;
 				float dy = -io.MouseDelta.y / canvas.y;
 
+				// Move point
 				if (idx % 3 == 0)
 				{
 					vec2 new_pos = to_ndc(pos[idx]);
@@ -305,6 +359,7 @@ void curve_base::draw_easing()
 						m_ease->m_frames[idx+1].second = new_pos.x;
 					}
 				}
+				// Move right tangent
 				else if (idx % 3 == 1)
 				{
 					vec2 new_tan = to_ndc(pos[idx]);
@@ -319,6 +374,7 @@ void curve_base::draw_easing()
 						m_ease->m_frames[idx - 2].first = vec3(mirror, 0);
 					}
 				}
+				// Move left tangent
 				else if (idx % 3 == 2)
 				{
 					vec2 new_tan = to_ndc(pos[idx]);
@@ -334,6 +390,7 @@ void curve_base::draw_easing()
 					}
 				}
 			}
+			// Remove point
 			else if (ImGui::IsMouseClicked(1) && m_ease->m_frames.size() > 4)
 			{
 				if((idx % 3 == 0) && idx > 2 && idx < m_ease->m_frames.size() - 3)
@@ -359,6 +416,7 @@ void curve_base::draw_easing()
 		ImVec4 gray(0.4f, 0.4f, 0.4f, 1.0f);
 		for (size_t i = 0; i < m_ease->m_frames.size(); i += 3)
 		{
+			// Draw right tangent
 			if (i == 0)
 			{
 				vec2 p0 = m_ease->m_frames[0].first;
@@ -371,6 +429,7 @@ void curve_base::draw_easing()
 				draw_list->AddCircleFilled({ t1.x,t1.y }, radius, ImColor(gray));
 				draw_list->AddCircleFilled({ t1.x,t1.y }, radius *3.0f / 4.0f, ImColor(blue));
 			}
+			// Draw left tangent
 			else if (i == m_ease->m_frames.size() - 1)
 			{
 				vec2 t0 = m_ease->m_frames[i - 1].first;
@@ -383,6 +442,7 @@ void curve_base::draw_easing()
 				draw_list->AddCircleFilled({ t0.x,t0.y }, radius, ImColor(gray));
 				draw_list->AddCircleFilled({ t0.x,t0.y }, radius *3.0f / 4.0f, ImColor(red));
 			}
+			// Draw point and its tangents
 			else
 			{
 				vec2 t0 = m_ease->m_frames[i - 1].first;
@@ -599,11 +659,12 @@ vec3 curve_bezier::evaluate(float t)const
 
 vec3 curve_bezier::evaluate_for_x(float x) const
 {
-	x = fmod(x, 1.0f);
+	x = glm::clamp(x, 0.0f, 1.0f);
 	float it{ 0.0f };
 	float step{ 2 };
 	const size_t num_div{ 100 };
 
+	// Do binary search for approximating 
 	for(size_t i = 0; i < num_div; i++)
 	{
 		if (evaluate(it).x <= x)

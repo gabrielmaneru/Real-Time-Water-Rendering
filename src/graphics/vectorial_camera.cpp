@@ -35,7 +35,7 @@ void vectorial_camera::use_target(const scene_object * target)
 {
 	m_target = target;
 
-	vec3 delta = m_target->m_transform.get_pos() - m_eye;
+	vec3 delta = m_target->m_transform.get_real_pos() - m_eye;
 	m_dist = glm::length(delta);
 	delta = -normalize(delta);
 	m_beta = glm::asin(delta.y);
@@ -46,7 +46,7 @@ void vectorial_camera::use_target(const scene_object * target)
 
 void vectorial_camera::release_target()
 {
-	vec3 delta = normalize(m_target->m_transform.get_pos() - m_eye);
+	vec3 delta = normalize(m_target->m_transform.get_real_pos() - m_eye);
 	m_target = nullptr;
 
 	m_pitch = glm::degrees(glm::asin(delta.y));
@@ -120,12 +120,12 @@ void vectorial_camera::update_target_mode()
 	}
 	m_beta = glm::clamp(m_beta, glm::pi<float>() * -.45f, glm::pi<float>() * .45f);
 	m_dist = glm::clamp(m_dist, m_near, m_far * 0.5f);
-	m_eye = m_target->m_transform.get_pos();
+	m_eye = m_target->m_transform.get_real_pos();
 	m_eye += vec3(	m_dist * cosf(m_beta) * cosf(m_alpha),
 					m_dist * sinf(m_beta),
 					m_dist * cosf(m_beta) * sinf(m_alpha) );
 
-	update_cam_vectors(glm::normalize(m_target->m_transform.get_pos() - m_eye));
+	update_cam_vectors(glm::normalize(m_target->m_transform.get_real_pos() - m_eye));
 }
 
 void vectorial_camera::update_cam_vectors()

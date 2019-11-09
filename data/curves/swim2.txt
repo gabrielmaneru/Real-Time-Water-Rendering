@@ -1,0 +1,11 @@
+CATMULL-ROM
+Keyframes: 
+	KF[0]: time = 0; vals = -25,20,34;
+	KF[1]: time = 1; vals = -7.5,30,25;
+	KF[2]: time = 2; vals = -2,25,-4;
+	KF[3]: time = 3; vals = -7.5,30,-32;
+	KF[4]: time = 4; vals = -25,20,-36;
+	KF[5]: time = 5; vals = -43,30,-32;
+	KF[6]: time = 6; vals = -43,25,-4;
+	KF[7]: time = 7; vals = -43,30,25;
+	KF[8]: time = 8; vals = -25,20,34;
