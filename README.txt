@@ -28,6 +28,8 @@ Options:
 Scene:
 	-Reloading Scene
 	-Create Objects
+	
+	-Lights Global Options -> Change Ambient for more clarity when testing the scene
 
 
 Object Pick:

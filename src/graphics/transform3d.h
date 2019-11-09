@@ -13,7 +13,7 @@ Author: Gabriel Mañeru - gabriel.m
 struct transform3d
 {
 	const vec3& get_pos()const { return m_tr.m_pos; }
-	const vec3& get_real_pos()const { return vec3(get_model() * vec4(0, 0, 0, 1)); }
+	const vec3 get_real_pos()const { return vec3(get_model() * vec4(0, 0, 0, 1)); }
 	const vec3& get_scl()const { return m_tr.m_scl; }
 	const quat& get_rot()const { return m_tr.m_rot; }
 	mat4 get_model()const { return m_tr.get_model(); }

@@ -114,7 +114,7 @@ void curve_base::do_adaptive_forward_differencing()
 		left.m_arclength = m_b;
 
 		//Check subdivision condition
-		float e = m_epsilon / glm::pow(2, lvl);
+		float e = m_epsilon / (float)glm::pow<int>(2, lvl);
 		if (e < delta || lvl < m_forced_subdivision)
 		{
 			subdivide(mid,lvl+1);
@@ -475,8 +475,8 @@ void curve_base::draw_easing()
 				&&  m_ease->m_frames[i + 3].first.x > m.x)
 				{
 					keyframe p{ vec3(m,0),m.x };
-					keyframe t0{ vec3(m + vec2(-0.025),0),m.x };
-					keyframe t1{ vec3(m + vec2(0.025),0),m.x };
+					keyframe t0{ vec3(m + vec2(-0.025f),0.0f),m.x };
+					keyframe t1{ vec3(m + vec2(0.025f),0.0f),m.x };
 
 					t0.first.x = glm::clamp<float>(t0.first.x, 0, 1);
 					t0.first.y = glm::clamp<float>(t0.first.y, 0, 1);
