@@ -533,6 +533,7 @@
     <None Include="data\shaders\basic.vert" />
     <None Include="data\shaders\color.frag" />
     <None Include="data\shaders\decal.frag" />
+    <None Include="data\shaders\hbao.frag" />
     <None Include="data\shaders\light.frag" />
     <None Include="data\shaders\g_buffer.frag" />
     <None Include="data\shaders\texture.frag" />

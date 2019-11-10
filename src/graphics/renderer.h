@@ -23,6 +23,7 @@ public:
 	Shader_Program* g_buffer_shader;
 	Shader_Program* decal_shader;
 	Shader_Program* light_shader;
+	Shader_Program* ao_shader;
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
 	Shader_Program* color_shader;
@@ -40,6 +41,7 @@ public:
 	// Framebuffer
 	framebuffer g_buffer;
 	framebuffer selection_buffer;
+	framebuffer ao_buffer;
 	framebuffer light_buffer;
 	framebuffer blur_control_buffer;
 	framebuffer bloom_buffer;
@@ -53,6 +55,7 @@ public:
 		SELECTION,
 		LIN_DEPTH,
 		DEPTH,
+		AO,
 		LIGHT,
 		BLUR_CONTROL,
 		BLOOM,
@@ -102,8 +105,15 @@ public:
 		float bilat_threshold{ 0.01f };
 
 		float dc_angle{ 0.8f };
-		int dc_mode{ 0 };
-		bool dc_active{ true };
+		int   dc_mode{ 0 };
+		bool  dc_active{ true };
+
+		float ao_radius{ 2.0 };
+		//float ao_angle_bias{ 0.1f };
+		int	  ao_num_dirs{ 4 };
+		int	  ao_num_steps{ 4 };
+		//float ao_att{ 0.1f };
+		//float ao_constract{ 0.1f };
 	}m_render_options;
 
 	friend class c_editor;

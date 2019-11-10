@@ -69,6 +69,7 @@ bool c_renderer::init()
 		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
 		decal_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/decal.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
+		ao_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/hbao.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 		color_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/color.frag");
@@ -135,6 +136,9 @@ void c_renderer::update()
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
+			});
+		ao_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
+			GL_R16F, GL_RED, GL_FLOAT, GL_LINEAR
 			});
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST
@@ -213,21 +217,40 @@ void c_renderer::update()
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/update_max_draw_call_count();
 		/**/for (auto p_obj : scene->m_objects)
-		/**/{
-		/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
-		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
-		/**/	color_shader->set_uniform("color", compute_selection_color());
-		/**/	if (p_obj->m_model != nullptr)
-		/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
-		/**/}
+			/**/ {
+			/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
+			/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
+			/**/	color_shader->set_uniform("color", compute_selection_color());
+			/**/	if (p_obj->m_model != nullptr)
+				/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
+			/**/
+		}
 		/**/if (m_render_options.render_lights)
-		/**/	scene->draw_debug_lights(color_shader);
+			/**/	scene->draw_debug_lights(color_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
-
-
-
+	if (ao_shader->is_valid())
+	{
+		// AO Pass	///////////////////////////////////////////////////////
+		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, ao_buffer.m_fbo));
+		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/GL_CALL(glViewport(0, 0, ao_buffer.m_width, ao_buffer.m_height));
+		/**/ao_shader->use();
+		/**/ortho_cam.set_uniforms(ao_shader);
+		/**/ao_shader->set_uniform("width", (float)ao_buffer.m_width);
+		/**/ao_shader->set_uniform("height", (float)ao_buffer.m_height);
+		/**/ao_shader->set_uniform("random01", random_float(0.0f, 1.0f));
+		/**/ao_shader->set_uniform("radius", m_render_options.ao_radius);
+		/**/ao_shader->set_uniform("num_dirs", m_render_options.ao_num_dirs);
+		/**/ao_shader->set_uniform("num_steps", m_render_options.ao_num_steps);
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
+		/**/glActiveTexture(GL_TEXTURE1);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
+		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
+		///////////////////////////////////////////////////////////////////////////
+	}
 	if (light_shader->is_valid())
 	{
 		// Light Pass	///////////////////////////////////////////////////////////
@@ -431,6 +454,7 @@ void c_renderer::shutdown()
 	delete g_buffer_shader;
 	delete decal_shader;
 	delete light_shader;
+	delete ao_shader;
 	delete blur_shader;
 	delete texture_shader;
 	delete color_shader;
@@ -492,11 +516,7 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::NORMAL);
 			show_image(c_renderer::LIN_DEPTH);
 			show_image(c_renderer::DEPTH);
-			ImGui::TreePop();
-		}
-		if (ImGui::TreeNode("Selection"))
-		{
-			show_image(c_renderer::SELECTION);
+			show_image(c_renderer::AO);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Light"))
@@ -520,7 +540,7 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &blur_shader, &texture_shader, &color_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &ao_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
 		}
@@ -660,6 +680,13 @@ void c_renderer::drawGUI()
 			ImGui::SliderFloat("Brightness Threshold", &m_render_options.bl_coef, 0.0f, 2.0f);
 			ImGui::TreePop();
 		}
+		if (ImGui::TreeNode("Ambient Occlusion"))
+		{
+			ImGui::SliderFloat("Radius", &m_render_options.ao_radius, 0.01f, 20.0f);
+			ImGui::SliderInt("Num Dirs", &m_render_options.ao_num_dirs, 1, 20);
+			ImGui::SliderInt("Num Steps", &m_render_options.ao_num_steps, 1, 20);
+			ImGui::TreePop();
+		}
 		if (ImGui::TreeNode("Blur"))
 		{
 			ImGui::SliderInt("Blur Bloom Iterations", &m_render_options.blur_bloom_iterations, 0, 10);
@@ -709,6 +736,8 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:
 		return selection_buffer.m_color_texture[0];
+	case c_renderer::e_texture::AO:
+		return ao_buffer.m_color_texture[0];
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_CONTROL:
