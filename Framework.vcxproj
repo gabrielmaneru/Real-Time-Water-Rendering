@@ -159,6 +159,7 @@
     <ClCompile Include="src\graphics\mesh.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\ortho_camera.cpp" />
+    <ClCompile Include="src\graphics\raw_texture.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\graphics\shader_program.cpp" />
     <ClCompile Include="src\graphics\texture.cpp" />
@@ -171,6 +172,7 @@
     <ClCompile Include="src\scene\light.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
     <ClCompile Include="src\scene\scene_object.cpp" />
+    <ClCompile Include="src\utils\generate_noise.cpp" />
     <ClCompile Include="src\utils\math_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -504,6 +506,7 @@
     <ClInclude Include="dependencies\include\stb_image\stb_image.h" />
     <ClInclude Include="dependencies\include\stb_image\stb_image_write.h" />
     <ClInclude Include="src\graphics\curve.h" />
+    <ClInclude Include="src\graphics\raw_texture.h" />
     <ClInclude Include="src\scene\decal.h" />
     <ClInclude Include="src\scene\light.h" />
     <ClInclude Include="src\graphics\material.h" />
@@ -526,6 +529,8 @@
     <ClInclude Include="src\scene\scene_object.h" />
     <ClInclude Include="src\scene\scene.h" />
     <ClInclude Include="src\scene\shape.h" />
+    <ClInclude Include="src\utils\generate_noise.h" />
+    <ClInclude Include="src\utils\map2d.h" />
     <ClInclude Include="src\utils\math_utils.h" />
   </ItemGroup>
   <ItemGroup>

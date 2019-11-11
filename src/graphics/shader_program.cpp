@@ -92,6 +92,13 @@ void Shader_Program::set_uniform(const char * name, float val) const
 		GL_CALL(glUniform1f(loc, val));
 }
 
+void Shader_Program::set_uniform(const char * name, const vec2 & v) const
+{
+	int loc = uniform_location(name);
+	if (loc >= 0)
+		GL_CALL(glUniform2f(loc, v.x, v.y));
+}
+
 void Shader_Program::set_uniform(const char * name, const vec3 & v) const
 {
 	int loc = uniform_location(name);

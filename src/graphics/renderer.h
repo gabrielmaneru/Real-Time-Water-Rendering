@@ -14,6 +14,7 @@ Author: Gabriel Ma�eru - gabriel.m
 #include "model.h"
 #include "framebuffer.h"
 #include "curve.h"
+#include "raw_texture.h"
 #include <glm/glm.h>
 
 class c_renderer
@@ -108,12 +109,13 @@ public:
 		int   dc_mode{ 0 };
 		bool  dc_active{ true };
 
-		float ao_radius{ 2.0 };
-		//float ao_angle_bias{ 0.1f };
-		int	  ao_num_dirs{ 4 };
-		int	  ao_num_steps{ 4 };
+		float ao_radius{ 8.0 };
+		float ao_angle_bias{ 0.1f };
+		int	  ao_num_dirs{ 8 };
+		int	  ao_num_steps{ 8 };
 		//float ao_att{ 0.1f };
 		//float ao_constract{ 0.1f };
+		raw_texture_single ao_noise;
 	}m_render_options;
 
 	friend class c_editor;

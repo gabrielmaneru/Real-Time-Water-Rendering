@@ -26,6 +26,7 @@ public:
 	void set_uniform(const char *name, bool val) const;
 	void set_uniform(const char *name, int val) const;
 	void set_uniform(const char *name, float val) const;
+	void set_uniform(const char *name, const vec2 & v) const;
 	void set_uniform(const char *name, const vec3 & v) const;
 	void set_uniform(const char *name, const vec4 & v) const;
 	void set_uniform(const char *name, const mat3 & m) const;

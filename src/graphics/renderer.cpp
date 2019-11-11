@@ -118,6 +118,10 @@ bool c_renderer::init()
 	// Setup Cameras
 	scene_cam.m_eye = { 29,16,-4 };
 	scene_cam.update();
+
+	/**/randomize_noise();
+	/**/m_render_options.ao_noise = generate_noise(1080, 8.0f, 8, 1.0f, 0.5f);
+	/**/m_render_options.ao_noise.load();
 	return true;
 }
 
@@ -222,7 +226,7 @@ void c_renderer::update()
 			/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
 			/**/	color_shader->set_uniform("color", compute_selection_color());
 			/**/	if (p_obj->m_model != nullptr)
-				/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
+			/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
 			/**/
 		}
 		/**/if (m_render_options.render_lights)
@@ -239,15 +243,19 @@ void c_renderer::update()
 		/**/ao_shader->use();
 		/**/ortho_cam.set_uniforms(ao_shader);
 		/**/ao_shader->set_uniform("width", (float)ao_buffer.m_width);
+		/**/ao_shader->set_uniform("noise", false);
+		/**/ao_shader->set_uniform("random_offset", vec2(random_float(-0.5f,0.5), random_float(-0.5, 0.5)));
 		/**/ao_shader->set_uniform("height", (float)ao_buffer.m_height);
-		/**/ao_shader->set_uniform("random01", random_float(0.0f, 1.0f));
 		/**/ao_shader->set_uniform("radius", m_render_options.ao_radius);
+		/**/ao_shader->set_uniform("bias", m_render_options.ao_angle_bias);
 		/**/ao_shader->set_uniform("num_dirs", m_render_options.ao_num_dirs);
 		/**/ao_shader->set_uniform("num_steps", m_render_options.ao_num_steps);
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
 		/**/glActiveTexture(GL_TEXTURE1);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, m_render_options.ao_noise.m_id);
 		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -683,6 +691,7 @@ void c_renderer::drawGUI()
 		if (ImGui::TreeNode("Ambient Occlusion"))
 		{
 			ImGui::SliderFloat("Radius", &m_render_options.ao_radius, 0.01f, 20.0f);
+			ImGui::SliderFloat("Angle Bias", &m_render_options.ao_angle_bias, 0.00f, glm::half_pi<float>());
 			ImGui::SliderInt("Num Dirs", &m_render_options.ao_num_dirs, 1, 20);
 			ImGui::SliderInt("Num Steps", &m_render_options.ao_num_steps, 1, 20);
 			ImGui::TreePop();

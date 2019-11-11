@@ -8,16 +8,18 @@ in vec2 vUv;
 
 layout (binding = 0) uniform sampler2D position_txt;
 layout (binding = 1) uniform sampler2D normal_txt;
+layout (binding = 2) uniform sampler2D noise_txt;
 uniform float width;
 uniform float height;
-uniform float random01=0.0;
 
 out float out_color;
 
 const float PI = 3.1415926535897932384626433832795;
 
+uniform bool noise;
+uniform vec2 random_offset;
 uniform float radius = 2.0;
-const float angle_bias = 0.1f;
+uniform float bias = 0.1;
 uniform int num_dirs = 4;
 uniform int num_steps = 4;
 const float att = 0.1f;
@@ -52,12 +54,15 @@ void main()
 	float march_angle_step = 2 * PI / num_dirs;
 	float march_dist_step = radius / num_steps;
 
+	// Get random angle
+	float random_value = texture2D(noise_txt, vUv+random_offset).r;
+
 	// Iterate directions
 	float ao = 0.0;
 	for(int i = 0; i < num_dirs; i++)
 	{
 		// Compute current values
-		float march_angle = march_angle_step * (i + random01);
+		float march_angle = march_angle_step * (i + random_value);
 		float cos_angle = cos(march_angle);
 		float sin_angle = sin(march_angle);
 		vec2 march_dir = vec2(cos_angle,sin_angle);
@@ -76,9 +81,13 @@ void main()
 			float angle = acos(dot(normalize(delta), vec3(march_dir,0)));
 			max_horizon_angle = max(max_horizon_angle, angle);
 		}
-		float local_ao = sin(max_horizon_angle) - sin(tan_angle);
-		ao += local_ao/num_dirs;
+		max_horizon_angle -= tan_angle;
+
+		float local_ao = sin(max_horizon_angle) - sin(tan_angle) - sin(bias);
+		ao += max(local_ao, 0) / num_dirs;
 	}
 
-	out_color = ao;
+	out_color = 1-ao;
+	if(noise)
+		out_color = random_value;
 }

@@ -28,6 +28,13 @@ void raw_texture_rgb::load()
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_id));
 	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGB, GL_FLOAT, m_values.data()));
 }
+raw_texture_rgb& raw_texture_rgb::operator=(const map2d<vec3>& map)
+{
+	m_width = map.m_width;
+	m_height = map.m_height;
+	m_values = map.m_values;
+	return *this;
+}
 void raw_texture_single::load()
 {
 	if (m_id == 0)
@@ -35,4 +42,12 @@ void raw_texture_single::load()
 
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_id));
 	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RED, GL_FLOAT, m_values.data()));
+}
+
+raw_texture_single& raw_texture_single::operator=(const map2d<float>& map)
+{
+	m_width = map.m_width;
+	m_height = map.m_height;
+	m_values = map.m_values;
+	return *this;
 }
