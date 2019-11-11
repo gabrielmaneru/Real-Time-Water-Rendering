@@ -43,48 +43,49 @@ vec3 get_bitangent()
 	return normalize(v_norm_t-v_norm_b);
 }
 
+float horizon_occlusion(float march_angle, vec3 v_pos, vec3 v_tan, vec3 v_bit, float march_dist_step)
+{
+	// Compute current values
+	float cos_angle = cos(march_angle);
+	float sin_angle = sin(march_angle);
+	vec2 march_dir = vec2(cos_angle,sin_angle);
+
+	// Get tangent angle
+	vec3 march_tan = v_tan*cos_angle + v_bit*sin_angle;
+	float tan_angle = acos(dot(normalize(march_tan), vec3(march_dir,0)));
+
+	// Get max horizon angle
+	float max_horizon_angle = 0.0;
+	for(int i = 0; i < num_steps; i++)
+	{
+		vec2 off = march_dir * (march_dist_step*i);
+		vec3 s_pos = texture2D(position_txt, vUv+off).rgb;
+		vec3 delta = s_pos - v_pos;
+		float angle = acos(dot(normalize(delta), vec3(march_dir,0)));
+		max_horizon_angle = max(max_horizon_angle, angle);
+	}
+	return sin(max_horizon_angle) - sin(tan_angle) - sin(bias);
+}
+
 void main()
 {
 	// Extract image data
 	vec3 v_pos = texture2D(position_txt, vUv).rgb;
 	vec3 v_tan = get_tangent();
 	vec3 v_bit = get_bitangent();
+	float random_value = texture2D(noise_txt, vUv+random_offset).r;
 
 	// Compute steps
 	float march_angle_step = 2 * PI / num_dirs;
 	float march_dist_step = radius / num_steps;
 
-	// Get random angle
-	float random_value = texture2D(noise_txt, vUv+random_offset).r;
-
 	// Iterate directions
 	float ao = 0.0;
 	for(int i = 0; i < num_dirs; i++)
 	{
-		// Compute current values
 		float march_angle = march_angle_step * (i + random_value);
-		float cos_angle = cos(march_angle);
-		float sin_angle = sin(march_angle);
-		vec2 march_dir = vec2(cos_angle,sin_angle);
-
-		// Get tangent angle
-		vec3 march_tan = v_tan*cos_angle + v_bit*sin_angle;
-		float tan_angle = acos(dot(normalize(march_tan), vec3(march_dir,0)));
-
-		// Get max horizon angle
-		float max_horizon_angle = 0.0;
-		for(int i = 0; i < num_steps; i++)
-		{
-			vec2 off = march_dir * (march_dist_step*i);
-			vec3 s_pos = texture2D(position_txt, vUv+off).rgb;
-			vec3 delta = s_pos - v_pos;
-			float angle = acos(dot(normalize(delta), vec3(march_dir,0)));
-			max_horizon_angle = max(max_horizon_angle, angle);
-		}
-		max_horizon_angle -= tan_angle;
-
-		float local_ao = sin(max_horizon_angle) - sin(tan_angle) - sin(bias);
-		ao += max(local_ao, 0) / num_dirs;
+		float local_ao = horizon_occlusion(march_angle, v_pos, v_tan, v_bit, march_dist_step);
+		ao += max(local_ao, 0);
 	}
 
 	out_color = 1-ao;
