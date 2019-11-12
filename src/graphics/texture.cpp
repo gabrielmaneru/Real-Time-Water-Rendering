@@ -12,7 +12,7 @@ Author: Gabriel Mañeru - gabriel.m
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-void Texture::loadFromFile(const char * str, bool gamma_correction)
+void Texture::loadFromFile(const char * str)
 {
 	// Generate and bind texture
 	glGenTextures(1, &m_id);
@@ -49,6 +49,40 @@ void Texture::loadFromFile(const char * str, bool gamma_correction)
 
 	// Free the image data
 	stbi_image_free(data);
+}
+
+void Texture::loadCubemapFromFile(std::vector<const char*> targets)
+{
+	// Generate and bind texture
+	glGenTextures(1, &m_id);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_id);
+
+	// Load textures
+	for(GLuint i = 0; i < 6; i++)
+	{
+		int nrChannels;
+		unsigned char* data = stbi_load(targets[i], &m_width, &m_height, &nrChannels, 0);
+		if(data==nullptr)
+			throw std::string("Image not loaded: ") + targets[i];
+
+		GLenum format, internalFormat;
+		if (nrChannels == 1)
+			format = internalFormat = GL_RED;
+		else if (nrChannels == 3)
+			format = internalFormat = GL_RGB;
+		else if (nrChannels == 4)
+			format = internalFormat = GL_RGBA;
+
+		// Set texture parameters
+
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, internalFormat, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, data);
+		stbi_image_free(data);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 std::string Texture::filter_name(const std::string& name)

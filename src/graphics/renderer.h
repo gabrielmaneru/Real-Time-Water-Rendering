@@ -28,6 +28,7 @@ public:
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
 	Shader_Program* color_shader;
+	Shader_Program* skybox_shader;
 
 	// Cameras
 	vectorial_camera scene_cam{};
@@ -64,7 +65,8 @@ public:
 		BLUR,
 		BLUR2
 	}m_txt_cur{ BLUR };
-	
+
+	Texture skybox;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
 	void update_max_draw_call_count();

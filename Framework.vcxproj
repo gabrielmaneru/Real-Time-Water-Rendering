@@ -541,6 +541,7 @@
     <None Include="data\shaders\hbao.frag" />
     <None Include="data\shaders\light.frag" />
     <None Include="data\shaders\g_buffer.frag" />
+    <None Include="data\shaders\skybox.frag" />
     <None Include="data\shaders\texture.frag" />
     <None Include="data\shaders\blur.frag" />
     <None Include="dependencies\include\assimp\color4.inl" />

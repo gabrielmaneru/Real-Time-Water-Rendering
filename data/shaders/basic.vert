@@ -21,6 +21,7 @@ uniform mat4 prev_bones[MAX_BONES];
 out vec3 vNormal;
 out vec3 vTangent;
 out vec3 vBitangent;
+out vec3 mPosition;
 out vec3 vPosition;
 out float vMotion;
 out vec2 vUv;
@@ -53,6 +54,7 @@ void main()
 	vNormal = normalize(normalMtx * attr_norm);
 	vTangent = normalize(normalMtx * attr_tan);
 	vBitangent = normalize(normalMtx * attr_bit);
+	mPosition = attr_pos;
 	vPosition = (MV*vec4(attr_pos, 1.0)).xyz;
 	vUv = attr_uvs;
 

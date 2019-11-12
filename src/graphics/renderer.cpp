@@ -73,6 +73,7 @@ bool c_renderer::init()
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 		color_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/color.frag");
+		skybox_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/skybox.frag");
 	}
 	catch (const std::string & log) { std::cout << log; }
 
@@ -119,9 +120,19 @@ bool c_renderer::init()
 	scene_cam.m_eye = { 29,16,-4 };
 	scene_cam.update();
 
-	/**/randomize_noise();
-	/**/m_render_options.ao_noise = generate_noise(1080, 8.0f, 8, 1.0f, 0.5f);
-	/**/m_render_options.ao_noise.load();
+	randomize_noise();
+	m_render_options.ao_noise = generate_noise(1080, 8.0f, 8, 1.0f, 0.5f);
+	m_render_options.ao_noise.load();
+
+	skybox.loadCubemapFromFile({
+		Texture::filter_name("front.jpg").c_str(),
+		Texture::filter_name("back.jpg").c_str(),
+		Texture::filter_name("top.jpg").c_str(),
+		Texture::filter_name("bottom.jpg").c_str(),
+		Texture::filter_name("left.jpg").c_str(),
+		Texture::filter_name("right.jpg").c_str(),
+		});
+
 	return true;
 }
 
@@ -259,7 +270,7 @@ void c_renderer::update()
 		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
 		///////////////////////////////////////////////////////////////////////////
 	}
-	if (light_shader->is_valid())
+	if (light_shader->is_valid() && skybox_shader->is_valid())
 	{
 		// Light Pass	///////////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
@@ -293,12 +304,21 @@ void c_renderer::update()
 		/**/scene->draw_lights(light_shader);
 		/**/glDisable(GL_CULL_FACE);
 		/**/glDepthFunc(GL_LESS);
+		/**/skybox_shader->use();
+		/**/scene_cam.set_uniforms(skybox_shader);
+		/**/skybox_shader->set_uniform("width", (float)light_buffer.m_width);
+		/**/skybox_shader->set_uniform("height", (float)light_buffer.m_height);
+		/**/skybox_shader->set_uniform("M", glm::translate(mat4(1),scene_cam.m_eye));
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
+		/**/glActiveTexture(GL_TEXTURE1);
+		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
+		/**/m_models[0]->m_meshes[0]->draw(skybox_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/GL_CALL(glDepthMask(GL_TRUE));
 		/**/GL_CALL(glDisable(GL_BLEND));
 		///////////////////////////////////////////////////////////////////////////
 	}
-
 	if (blur_shader->is_valid())
 	{
 		// Blur Pass	///////////////////////////////////////////////////////////

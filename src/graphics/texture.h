@@ -9,12 +9,14 @@ Author: Gabriel Mañeru - gabriel.m
 
 #pragma once
 #include <string>
+#include <vector>
 struct Texture
 {
 	unsigned int m_id{ 0 };
 	int m_width;
 	int m_height;
-	void loadFromFile(const char * str, bool gamma_correction);
+	void loadFromFile(const char * str);
+	void loadCubemapFromFile(std::vector<const char *> targets);
 	static std::string filter_name(const std::string&);
 	std::string m_path;
 };

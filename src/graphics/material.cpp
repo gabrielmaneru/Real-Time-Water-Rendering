@@ -23,7 +23,7 @@ Material::Material(std::string name, vec3 albedo_v, std::string albedo_path, vec
 		}
 		albedo_path = "./data/textures/" + albedo_path.substr(start);
 
-		m_albedo_txt.loadFromFile(albedo_path.c_str(), true);
+		m_albedo_txt.loadFromFile(albedo_path.c_str());
 		m_albedo_txt.m_path = albedo_path.c_str();
 	}
 	else
@@ -40,7 +40,7 @@ Material::Material(std::string name, vec3 albedo_v, std::string albedo_path, vec
 		}
 		metallic_path = "./data/textures/" + metallic_path.substr(start);
 
-		m_metallic_txt.loadFromFile(metallic_path.c_str(), true);
+		m_metallic_txt.loadFromFile(metallic_path.c_str());
 		m_metallic_txt.m_path = metallic_path.c_str();
 	}
 	else
@@ -57,7 +57,7 @@ Material::Material(std::string name, vec3 albedo_v, std::string albedo_path, vec
 		}
 		roughness_path = "./data/textures/" + roughness_path.substr(start);
 
-		m_roughness_txt.loadFromFile(roughness_path.c_str(), true);
+		m_roughness_txt.loadFromFile(roughness_path.c_str());
 		m_roughness_txt.m_path = roughness_path.c_str();
 	}
 	else
@@ -76,7 +76,7 @@ Material::Material(std::string name, vec3 albedo_v, std::string albedo_path, vec
 		}
 		normal_path = "./data/textures/" + normal_path.substr(start);
 
-		m_normal_txt.loadFromFile(normal_path.c_str(), true);
+		m_normal_txt.loadFromFile(normal_path.c_str());
 		m_normal_txt.m_path = normal_path.c_str();
 	}
 }

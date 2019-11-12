@@ -396,7 +396,7 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 
 	Texture texture;
 	texture.m_path = Texture::filter_name(str.C_Str());
-	texture.loadFromFile(texture.m_path.c_str(), type == aiTextureType_DIFFUSE);
+	texture.loadFromFile(texture.m_path.c_str());
 	return texture;
 }
 
