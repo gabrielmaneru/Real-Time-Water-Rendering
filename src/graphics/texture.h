@@ -15,7 +15,7 @@ struct Texture
 	unsigned int m_id{ 0 };
 	int m_width;
 	int m_height;
-	void loadFromFile(const char * str);
+	void loadFromFile(const char * str, bool clamp = false);
 	void loadCubemapFromFile(std::vector<const char *> targets);
 	static std::string filter_name(const std::string&);
 	std::string m_path;

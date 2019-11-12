@@ -124,15 +124,7 @@ bool c_renderer::init()
 	m_render_options.ao_noise = generate_noise(1080, 8.0f, 8, 1.0f, 0.5f);
 	m_render_options.ao_noise.load();
 
-	skybox.loadCubemapFromFile({
-		Texture::filter_name("front.jpg").c_str(),
-		Texture::filter_name("back.jpg").c_str(),
-		Texture::filter_name("top.jpg").c_str(),
-		Texture::filter_name("bottom.jpg").c_str(),
-		Texture::filter_name("left.jpg").c_str(),
-		Texture::filter_name("right.jpg").c_str(),
-		});
-
+	skybox.loadFromFile(Texture::filter_name("CasualDay4K.hdr").c_str(), true);
 	return true;
 }
 
@@ -312,8 +304,8 @@ void c_renderer::update()
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
-		/**/m_models[0]->m_meshes[0]->draw(skybox_shader);
+		/**/glBindTexture(GL_TEXTURE_2D, skybox.m_id);
+		/**/m_models[3]->m_meshes[0]->draw(skybox_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/GL_CALL(glDepthMask(GL_TRUE));
 		/**/GL_CALL(glDisable(GL_BLEND));
@@ -483,6 +475,7 @@ void c_renderer::shutdown()
 	delete decal_shader;
 	delete light_shader;
 	delete ao_shader;
+	delete skybox_shader;
 	delete blur_shader;
 	delete texture_shader;
 	delete color_shader;
@@ -568,7 +561,7 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &ao_shader, &blur_shader, &texture_shader, &color_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &skybox_shader, &ao_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
 		}
