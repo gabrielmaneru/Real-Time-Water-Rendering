@@ -14,7 +14,8 @@ struct raw_mesh
 {
 	void load();
 	void free();
-	void compute_terrain_normals();
+	void draw();
+	void compute_normals();
 
 	unsigned int m_vao{ 0 };
 	unsigned int m_vtx{ 0 };

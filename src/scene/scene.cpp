@@ -430,7 +430,7 @@ void c_scene::drawGUI()
 			ImGui::PushID(i);
 			bool is_selected = m_point_lights[i] == editor->m_selected;
 			if (ImGui::Selectable("Light", is_selected))
-				editor->m_selected = m_objects[i];
+				editor->m_selected = m_point_lights[i];
 			ImGui::PopID();
 		}
 

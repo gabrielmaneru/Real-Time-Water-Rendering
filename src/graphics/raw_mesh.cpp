@@ -67,7 +67,14 @@ void raw_mesh::free()
 	}
 }
 
-void raw_mesh::compute_terrain_normals()
+void raw_mesh::draw()
+{
+	GL_CALL(glBindVertexArray(m_vao));
+	GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)faces.size(), GL_UNSIGNED_INT, 0));
+	GL_CALL(glBindVertexArray(0));
+}
+
+void raw_mesh::compute_normals()
 {
 	size_t scale = static_cast<size_t>(sqrt(vertices.size()));
 	normals.resize(vertices.size());

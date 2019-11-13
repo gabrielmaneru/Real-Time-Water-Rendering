@@ -15,6 +15,7 @@ Author: Gabriel Ma�eru - gabriel.m
 #include "framebuffer.h"
 #include "curve.h"
 #include "raw_texture.h"
+#include "raw_mesh.h"
 #include <glm/glm.h>
 
 class c_renderer
@@ -23,6 +24,7 @@ public:
 	// Shaders
 	Shader_Program* g_buffer_shader;
 	Shader_Program* decal_shader;
+	Shader_Program* ocean_shader;
 	Shader_Program* light_shader;
 	Shader_Program* ao_shader;
 	Shader_Program* blur_shader;
@@ -67,6 +69,7 @@ public:
 	}m_txt_cur{ BLUR };
 
 	Texture skybox;
+	raw_mesh ocean;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
 	void update_max_draw_call_count();
