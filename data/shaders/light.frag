@@ -22,29 +22,8 @@ subroutine uniform Render_Type render_pass;
 
 out vec3 out_color;
 
-subroutine (Render_Type)
-void render_ambient()
-{
-	vec2 new_uvs = vec2(gl_FragCoord.x/window_width, gl_FragCoord.y/window_height);
-	
-	vec4 albedo_value = texture(albedo_txt, new_uvs);
-	vec4 position_value = texture(position_txt, new_uvs);
-	vec4 normal_value = texture(normal_txt, new_uvs);
-	if(normal_value.xyz == vec3(0,0,0))
-		discard;
-	if(normal_value.xyz == vec3(1,1,1))
-		out_color=vec3(1.0);
-	else
-	{
-		vec3 kd = albedo_value.rgb;
-		float ka = position_value.a-1.0;
-		out_color = (ka*la)*kd;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-//PBR-by-Jon-Sanchez-based-on-Naty-Hoffman's-Paper////////////////////////
-//////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////
 	float PI = 3.141592653589;
 	vec3 FresnelSchlickUnreal(float cosTheta, vec3 F0)
 	{
@@ -100,8 +79,8 @@ void render_ambient()
 	
 		return ggx1 * ggx2;
 	}
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 vec3 pointlight(vec3 albedo, vec3 metallic, float roughness, vec3 pos, vec3 norm) 
 {
@@ -135,6 +114,26 @@ vec3 pointlight(vec3 albedo, vec3 metallic, float roughness, vec3 pos, vec3 norm
 	vec3 specular = (NDF * G * F) / max(denominator, 0.001); 
       
 	return (specular + diffuse) * (5.0f*ld) * NdotL * att;
+}
+
+subroutine (Render_Type)
+void render_ambient()
+{
+	vec2 new_uvs = vec2(gl_FragCoord.x/window_width, gl_FragCoord.y/window_height);
+	
+	vec4 albedo_value = texture(albedo_txt, new_uvs);
+	vec4 position_value = texture(position_txt, new_uvs);
+	vec4 normal_value = texture(normal_txt, new_uvs);
+	if(normal_value.xyz == vec3(0,0,0))
+		discard;
+	if(normal_value.xyz == vec3(1,1,1))
+		out_color=vec3(1.0);
+	else
+	{
+		vec3 kd = albedo_value.rgb;
+		float ka = position_value.a-1.0;
+		out_color = (ka*la)*kd;
+	}
 }
 
 subroutine (Render_Type)

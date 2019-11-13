@@ -29,7 +29,7 @@ void light_data::drawGUI()
 	ImGui::DragFloat3("Att", &m_att_factor.x, 0.0001f, 0.001f, 1.0f);
 }
 
-void light::recompute_scale()
+void point_light::recompute_scale()
 {
 	// Compute radius of max att
 	const vec3& att = m_ldata.m_att_factor;
@@ -42,12 +42,11 @@ void light::recompute_scale()
 	m_transform.set_scl(vec3(r1));
 }
 
-light::light(transform3d tr, light_data ld)
+point_light::point_light(transform3d tr, light_data ld)
 	:scene_object("sphere", tr, nullptr, nullptr), m_ldata(ld)
-{
-}
+{}
 
-void light::draw(Shader_Program * shader)
+void point_light::draw(Shader_Program * shader)
 {
 	shader->set_uniform("l_pos", vec3(renderer->scene_cam.m_view * vec4(m_transform.get_pos(), 1.0f)));
 	shader->set_uniform("ld", m_ldata.m_diffuse);
@@ -61,3 +60,7 @@ void light::draw(Shader_Program * shader)
 		m_model->draw(shader,nullptr, false);
 	}
 }
+
+dir_light::dir_light(vec3 dir, transform3d tr, light_data ld)
+	:scene_object("octohedron", tr, nullptr, nullptr), m_ldata(ld), m_direction(dir)
+{}

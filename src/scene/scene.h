@@ -16,17 +16,17 @@ Author: Gabriel Mañeru - gabriel.m
 class c_scene
 {
 	std::vector<scene_object*> m_objects;
-	std::vector<light*> m_lights;
+	std::vector<point_light*> m_point_lights;
+	std::vector<dir_light*> m_dir_lights;
 	std::vector<decal*> m_decals;
 	std::string m_scene_name{"scene"};
-	int m_num_lights = 300;
 	bool load_scene(std::string);
 
 public:
 	bool init();
 	void update();
 	void draw_objs(Shader_Program*);
-	void draw_lights(Shader_Program*);
+	void draw_point_lights(Shader_Program*);
 	void draw_decals(Shader_Program*);
 	void draw_debug_lights(Shader_Program*);
 	void draw_debug_curves(Shader_Program*);

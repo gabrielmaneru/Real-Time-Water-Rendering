@@ -190,8 +190,11 @@ bool c_scene::load_scene(std::string path)
 			}
 
 			// Create Decals
+			auto d = stream.find("decals");
+			if(d < stream.size())
 			{
-				stream = stream.substr(stream.find("decals"));
+
+				stream = stream.substr();
 				std::string dcls = stream.substr(stream.find_first_of('[') + 1, stream.find_first_of(']') - stream.find_first_of('['));
 				while (!dcls.empty())
 				{
@@ -244,15 +247,11 @@ bool c_scene::init()
 		return false;
 
 	transform3d tr;
-	tr.set_scl(vec3(.5f));
+	tr.set_pos({ 10,5,10 });
+	tr.set_scl(vec3(0.5f));
 
 	light_data ld;
-	for (int i = 0; i < m_num_lights; i++)
-	{
-		tr.set_pos({ random_float(-107.0f, 93.0f), random_float(0.0f, 100.0f),random_float(-54.0f, 46.0f) });
-		ld.m_diffuse= { random_float(0.0f, 1.0f), random_float(0.0f, 1.0f),random_float(0.0f, 1.0f) };
-		m_lights.push_back(new light(tr, ld));
-	}
+	m_dir_lights.push_back(new dir_light(glm::normalize(-tr.get_pos()), tr, ld));
 
 	return true;
 }
@@ -269,10 +268,10 @@ void c_scene::draw_objs(Shader_Program * shader)
 			p_obj->draw(shader);
 }
 
-void c_scene::draw_lights(Shader_Program * shader)
+void c_scene::draw_point_lights(Shader_Program * shader)
 {
 	shader->set_uniform("la", light_data::m_ambient);
-	for (auto p_li : m_lights)
+	for (auto p_li : m_point_lights)
 		p_li->draw(shader);
 }
 
@@ -287,7 +286,7 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 	transform3d tr;
 	tr.set_scl(vec3(.5f));
 
-	for (auto p_li : m_lights)
+	for (auto p_li : m_point_lights)
 	{
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
@@ -355,9 +354,9 @@ void c_scene::shutdown()
 	for (auto p_obj : m_objects)
 		delete p_obj;
 	m_objects.clear();
-	for (auto p_li : m_lights)
+	for (auto p_li : m_point_lights)
 		delete p_li;
-	m_lights.clear();
+	m_point_lights.clear();
 }
 
 void c_scene::drawGUI()
@@ -375,21 +374,6 @@ void c_scene::drawGUI()
 		{
 			shutdown();
 			init();
-		}
-		ImGui::InputInt("Num Lights", &m_num_lights);
-		if ((m_lights.size() > 1) && ImGui::TreeNode("Change ALL Light Values"))
-		{
-			vec3 m_diffuse = m_lights[1]->m_ldata.m_diffuse;
-			vec3 m_att_factor = m_lights[1]->m_ldata.m_att_factor;
-			if (ImGui::InputFloat3("ALL Diffuse", &m_diffuse.x))
-				for (auto l : m_lights)
-					l->m_ldata.m_diffuse = m_diffuse;
-			if (ImGui::InputFloat3("ALL AttFactor", &m_att_factor.x))
-				for (auto l : m_lights)
-					l->m_ldata.m_att_factor = m_att_factor;
-
-
-			ImGui::TreePop();
 		}
 		ImGui::TreePop();
 	}
@@ -434,21 +418,21 @@ void c_scene::drawGUI()
 	if (ImGui::TreeNode("Lights List"))
 	{
 		if (ImGui::Button("Create"))
-			m_lights.push_back(new light);
-		for (int i = 0; i < m_lights.size(); i++)
+			m_point_lights.push_back(new point_light);
+		for (int i = 0; i < m_point_lights.size(); i++)
 		{
 			ImGui::PushID(i);
 
 			if (ImGui::TreeNode("Light"))
 			{
-				if (ImGui::DragFloat3("Position", &scene->m_lights[i]->m_transform.m_tr.m_pos.x, .1f))
-					scene->m_lights[i]->m_transform.m_tr.upd();
-				scene->m_lights[i]->m_ldata.drawGUI();
+				if (ImGui::DragFloat3("Position", &scene->m_point_lights[i]->m_transform.m_tr.m_pos.x, .1f))
+					scene->m_point_lights[i]->m_transform.m_tr.upd();
+				scene->m_point_lights[i]->m_ldata.drawGUI();
 
 				if (ImGui::Button("Delete"))
 				{
-					delete m_lights[i];
-					m_lights.erase(m_lights.begin() + i);
+					delete m_point_lights[i];
+					m_point_lights.erase(m_point_lights.begin() + i);
 					i--;
 				}
 				ImGui::TreePop();

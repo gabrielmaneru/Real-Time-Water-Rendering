@@ -208,5 +208,5 @@ void c_editor::select_object()
 	if (idx < scene->m_objects.size())
 		m_selected = scene->m_objects[idx];
 	else
-		m_selected = scene->m_lights[idx - scene->m_objects.size()];
+		m_selected = scene->m_point_lights[idx - scene->m_objects.size()];
 }

@@ -18,14 +18,24 @@ struct light_data
 	void drawGUI();
 };
 
-class light : public scene_object
+class point_light : public scene_object
 {
 	void recompute_scale();
 public:
-	light(transform3d tr = {}, light_data ld={});
-	virtual ~light() = default;
+	point_light(transform3d tr = {}, light_data ld = {});
+	virtual ~point_light() = default;
 	void draw(Shader_Program*);
 
-	float time{0.0f};
 	light_data m_ldata;
+};
+
+class dir_light : public scene_object
+{
+public:
+	dir_light(vec3 dir, transform3d tr = {}, light_data ld = {});
+	virtual ~dir_light() = default;
+	void draw(Shader_Program*) {};
+
+	light_data m_ldata;
+	vec3 m_direction;
 };

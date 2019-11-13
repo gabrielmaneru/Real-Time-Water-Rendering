@@ -124,6 +124,6 @@ public:
 	friend class scene_object;
 	friend struct curve_interpolator;
 	friend class c_scene;
-	friend class light;
+	friend class point_light;
 };
 extern c_renderer* renderer;

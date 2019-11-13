@@ -8,7 +8,7 @@ in float vMotion;
 in vec2 vUv;
 
 layout (binding = 0) uniform sampler2D normal_txt;
-layout (binding = 1) uniform sampler2D skybox_txt;
+layout (binding = 1) uniform samplerCube skybox_txt;
 uniform float width;
 uniform float height;
 
@@ -30,8 +30,5 @@ void main()
 		discard;
 
 	vec3 n_pos = normalize(mPosition);
-	vec2 uv = vec2(atan(n_pos.x,n_pos.z), -asin(n_pos.y));
-	uv.x = map(uv.x,-PI,PI,0,1);
-	uv.y = map(uv.y,-PI/2,PI/2,0,1);
-	out_color = texture(skybox_txt, uv).rgb;
+	out_color = texture(skybox_txt, n_pos).rgb;
 }

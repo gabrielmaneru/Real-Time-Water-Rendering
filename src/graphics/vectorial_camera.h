@@ -23,7 +23,7 @@ public:
 	void release_target();
 	const scene_object * get_target() { return m_target; }
 
-	float m_fov{ 90.0f };
+	float m_fov{ 80.0f };
 	float m_near{ .1f };
 	float m_far{ 500.0f };
 	float m_yaw = 0.0f;

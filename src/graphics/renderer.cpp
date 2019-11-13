@@ -25,7 +25,7 @@ void c_renderer::update_max_draw_call_count()
 {
 	m_selection_calls = { 0u, scene->m_objects.size() };
 	if (m_render_options.render_lights)
-		m_selection_calls.second += scene->m_lights.size();
+		m_selection_calls.second += scene->m_point_lights.size();
 }
 
 vec3 c_renderer::compute_selection_color()
@@ -124,7 +124,14 @@ bool c_renderer::init()
 	m_render_options.ao_noise = generate_noise(1080, 8.0f, 8, 1.0f, 0.5f);
 	m_render_options.ao_noise.load();
 
-	skybox.loadFromFile(Texture::filter_name("CasualDay4K.hdr").c_str(), true);
+	skybox.loadCubemapFromFile({
+		Texture::filter_name("px.png").c_str(),
+		Texture::filter_name("nx.png").c_str(),
+		Texture::filter_name("py.png").c_str(),
+		Texture::filter_name("ny.png").c_str(),
+		Texture::filter_name("pz.png").c_str(),
+		Texture::filter_name("nz.png").c_str(),
+	});
 	return true;
 }
 
@@ -293,7 +300,7 @@ void c_renderer::update()
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/glDepthFunc(GL_GREATER);
 		/**/glEnable(GL_CULL_FACE);
-		/**/scene->draw_lights(light_shader);
+		/**/scene->draw_point_lights(light_shader);
 		/**/glDisable(GL_CULL_FACE);
 		/**/glDepthFunc(GL_LESS);
 		/**/skybox_shader->use();
@@ -304,8 +311,8 @@ void c_renderer::update()
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, skybox.m_id);
-		/**/m_models[3]->m_meshes[0]->draw(skybox_shader);
+		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
+		/**/m_models[0]->m_meshes[0]->draw(skybox_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/GL_CALL(glDepthMask(GL_TRUE));
 		/**/GL_CALL(glDisable(GL_BLEND));
@@ -536,7 +543,7 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::METALLIC);
 			show_image(c_renderer::NORMAL);
 			show_image(c_renderer::LIN_DEPTH);
-			show_image(c_renderer::DEPTH);
+			show_image(c_renderer::SELECTION);
 			show_image(c_renderer::AO);
 			ImGui::TreePop();
 		}
