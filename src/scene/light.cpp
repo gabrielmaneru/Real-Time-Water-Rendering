@@ -61,12 +61,27 @@ void point_light::draw(Shader_Program * shader)
 	}
 }
 
-dir_light::dir_light(vec3 dir, transform3d tr, light_data ld)
-	:scene_object("octohedron", tr, nullptr, nullptr), m_ldata(ld), m_direction(dir)
+void point_light::draw_GUI()
+{
+	if (ImGui::DragFloat3("Position", &m_transform.m_tr.m_pos.x, .1f))
+		m_transform.m_tr.upd();
+	m_ldata.drawGUI();
+}
+
+dir_light::dir_light(transform3d tr, light_data ld)
+	:scene_object("octohedron", tr, nullptr, nullptr), m_ldata(ld)
 {}
 
 void dir_light::draw(Shader_Program * shader)
 {
-	shader->set_uniform("l_dir", glm::inverse(glm::transpose(mat3(renderer->scene_cam.m_view))) * m_direction);
+	shader->set_uniform("l_dir", glm::inverse(glm::transpose(mat3(renderer->scene_cam.m_view))) * m_transform.get_pos());
 	shader->set_uniform("ld", m_ldata.m_diffuse);
+}
+
+void dir_light::draw_GUI()
+{
+	if (ImGui::DragFloat3("Position", &m_transform.m_tr.m_pos.x, .1f))
+		m_transform.m_tr.upd();
+	ImGui::NewLine();
+	m_ldata.drawGUI();
 }

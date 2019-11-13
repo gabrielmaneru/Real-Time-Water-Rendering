@@ -119,6 +119,9 @@ void c_editor::draw_selected_window()
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 		mat4 model = m_selected->m_transform.m_tr.m_model;
+		if(dynamic_cast<dir_light*>(m_selected)!=nullptr
+		|| dynamic_cast<point_light*>(m_selected)!=nullptr)
+			model = m_selected->m_transform.get_model();
 		ImGuizmo::BeginFrame();
 		ImGuizmo::Manipulate(
 			&renderer->scene_cam.m_view[0][0],

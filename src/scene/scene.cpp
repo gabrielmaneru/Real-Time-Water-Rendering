@@ -247,11 +247,11 @@ bool c_scene::init()
 		return false;
 
 	transform3d tr;
-	tr.set_pos({ 10,5,10 });
-	tr.set_scl(vec3(0.5f));
+	tr.set_pos({ 250,1250,3000 });
+	tr.set_scl(vec3(1.f));
 
 	light_data ld;
-	m_dir_light = new dir_light(glm::normalize(-tr.get_pos()), tr, ld);
+	m_dir_light = new dir_light(tr, ld);
 
 	return true;
 }
@@ -291,7 +291,13 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
 		shader->set_uniform("selection_color", renderer->compute_selection_color());
-		renderer->get_model("sphere")->draw(shader, nullptr);
+		renderer->get_model("sphere")->draw(shader, nullptr, false);
+	}
+	if(m_dir_light)
+	{
+		tr.set_pos(m_dir_light->m_transform.get_pos());
+		shader->set_uniform("M", tr.get_model());
+		renderer->get_model("octohedron")->draw(shader, nullptr, false);
 	}
 }
 
@@ -422,22 +428,18 @@ void c_scene::drawGUI()
 		for (int i = 0; i < m_point_lights.size(); i++)
 		{
 			ImGui::PushID(i);
-
-			if (ImGui::TreeNode("Light"))
-			{
-				if (ImGui::DragFloat3("Position", &scene->m_point_lights[i]->m_transform.m_tr.m_pos.x, .1f))
-					scene->m_point_lights[i]->m_transform.m_tr.upd();
-				scene->m_point_lights[i]->m_ldata.drawGUI();
-
-				if (ImGui::Button("Delete"))
-				{
-					delete m_point_lights[i];
-					m_point_lights.erase(m_point_lights.begin() + i);
-					i--;
-				}
-				ImGui::TreePop();
-			}
+			bool is_selected = m_point_lights[i] == editor->m_selected;
+			if (ImGui::Selectable("Light", is_selected))
+				editor->m_selected = m_objects[i];
 			ImGui::PopID();
+		}
+
+		if (m_dir_light)
+		{
+			ImGui::NewLine();
+			bool is_selected = m_dir_light == editor->m_selected;
+			if (ImGui::Selectable("Directional Light", is_selected))
+				editor->m_selected = m_dir_light;
 		}
 		ImGui::TreePop();
 	}

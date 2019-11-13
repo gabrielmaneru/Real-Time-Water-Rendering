@@ -42,7 +42,7 @@ public:
 	void update();
 	void draw(Shader_Program*);
 
-	void draw_GUI();
+	virtual void draw_GUI();
 
 	animator* m_animator{ nullptr };
 	curve_interpolator* m_curve_interpolator{ nullptr };
