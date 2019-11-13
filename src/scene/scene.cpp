@@ -194,7 +194,7 @@ bool c_scene::load_scene(std::string path)
 			if(d < stream.size())
 			{
 
-				stream = stream.substr();
+				stream = stream.substr(d);
 				std::string dcls = stream.substr(stream.find_first_of('[') + 1, stream.find_first_of(']') - stream.find_first_of('['));
 				while (!dcls.empty())
 				{

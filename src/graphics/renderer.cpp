@@ -107,7 +107,7 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		//m_models.push_back(new Model("./data/meshes/sponza.obj"));
+		m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	
@@ -121,7 +121,7 @@ bool c_renderer::init()
 	scene_cam.update();
 
 	randomize_noise();
-	m_render_options.ao_noise = generate_noise(256, 8.0f, 8, 1.0f, 0.5f);
+	m_render_options.ao_noise = generate_noise(512, 1.0f, 1, 1.0f, 1.0f);
 	m_render_options.ao_noise.load();
 
 	skybox.loadCubemapFromFile({
