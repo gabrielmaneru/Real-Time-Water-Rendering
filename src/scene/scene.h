@@ -17,7 +17,7 @@ class c_scene
 {
 	std::vector<scene_object*> m_objects;
 	std::vector<point_light*> m_point_lights;
-	std::vector<dir_light*> m_dir_lights;
+	dir_light* m_dir_light{ nullptr };
 	std::vector<decal*> m_decals;
 	std::string m_scene_name{"scene"};
 	bool load_scene(std::string);

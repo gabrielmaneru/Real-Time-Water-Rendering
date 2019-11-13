@@ -64,3 +64,9 @@ void point_light::draw(Shader_Program * shader)
 dir_light::dir_light(vec3 dir, transform3d tr, light_data ld)
 	:scene_object("octohedron", tr, nullptr, nullptr), m_ldata(ld), m_direction(dir)
 {}
+
+void dir_light::draw(Shader_Program * shader)
+{
+	shader->set_uniform("l_dir", glm::inverse(glm::transpose(mat3(renderer->scene_cam.m_view))) * m_direction);
+	shader->set_uniform("ld", m_ldata.m_diffuse);
+}

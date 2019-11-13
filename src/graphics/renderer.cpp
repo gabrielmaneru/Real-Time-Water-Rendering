@@ -281,10 +281,13 @@ void c_renderer::update()
 		/**/// Render Ambient
 		/**/light_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "render_ambient");
 		/**/ortho_cam.set_uniforms(light_shader);
+		/**/if (scene->m_dir_light) scene->m_dir_light->draw(light_shader);
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
 		/**/glActiveTexture(GL_TEXTURE1);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(METALLIC));
 		/**/glActiveTexture(GL_TEXTURE3);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
 		/**/m_models[2]->m_meshes[0]->draw(light_shader);
@@ -294,8 +297,6 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(light_shader);
 		/**/light_shader->set_uniform("window_width", window_manager->get_width());
 		/**/light_shader->set_uniform("window_height", window_manager->get_height());
-		/**/glActiveTexture(GL_TEXTURE2);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(METALLIC));
 		/**/GL_CALL(glEnable(GL_BLEND));
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/glDepthFunc(GL_GREATER);

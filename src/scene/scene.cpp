@@ -251,7 +251,7 @@ bool c_scene::init()
 	tr.set_scl(vec3(0.5f));
 
 	light_data ld;
-	m_dir_lights.push_back(new dir_light(glm::normalize(-tr.get_pos()), tr, ld));
+	m_dir_light = new dir_light(glm::normalize(-tr.get_pos()), tr, ld);
 
 	return true;
 }

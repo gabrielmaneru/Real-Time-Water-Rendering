@@ -34,7 +34,7 @@ class dir_light : public scene_object
 public:
 	dir_light(vec3 dir, transform3d tr = {}, light_data ld = {});
 	virtual ~dir_light() = default;
-	void draw(Shader_Program*) {};
+	void draw(Shader_Program*);
 
 	light_data m_ldata;
 	vec3 m_direction;

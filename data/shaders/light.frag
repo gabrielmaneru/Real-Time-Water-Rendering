@@ -11,6 +11,7 @@ layout (binding = 1) uniform sampler2D albedo_txt;
 layout (binding = 2) uniform sampler2D metallic_txt;
 layout (binding = 3) uniform sampler2D normal_txt;
 uniform vec3 l_pos;
+uniform vec3 l_dir = vec3(0);
 uniform vec3 la;
 uniform vec3 ld;
 uniform vec3 att_factor;
@@ -116,6 +117,35 @@ vec3 pointlight(vec3 albedo, vec3 metallic, float roughness, vec3 pos, vec3 norm
 	return (specular + diffuse) * (5.0f*ld) * NdotL * att;
 }
 
+vec3 dirlight(vec3 albedo, vec3 metallic, float roughness, vec3 pos, vec3 norm) 
+{
+	vec3 Norm = normalize(norm);
+	vec3 Light = normalize(l_dir);
+	vec3 View = normalize(-pos);
+	
+	vec3 Half = normalize(View + Light);
+    
+	float NdotV = max(dot(Norm, View), 0.001);
+	float NdotL = max(dot(Norm, Light), 0.001);
+	float NdotH = max(dot(Norm, Half), 0.001);
+	float VdotH = max(dot(View, Half), 0.001);
+    
+	vec3 F0 = mix(vec3(0.04), albedo, metallic);
+    
+	float NDF = DistributionGGX(NdotH, roughness);       
+	float G = GeometrySmith(NdotV, NdotL, roughness);  
+	vec3 F = FresnelSchlick(NdotH, F0);
+        
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+    
+	vec3 diffuse = albedo * kD / PI;
+	float denominator = 4.0 * NdotV * NdotL;
+	vec3 specular = (NDF * G * F) / max(denominator, 0.001); 
+      
+	return (specular + diffuse) * (5.0f*ld) * NdotL;
+}
+
 subroutine (Render_Type)
 void render_ambient()
 {
@@ -123,6 +153,7 @@ void render_ambient()
 	
 	vec4 albedo_value = texture(albedo_txt, new_uvs);
 	vec4 position_value = texture(position_txt, new_uvs);
+	vec4 metallic_value = texture(metallic_txt, new_uvs);
 	vec4 normal_value = texture(normal_txt, new_uvs);
 	if(normal_value.xyz == vec3(0,0,0))
 		discard;
@@ -130,9 +161,20 @@ void render_ambient()
 		out_color=vec3(1.0);
 	else
 	{
-		vec3 kd = albedo_value.rgb;
 		float ka = position_value.a-1.0;
-		out_color = (ka*la)*kd;
+		vec3 albedo = albedo_value.rgb;
+
+		vec3 kdir = vec3(0);
+		if(length(l_dir) > 0.1)
+		{
+			vec3 frag_pos = position_value.rgb;
+			float roughness = albedo_value.a-1.0;
+			vec3 metallic = metallic_value.rgb;
+			vec3 normal = normalize(normal_value.rgb);
+			kdir = dirlight(albedo, metallic, roughness, frag_pos, normal);
+		}
+
+		out_color = (ka*la)*albedo + kdir;
 	}
 }
 
