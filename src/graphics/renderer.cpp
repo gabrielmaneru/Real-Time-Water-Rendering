@@ -123,12 +123,12 @@ bool c_renderer::init()
 
 	randomize_noise();
 	int noise_size = 512u;
-	map2d<float> noise = generate_noise(noise_size, 8.0f, 8, 1.0f, 0.5f);
+	map2d<float> noise = generate_noise(noise_size, 16.0f, 4, 2.0f, 0.5f);
 
 	m_render_options.ao_noise = noise;
 	m_render_options.ao_noise.load();
 
-	ocean.build_from_map(noise);
+	ocean.build_from_map(noise,50.f);
 	ocean.compute_normals();
 	ocean.load();
 

@@ -34,7 +34,7 @@ void main()
 	float incline = -view.y;
 	vec3 sky_color = 20*incline*texture(skybox_txt, to_sky).rgb;
 	
-	float border = 100*pow(dot(view,to_sky),16);
+	float border = clamp(100*pow(dot(view,to_sky),16),0,1);
 	vec3 water_color = vec3(0,1,2);
 
 	attr_albedo = vec4(border*sky_color + (1-border)* water_color, 1.0);
