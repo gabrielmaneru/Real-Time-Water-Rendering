@@ -81,8 +81,8 @@ bool c_renderer::init()
 	// Materials
 	Model::m_def_materials.push_back(new Material{ "default",
 		{0.0,1.0,0.0},{},
-		vec3{1.0},{},
-		{1.0f},{},
+		vec3{0.0},{},
+		{0.0f},{},
 		1.0f,{}
 		});
 	Model::m_def_materials.push_back(new Material{ "plastic",
@@ -124,8 +124,13 @@ bool c_renderer::init()
 	randomize_noise();
 	int noise_size = 512u;
 	map2d<float> noise = generate_noise(noise_size, 8.0f, 8, 1.0f, 0.5f);
+
 	m_render_options.ao_noise = noise;
 	m_render_options.ao_noise.load();
+
+	ocean.build_from_map(noise);
+	ocean.compute_normals();
+	ocean.load();
 
 	skybox.loadCubemapFromFile({
 		Texture::filter_name("px.png").c_str(),
@@ -134,45 +139,7 @@ bool c_renderer::init()
 		Texture::filter_name("ny.png").c_str(),
 		Texture::filter_name("pz.png").c_str(),
 		Texture::filter_name("nz.png").c_str(),
-	});
-
-	ocean.vertices.resize(noise_size*noise_size);
-	ocean.uv_coord.resize(noise_size*noise_size);
-	ocean.faces.resize((noise_size - 1)*(noise_size - 1) * 6);
-	size_t tri_index = 0;
-	auto add_tri = [&](size_t a, size_t b, size_t c)
-	{
-		ocean.faces[tri_index] = (unsigned)a;
-		ocean.faces[tri_index + 1u] = (unsigned)b;
-		ocean.faces[tri_index + 2u] = (unsigned)c;
-		tri_index += 3;
-	};
-	size_t vtx_index = 0;
-	for (int y = 0; y < noise_size; ++y)
-	{
-		for (int x = 0; x < noise_size; ++x)
-		{
-			ocean.vertices[vtx_index] = {
-				map<int, float>(x, 0, noise_size - 1, -noise_size / 2.0f, noise_size / 2.0f),
-				map(noise.get((size_t)x,(size_t)y), 0.0f, 1.0f, -10.0f,10.0f),
-				map<int, float>(y, 0, noise_size - 1, -noise_size / 2.0f, noise_size / 2.0f)
-			};
-			ocean.uv_coord[vtx_index] = {
-				coef<int>(0, noise_size - 1, x),
-				coef<int>(0, noise_size - 1, y),
-			};
-			if (x < noise_size - 1 && y < noise_size - 1)
-			{
-				add_tri(vtx_index, vtx_index + noise_size + 1, vtx_index + noise_size);
-				add_tri(vtx_index + noise_size + 1, vtx_index, vtx_index + 1);
-			}
-			vtx_index++;
-		}
-	}
-	ocean.compute_normals();
-	ocean.load();
-
-
+		});
 	return true;
 }
 
@@ -234,11 +201,13 @@ void c_renderer::update()
 		/**/ocean_shader->set_uniform("near", scene_cam.m_near);
 		/**/ocean_shader->set_uniform("far", scene_cam.m_far);
 		/**/ocean_shader->set_uniform("M", mat4(1));
-		/**/GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-		/**/ocean_shader->set_uniform("color", vec3(0.0));
-		/**/ocean.draw();
+		/**///GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+		/**///ocean_shader->set_uniform("line_render", true);
+		/**///ocean.draw();
 		/**/GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-		/**/ocean_shader->set_uniform("color", vec3(0.0, 0.467, 0.745));
+		/**/ocean_shader->set_uniform("line_render", false);
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
 		/**/ocean.draw();
 		/**/
 		/**/if(m_render_options.dc_active)

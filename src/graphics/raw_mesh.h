@@ -10,11 +10,13 @@ Author: Gabriel Mañeru - gabriel.m
 #pragma once
 #include <vector>
 #include <glm/glm.h>
+#include <utils/map2d.h>
 struct raw_mesh
 {
 	void load();
 	void free();
 	void draw();
+	void build_from_map(const map2d<float>& map);
 	void compute_normals();
 
 	unsigned int m_vao{ 0 };

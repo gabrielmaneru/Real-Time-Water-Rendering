@@ -10,6 +10,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "raw_mesh.h"
 #include "gl_error.h"
 #include <GL/gl3w.h>
+#include <utils/math_utils.h>
 void raw_mesh::load()
 {
 	if (m_vao == 0)
@@ -72,6 +73,44 @@ void raw_mesh::draw()
 	GL_CALL(glBindVertexArray(m_vao));
 	GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)faces.size(), GL_UNSIGNED_INT, 0));
 	GL_CALL(glBindVertexArray(0));
+}
+
+void raw_mesh::build_from_map(const map2d<float>& m)
+{
+	int scale = m.m_height;
+	vertices.resize(scale*scale);
+	uv_coord.resize(scale*scale);
+	faces.resize((scale - 1)*(scale - 1) * 6);
+	int tri_index = 0;
+	auto add_tri = [&](int a, int b, int c)
+	{
+		faces[tri_index] = (unsigned)a;
+		faces[tri_index + 1u] = (unsigned)b;
+		faces[tri_index + 2u] = (unsigned)c;
+		tri_index += 3;
+	};
+	int vtx_index = 0;
+	for (int y = 0; y < scale; ++y)
+	{
+		for (int x = 0; x < scale; ++x)
+		{
+			vertices[vtx_index] = {
+				map<int, float>(x, 0, scale - 1, -scale / 2.0f, scale / 2.0f),
+				map(m.get((size_t)x,(size_t)y), 0.0f, 1.0f, -10.0f,10.0f),
+				map<int, float>(y, 0, scale - 1, -scale / 2.0f, scale / 2.0f)
+			};
+			uv_coord[vtx_index] = {
+				coef<int>(0, scale - 1, x),
+				coef<int>(0, scale - 1, y),
+			};
+			if (x < scale - 1 && y < scale - 1)
+			{
+				add_tri(vtx_index, vtx_index + scale + 1, vtx_index + scale);
+				add_tri(vtx_index + scale + 1, vtx_index, vtx_index + 1);
+			}
+			vtx_index++;
+		}
+	}
 }
 
 void raw_mesh::compute_normals()
