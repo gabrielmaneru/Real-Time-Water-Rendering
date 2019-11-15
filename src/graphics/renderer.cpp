@@ -121,7 +121,7 @@ bool c_renderer::init()
 	scene_cam.update();
 
 	randomize_noise();
-	m_render_options.ao_noise = generate_noise(512, 1.0f, 1, 1.0f, 1.0f);
+	m_render_options.ao_noise = generate_noise(512, 16.0f, 4, 2.0f, 2.0f);
 	m_render_options.ao_noise.load();
 
 	skybox.loadCubemapFromFile({

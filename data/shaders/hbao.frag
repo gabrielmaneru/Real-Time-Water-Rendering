@@ -73,7 +73,7 @@ void main()
 	vec3 v_pos = texture2D(position_txt, vUv).rgb;
 	vec3 v_tan = get_tangent();
 	vec3 v_bit = get_bitangent();
-	float random_value = texture2D(noise_txt, vUv+random_offset).r;
+	float random_value = texture2D(noise_txt, mod(vUv+random_offset, vec2(1))).r;
 
 	// Compute steps
 	float march_angle_step = 2 * PI / num_dirs;
