@@ -128,7 +128,7 @@ bool c_renderer::init()
 	m_render_options.ao_noise = noise;
 	m_render_options.ao_noise.load();
 
-	ocean.build_from_map(noise,50.f);
+	ocean.build_from_map(noise, 0.01f, 1.f);
 	ocean.compute_normals();
 	ocean.load();
 

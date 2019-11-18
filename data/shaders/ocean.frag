@@ -37,7 +37,8 @@ void main()
 	float border = clamp(100*pow(dot(view,to_sky),16),0,1);
 	vec3 water_color = vec3(0,1,2);
 
-	attr_albedo = vec4(border*sky_color + (1-border)* water_color, 1.0);
+	//attr_albedo = vec4(border*sky_color + (1-border)* water_color, 1.0);
+	attr_albedo = vec4(sky_color, 1.0);
 
 	attr_metallic = vec4(vec3(0.0), 1.0);
 	attr_normal = vec4(normalize(vNormal), 1.0);

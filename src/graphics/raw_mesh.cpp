@@ -75,7 +75,7 @@ void raw_mesh::draw()
 	GL_CALL(glBindVertexArray(0));
 }
 
-void raw_mesh::build_from_map(const map2d<float>& m, float height)
+void raw_mesh::build_from_map(const map2d<float>& m, float size, float height)
 {
 	int scale = m.m_height;
 	vertices.resize(scale*scale);
@@ -95,9 +95,9 @@ void raw_mesh::build_from_map(const map2d<float>& m, float height)
 		for (int x = 0; x < scale; ++x)
 		{
 			vertices[vtx_index] = {
-				map<int, float>(x, 0, scale - 1, -scale / 2.0f, scale / 2.0f),
+				map<int, float>(x, 0, scale - 1, -scale * size / 2.0f, scale * size / 2.0f),
 				m.get((size_t)x,(size_t)y)*height,
-				map<int, float>(y, 0, scale - 1, -scale / 2.0f, scale / 2.0f)
+				map<int, float>(y, 0, scale - 1, -scale * size / 2.0f, scale * size / 2.0f)
 			};
 			uv_coord[vtx_index] = {
 				coef<int>(0, scale - 1, x),
