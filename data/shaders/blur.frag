@@ -19,18 +19,16 @@ uniform int pass;
 uniform float width;
 uniform float height;
 uniform int blur_mode;
-uniform float bilat_threshold;
+uniform float bilat_scale;
 const float gaussian[]= float[](0.129001,0.142521,0.151303,0.15435);
 vec3 get_color(vec2 off)
 {
 	return clamp(texture2D(texture1, vUv + off).rgb,vec3(0,0,0),vec3(1,1,1));
 }
-float bilateral(vec2 off)
+float bilateral(vec2 uv)
 {
-	if(abs(texture2D(texture3, vUv).r - texture2D(texture3, vUv + off).r) < bilat_threshold)
-		return 1.0f;
-	else 
-		return 0.0f;
+	float center = texture2D(texture3, vUv).r;
+	return 1/(1+bilat_scale*abs(texture2D(texture3, vUv+uv).r - center));
 }
 vec3 blur_3()
 {
@@ -63,25 +61,42 @@ vec3 blur_3()
 	}
 	else
 	{
+		float tot_bil = 0.0f;
 		if(pass == 0)
 		{
-			sum += gaussian[0] * bilateral(vec2(-3*w,   0)) * get_color(vec2(-3*w,   0));
-			sum += gaussian[1] * bilateral(vec2(-2*w,   0)) * get_color(vec2(-2*w,   0));
-			sum += gaussian[2] * bilateral(vec2(  -w,   0)) * get_color(vec2(  -w,   0));
-			sum += gaussian[3] * bilateral(vec2(   0,   0)) * get_color(vec2(   0,   0));
-			sum += gaussian[2] * bilateral(vec2(   w,   0)) * get_color(vec2(   w,   0));
-			sum += gaussian[1] * bilateral(vec2( 2*w,   0)) * get_color(vec2( 2*w,   0));
-			sum += gaussian[0] * bilateral(vec2( 3*w,   0)) * get_color(vec2( 3*w,   0));
+			tot_bil += bilateral(vec2(-3*w,0));
+			sum += gaussian[0] * bilateral(vec2(-3*w,0)) * get_color(vec2(-3*w,0));
+			tot_bil += bilateral(vec2(-2*w,0));
+			sum += gaussian[1] * bilateral(vec2(-2*w,0)) * get_color(vec2(-2*w,0));
+			tot_bil += bilateral(vec2(-w,0));
+			sum += gaussian[2] * bilateral(vec2(-w,0)) * get_color(vec2(-w,0));
+			tot_bil += bilateral(vec2(0,0));
+			sum += gaussian[3] * bilateral(vec2(0,0)) * get_color(vec2(0,0));
+			tot_bil += bilateral(vec2(w,0));
+			sum += gaussian[2] * bilateral(vec2(w,0)) * get_color(vec2(w,0));
+			tot_bil += bilateral(vec2(2*w,0));
+			sum += gaussian[1] * bilateral(vec2(2*w,0)) * get_color(vec2(2*w,0));
+			tot_bil += bilateral(vec2(3*w,0));
+			sum += gaussian[0] * bilateral(vec2(3*w,0)) * get_color(vec2(3*w,0));
+			sum = vec3(tot_bil);
 		}
 		else
 		{
-			sum += gaussian[0] * bilateral(vec2(   0,-3*w)) * get_color(vec2(   0,-3*w));
-			sum += gaussian[1] * bilateral(vec2(   0,-2*w)) * get_color(vec2(   0,-2*w));
-			sum += gaussian[2] * bilateral(vec2(   0,  -w)) * get_color(vec2(   0,  -w));
-			sum += gaussian[3] * bilateral(vec2(   0,   0)) * get_color(vec2(   0,   0));
-			sum += gaussian[2] * bilateral(vec2(   0,   w)) * get_color(vec2(   0,   w));
-			sum += gaussian[1] * bilateral(vec2(   0, 2*w)) * get_color(vec2(   0, 2*w));
-			sum += gaussian[0] * bilateral(vec2(   0, 3*w)) * get_color(vec2(   0, 3*w));
+			tot_bil += bilateral(vec2(0,-3*w));
+			sum += gaussian[0] * bilateral(vec2(0,-3*w)) * get_color(vec2(0,-3*w));
+			tot_bil += bilateral(vec2(0,-2*w));
+			sum += gaussian[1] * bilateral(vec2(0,-2*w)) * get_color(vec2(0,-2*w));
+			tot_bil += bilateral(vec2(0,-w));
+			sum += gaussian[2] * bilateral(vec2(0,-w)) * get_color(vec2(0,-w));
+			tot_bil += bilateral(vec2(0,0));
+			sum += gaussian[3] * bilateral(vec2(0,0)) * get_color(vec2(0,0));
+			tot_bil += bilateral(vec2(0,w));
+			sum += gaussian[2] * bilateral(vec2(0,w)) * get_color(vec2(0,w));
+			tot_bil += bilateral(vec2(0,2*w));
+			sum += gaussian[1] * bilateral(vec2(0,2*w)) * get_color(vec2(0,2*w));
+			tot_bil += bilateral(vec2(0,3*w));
+			sum += gaussian[0] * bilateral(vec2(0,3*w)) * get_color(vec2(0,3*w));
+			sum = vec3(tot_bil);
 		}
 	}
 	return sum;
