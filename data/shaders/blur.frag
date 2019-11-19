@@ -25,10 +25,14 @@ vec3 get_color(vec2 off)
 {
 	return clamp(texture2D(texture1, vUv + off).rgb,vec3(0,0,0),vec3(1,1,1));
 }
-float bilateral(vec2 uv)
+float get_depth(vec2 off)
 {
-	float center = texture2D(texture3, vUv).r;
-	return 1/(1+bilat_scale*abs(texture2D(texture3, vUv+uv).r - center));
+	return texture2D(texture3, vUv + off).r;
+}
+float bilateral(float z, float center_z)
+{
+	float dz = center_z - z;
+	return exp2(-dz*dz);
 }
 vec3 blur_3()
 {
@@ -38,65 +42,61 @@ vec3 blur_3()
 	vec3 sum=vec3(0.0);
 	if(blur_mode == 0)
 	{
-		if(pass == 0)
+		sum = gaussian[3] * get_color(vec2(0));
+		for(int i = 1; i < 4; i++)
 		{
-			sum += gaussian[0] * get_color(vec2(-3*w,   0));
-			sum += gaussian[1] * get_color(vec2(-2*w,   0));
-			sum += gaussian[2] * get_color(vec2(  -w,   0));
-			sum += gaussian[3] * get_color(vec2(   0,   0));
-			sum += gaussian[2] * get_color(vec2(   w,   0));
-			sum += gaussian[1] * get_color(vec2( 2*w,   0));
-			sum += gaussian[0] * get_color(vec2( 3*w,   0));
-		}
-		else
-		{
-			sum += gaussian[0] * get_color(vec2(   0,-3*w));
-			sum += gaussian[1] * get_color(vec2(   0,-2*w));
-			sum += gaussian[2] * get_color(vec2(   0,  -w));
-			sum += gaussian[3] * get_color(vec2(   0,   0));
-			sum += gaussian[2] * get_color(vec2(   0,   w));
-			sum += gaussian[1] * get_color(vec2(   0, 2*w));
-			sum += gaussian[0] * get_color(vec2(   0, 3*w));
+			vec2 off = (pass==0)?vec2(w*i,0):vec2(0,h*i);
+			sum += gaussian[3-i]*get_color(off);
+			sum += gaussian[3-i]*get_color(-off);
 		}
 	}
 	else
 	{
-		float tot_bil = 0.0f;
-		if(pass == 0)
+		// Compute Bilateral weight
+		float weight[3][2];
+		float weight_c = 1.0;
+		float tot_w = weight_c;
+		float center_z = get_depth(vec2(0));
+		for(int i = 1; i < 4; i++)
 		{
-			tot_bil += bilateral(vec2(-3*w,0));
-			sum += gaussian[0] * bilateral(vec2(-3*w,0)) * get_color(vec2(-3*w,0));
-			tot_bil += bilateral(vec2(-2*w,0));
-			sum += gaussian[1] * bilateral(vec2(-2*w,0)) * get_color(vec2(-2*w,0));
-			tot_bil += bilateral(vec2(-w,0));
-			sum += gaussian[2] * bilateral(vec2(-w,0)) * get_color(vec2(-w,0));
-			tot_bil += bilateral(vec2(0,0));
-			sum += gaussian[3] * bilateral(vec2(0,0)) * get_color(vec2(0,0));
-			tot_bil += bilateral(vec2(w,0));
-			sum += gaussian[2] * bilateral(vec2(w,0)) * get_color(vec2(w,0));
-			tot_bil += bilateral(vec2(2*w,0));
-			sum += gaussian[1] * bilateral(vec2(2*w,0)) * get_color(vec2(2*w,0));
-			tot_bil += bilateral(vec2(3*w,0));
-			sum += gaussian[0] * bilateral(vec2(3*w,0)) * get_color(vec2(3*w,0));
-			sum = vec3(tot_bil);
+			vec2 off = (pass==0)?vec2(w*i,0):vec2(0,h*i);
+			weight[i-1][0] = 400*bilateral(get_depth(off),center_z);
+			weight[i-1][1] = 400*bilateral(get_depth(-off),center_z);
+			tot_w +=weight[i-1][0];
+			tot_w +=weight[i-1][1];
 		}
-		else
+		// Normalize Bilateral weight
+		weight_c/=tot_w;
+		for(int i = 0; i < 3; i++)
 		{
-			tot_bil += bilateral(vec2(0,-3*w));
-			sum += gaussian[0] * bilateral(vec2(0,-3*w)) * get_color(vec2(0,-3*w));
-			tot_bil += bilateral(vec2(0,-2*w));
-			sum += gaussian[1] * bilateral(vec2(0,-2*w)) * get_color(vec2(0,-2*w));
-			tot_bil += bilateral(vec2(0,-w));
-			sum += gaussian[2] * bilateral(vec2(0,-w)) * get_color(vec2(0,-w));
-			tot_bil += bilateral(vec2(0,0));
-			sum += gaussian[3] * bilateral(vec2(0,0)) * get_color(vec2(0,0));
-			tot_bil += bilateral(vec2(0,w));
-			sum += gaussian[2] * bilateral(vec2(0,w)) * get_color(vec2(0,w));
-			tot_bil += bilateral(vec2(0,2*w));
-			sum += gaussian[1] * bilateral(vec2(0,2*w)) * get_color(vec2(0,2*w));
-			tot_bil += bilateral(vec2(0,3*w));
-			sum += gaussian[0] * bilateral(vec2(0,3*w)) * get_color(vec2(0,3*w));
-			sum = vec3(tot_bil);
+			weight[i][0] /= tot_w;
+			weight[i][1] /= tot_w;
+		}
+		// Add Gaussian
+		weight_c *=gaussian[3];
+		tot_w = weight_c;
+		for(int i = 0; i < 3; i++)
+		{
+			weight[i][0] *= gaussian[3-i];
+			weight[i][1] *= gaussian[3-i];
+			tot_w +=weight[i-1][0];
+			tot_w +=weight[i-1][1];
+		}
+		// Normalize Final weight
+		weight_c/=tot_w;
+		for(int i = 0; i < 3; i++)
+		{
+			weight[i][0] /= tot_w;
+			weight[i][1] /= tot_w;
+		}
+		
+		sum += weight_c * get_color(vec2(0));
+		for(int i = 1; i < 4; i++)
+		{
+			vec2 off = (pass==0)?vec2(w*i,0):vec2(0,h*i);
+			
+			sum += weight[i-1][0]*get_color(off);
+			sum += weight[i-1][1]*get_color(-off);
 		}
 	}
 	return sum;

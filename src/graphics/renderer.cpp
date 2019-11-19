@@ -378,6 +378,8 @@ void c_renderer::update()
 		/**/	blur_shader->set_uniform("bloom_coef", m_render_options.bl_coef);
 		/**/	glActiveTexture(GL_TEXTURE0);
 		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/	glActiveTexture(GL_TEXTURE2);
+		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(LIN_DEPTH));
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
 		/**/	glFlush;
 		/**/	glFinish;
@@ -418,7 +420,7 @@ void c_renderer::update()
 		/**/glActiveTexture(GL_TEXTURE1);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(BLUR_CONTROL));
 		/**/glActiveTexture(GL_TEXTURE2);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIN_DEPTH));
 		/**/blur_shader->set_uniform("final_mode", 0);
 		/**/blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
 		/**/glActiveTexture(GL_TEXTURE0);
@@ -428,10 +430,12 @@ void c_renderer::update()
 		/**/{
 		/**/	blur_shader->set_uniform("final_mode", 1);
 		/**/	blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
+		/**/	blur_shader->set_uniform("pass", 0);
 		/**/	glActiveTexture(GL_TEXTURE0);
 		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR2));
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
 		/**/	blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1 });
+		/**/	blur_shader->set_uniform("pass", 1);
 		/**/	glActiveTexture(GL_TEXTURE0);
 		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR));
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);

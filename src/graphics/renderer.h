@@ -91,9 +91,9 @@ public:
 		float aa_coef_normal{ 0.05f };
 		float aa_coef_depth{ 0.25f };
 
-		bool  do_depth_of_field{ false };
+		bool  do_depth_of_field{ true };
 		float df_plane_focus{ 45.f };
-		float df_aperture{ 45.f };
+		float df_aperture{ 0.0f };
 		bool  df_auto_focus{ false };
 
 		bool  do_motion_blur{ false };
