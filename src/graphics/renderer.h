@@ -103,12 +103,12 @@ public:
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
 
-		int   blur_ao_iterations{ 4 };
+		int   blur_ao_iterations{ 8 };
 		int   blur_bloom_iterations{ 2 };
 		int   blur_general_iterations{ 4 };
 		int   blur_mode{ 1 };
 		float bilat_scale{ 100.0f };
-		float bilat_weight{ 0.5f };
+		float bilat_weight{ 0.8f };
 
 		float dc_angle{ 0.8f };
 		int   dc_mode{ 0 };
@@ -116,10 +116,10 @@ public:
 
 		float ao_radius{ 10.0 };
 		float ao_angle_bias{ 0.5f };
-		int	  ao_num_dirs{ 8 };
-		int	  ao_num_steps{ 8 };
-		//float ao_att{ 0.1f };
-		//float ao_constract{ 0.1f };
+		int	  ao_num_dirs{ 10 };
+		int	  ao_num_steps{ 10 };
+		float ao_att{ 0.8f };
+		float ao_contrast{ 0.5f };
 		raw_texture_single ao_noise;
 	}m_render_options;
 

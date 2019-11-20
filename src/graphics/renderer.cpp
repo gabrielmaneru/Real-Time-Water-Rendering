@@ -254,18 +254,22 @@ void c_renderer::update()
 		/**/ao_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
 		/**/ao_shader->use();
 		/**/ortho_cam.set_uniforms(ao_shader);
-		/**/ao_shader->set_uniform("width", (float)ao_buffer.m_width);
+		/**/vec2 res{ ao_buffer.m_width, ao_buffer.m_height };
+		/**/vec2 inv_res{ 1.0f/ao_buffer.m_width, 1.0f/ao_buffer.m_height };
+		/**/ao_shader->set_uniform("res", res);
+		/**/ao_shader->set_uniform("inv_res", inv_res);
+		/**/ao_shader->set_uniform("fov", scene_cam.m_fov);
+		/**/ao_shader->set_uniform("proj_mtx", scene_cam.m_proj);
 		/**/ao_shader->set_uniform("random_offset", vec2(random_float(-0.5f,0.5), random_float(-0.5, 0.5)));
-		/**/ao_shader->set_uniform("height", (float)ao_buffer.m_height);
 		/**/ao_shader->set_uniform("radius", m_render_options.ao_radius);
 		/**/ao_shader->set_uniform("bias", m_render_options.ao_angle_bias);
 		/**/ao_shader->set_uniform("num_dirs", m_render_options.ao_num_dirs);
 		/**/ao_shader->set_uniform("num_steps", m_render_options.ao_num_steps);
+		/**/ao_shader->set_uniform("att", m_render_options.ao_att);
+		/**/ao_shader->set_uniform("contrast", m_render_options.ao_contrast);
 		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
 		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
-		/**/glActiveTexture(GL_TEXTURE2);
 		/**/glBindTexture(GL_TEXTURE_2D, m_render_options.ao_noise.m_id);
 		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
 
@@ -748,6 +752,8 @@ void c_renderer::drawGUI()
 			ImGui::SliderFloat("Angle Bias", &m_render_options.ao_angle_bias, 0.00f, glm::half_pi<float>());
 			ImGui::SliderInt("Num Dirs", &m_render_options.ao_num_dirs, 1, 20);
 			ImGui::SliderInt("Num Steps", &m_render_options.ao_num_steps, 1, 20);
+			ImGui::SliderFloat("Att", &m_render_options.ao_att, 0.0f, 1.0f);
+			ImGui::SliderFloat("Contrast", &m_render_options.ao_contrast, 0.0f, 20.0f);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Blur"))
