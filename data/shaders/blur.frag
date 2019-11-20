@@ -20,7 +20,9 @@ uniform float width;
 uniform float height;
 uniform int blur_mode;
 uniform float bilat_scale;
+uniform float bilat_weight;
 const float gaussian[]= float[](0.129001,0.142521,0.151303,0.15435);
+
 vec3 get_color(vec2 off)
 {
 	return clamp(texture2D(texture1, vUv + off).rgb,vec3(0,0,0),vec3(1,1,1));
@@ -29,11 +31,37 @@ float get_depth(vec2 off)
 {
 	return texture2D(texture3, vUv + off).r;
 }
-float bilateral(float z, float center_z)
+float get_bilateral(float z, float center_z)
 {
-	float dz = center_z - z;
+	float dz = bilat_scale*(center_z - z);
 	return exp2(-dz*dz);
 }
+void bilateral_kernel(out float bilateral[3][2], out float bilateral_c)
+{
+	bilateral_c = 1.0;
+	float tot_w = bilateral_c;
+	float w = 1.0/width;
+	float h = 1.0/height;
+
+	// Compute Bilateral weight
+	float center_z = get_depth(vec2(0));
+	for(int i = 1; i < 4; i++)
+	{
+		vec2 off = (pass==0)?vec2(w*i,0):vec2(0,h*i);
+		bilateral[i-1][0] = get_bilateral(get_depth(off),center_z);
+		bilateral[i-1][1] = get_bilateral(get_depth(-off),center_z);
+		tot_w += bilateral[i-1][0] + bilateral[i-1][1];
+	}
+
+	// Normalize Bilateral weight
+	bilateral_c/=tot_w;
+	for(int i = 0; i < 3; i++)
+	{
+		bilateral[i][0] /= tot_w;
+		bilateral[i][1] /= tot_w;
+	}
+}
+
 vec3 blur_3()
 {
 	float w = 1.0/width;
@@ -53,43 +81,29 @@ vec3 blur_3()
 	else
 	{
 		// Compute Bilateral weight
+		float bilateral[3][2];
+		float bilateral_c;
+		bilateral_kernel(bilateral, bilateral_c);
+
+		// Add Bilateral & Gaussian
 		float weight[3][2];
-		float weight_c = 1.0;
+		float weight_c = mix(gaussian[3],bilateral_c,bilat_weight);
 		float tot_w = weight_c;
-		float center_z = get_depth(vec2(0));
-		for(int i = 1; i < 4; i++)
+		for(int i = 0; i < 3; i++)
 		{
-			vec2 off = (pass==0)?vec2(w*i,0):vec2(0,h*i);
-			weight[i-1][0] = 400*bilateral(get_depth(off),center_z);
-			weight[i-1][1] = 400*bilateral(get_depth(-off),center_z);
-			tot_w +=weight[i-1][0];
-			tot_w +=weight[i-1][1];
+			weight[i][0] += mix(gaussian[2-i],bilateral[i][0],bilat_weight);
+			weight[i][1] += mix(gaussian[2-i],bilateral[i][1],bilat_weight);
+			tot_w += weight[i][0] + weight[i][1];
 		}
-		// Normalize Bilateral weight
-		weight_c/=tot_w;
+
+		// Normalize Weights
+		weight_c /= tot_w;
 		for(int i = 0; i < 3; i++)
 		{
 			weight[i][0] /= tot_w;
 			weight[i][1] /= tot_w;
 		}
-		// Add Gaussian
-		weight_c *=gaussian[3];
-		tot_w = weight_c;
-		for(int i = 0; i < 3; i++)
-		{
-			weight[i][0] *= gaussian[3-i];
-			weight[i][1] *= gaussian[3-i];
-			tot_w +=weight[i-1][0];
-			tot_w +=weight[i-1][1];
-		}
-		// Normalize Final weight
-		weight_c/=tot_w;
-		for(int i = 0; i < 3; i++)
-		{
-			weight[i][0] /= tot_w;
-			weight[i][1] /= tot_w;
-		}
-		
+
 		sum += weight_c * get_color(vec2(0));
 		for(int i = 1; i < 4; i++)
 		{
@@ -211,7 +225,7 @@ void do_final_blur()
 		attr_1 = mix(texture2D(texture1, vUv).rgb, sum, clamp(length(texture2D(texture2, vUv).rgb),0,1));
 	}
 	else
-		attr_1 = texture2D(texture1, vUv).rgb + texture2D(texture3, vUv).rgb;
+		attr_1 = clamp(texture2D(texture1, vUv).rgb + texture2D(texture3, vUv).rgb,vec3(0),vec3(1));
 }
 //-------------------------------------------------------------------
 

@@ -102,10 +102,11 @@ public:
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
 
-		int   blur_bloom_iterations{ 1 };
-		int   blur_general_iterations{ 1 };
+		int   blur_bloom_iterations{ 2 };
+		int   blur_general_iterations{ 4 };
 		int   blur_mode{ 0 };
-		float bilat_threshold{ 0.01f };
+		float bilat_scale{ 100.0f };
+		float bilat_weight{ 0.5f };
 
 		float dc_angle{ 0.8f };
 		int   dc_mode{ 0 };
