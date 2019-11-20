@@ -329,6 +329,7 @@ void c_renderer::update()
 		/**/blur_shader->set_uniform("blur_mode", m_render_options.blur_mode);
 		/**/blur_shader->set_uniform("bilat_scale", m_render_options.bilat_scale);
 		/**/blur_shader->set_uniform("bilat_weight", m_render_options.bilat_weight);
+		/**/blur_shader->set_uniform("fov", scene_cam.m_fov);
 		/**/ortho_cam.set_uniforms(blur_shader);
 		/**/GL_CALL(glEnable(GL_BLEND));
 		/**/
@@ -736,7 +737,7 @@ void c_renderer::drawGUI()
 				}
 				ImGui::EndCombo();
 			}
-			ImGui::DragFloat("Bilateral Threshold", &m_render_options.bilat_scale, 10.0f, 1.0f, 1000.0f);
+			ImGui::DragFloat("Bilateral Scale", &m_render_options.bilat_scale, 10.0f, 1.0f, 1000.0f);
 			ImGui::SliderFloat("Bilateral Weight", &m_render_options.bilat_weight,0.0f, 1.0f);
 			ImGui::TreePop();
 		}

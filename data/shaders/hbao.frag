@@ -9,8 +9,10 @@ in vec2 vUv;
 layout (binding = 0) uniform sampler2D position_txt;
 layout (binding = 1) uniform sampler2D normal_txt;
 layout (binding = 2) uniform sampler2D noise_txt;
+
 uniform float width;
 uniform float height;
+uniform float fov;
 
 out float out_color;
 
@@ -22,7 +24,7 @@ uniform float radius = 2.0;
 uniform float bias = 0.1;
 uniform int num_dirs = 4;
 uniform int num_steps = 4;
-const float att = 0.1f;
+const float att = 1.0f;
 const float contrast = 1.0f;
 
 vec3 get_tangent()
@@ -43,28 +45,52 @@ vec3 get_bitangent()
 	return normalize(v_norm_t-v_norm_b);
 }
 
-float horizon_occlusion(float march_angle, vec3 v_pos, vec3 v_tan, vec3 v_bit, float march_dist_step)
+float horizon_occlusion(vec2 uv_step, vec3 v_pos, vec3 v_tan, vec3 v_bit)
 {
-	// Compute current values
-	float cos_angle = cos(march_angle);
-	float sin_angle = sin(march_angle);
-	vec2 march_dir = vec2(cos_angle,sin_angle);
+	// Get tangent vector
+	vec3 march_tan = uv_step.x * v_tan + uv_step.y * v_bit;
 
-	// Get tangent angle
-	vec3 march_tan = v_tan*cos_angle + v_bit*sin_angle;
-	float tan_angle = acos(dot(normalize(march_tan), vec3(march_dir,0)));
+	// Get tangent of the angle on the Z
+	float march_height = march_tan.z / length(march_tan.xy) + bias;
 
-	// Get max horizon angle
-	float max_horizon_angle = 0.0;
+	// Get Sin of the angle from the Tangent
+	float march_sin = march_height / sqrt(march_height*march_height + 1.0);
+
+	// Iterate
+	vec2 uv = vUv;
+	float ao = 0.0;
 	for(int i = 0; i < num_steps; i++)
 	{
-		vec2 off = march_dir * (march_dist_step*i);
-		vec3 s_pos = texture2D(position_txt, vUv+off).rgb;
-		vec3 delta = s_pos - v_pos;
-		float angle = acos(dot(normalize(delta), vec3(march_dir,0)));
-		max_horizon_angle = max(max_horizon_angle, angle);
+		// Increase Step
+		uv += uv_step;
+
+		// Sample position
+		vec3 s_pos = texture2D(position_txt, uv).rgb;
+
+		// Delta vector
+		vec3 d_pos = s_pos - v_pos;
+
+		// Get tangent of the angle on the Z
+		float sample_height = d_pos.z / length(d_pos.xy);
+
+		float len = length(d_pos);
+
+		// If height is greater than the current occluded height
+		if(len < radius && sample_height > march_height)
+		{
+			// Get Sin of the angle from the Tangent
+			float sample_sin = sample_height / sqrt(sample_height*sample_height + 1.0);
+
+			// Occlusion step
+			float local_ao = sample_sin - march_sin;
+			ao += mix(local_ao,local_ao * pow(1-len/radius,2),att);
+
+			// Update current occlusion
+			march_height = sample_height;
+			march_sin = sample_sin;
+		}
 	}
-	return sin(max_horizon_angle) - sin(tan_angle) - sin(bias);
+	return ao;
 }
 
 void main()
@@ -76,15 +102,21 @@ void main()
 	float random_value = texture2D(noise_txt, mod(vUv+random_offset, vec2(1))).r;
 
 	// Compute steps
+	float w = 1/width;
+	float h = 1/height;
 	float march_angle_step = 2 * PI / num_dirs;
-	float march_dist_step = radius / num_steps;
+	float p_radius = radius / -v_pos.z;
+	vec2 march_dist_step = vec2(p_radius/num_steps);
 
 	// Iterate directions
 	float ao = 0.0;
 	for(int i = 0; i < num_dirs; i++)
 	{
 		float march_angle = march_angle_step * (i + random_value);
-		float local_ao = horizon_occlusion(march_angle, v_pos, v_tan, v_bit, march_dist_step);
+		vec2 march_dir = vec2(cos(march_angle),sin(march_angle));
+		vec2 uv_step = march_dir * march_dist_step;
+
+		float local_ao = horizon_occlusion(uv_step, v_pos, v_tan, v_bit);
 		ao += max(local_ao, 0);
 	}
 

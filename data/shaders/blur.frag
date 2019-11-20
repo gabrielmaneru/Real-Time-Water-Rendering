@@ -33,6 +33,7 @@ float get_depth(vec2 off)
 }
 float get_bilateral(float z, float center_z)
 {
+	// A formula that looks cool enought
 	float dz = bilat_scale*(center_z - z);
 	return exp2(-dz*dz);
 }
