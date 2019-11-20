@@ -152,6 +152,7 @@ void c_renderer::update()
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
 			});
 		ao_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
+			GL_R16F, GL_RED, GL_FLOAT, GL_LINEAR,
 			GL_R16F, GL_RED, GL_FLOAT, GL_LINEAR
 			});
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
@@ -244,16 +245,16 @@ void c_renderer::update()
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
-	if (ao_shader->is_valid())
+	if (ao_shader->is_valid() && blur_shader->is_valid())
 	{
 		// AO Pass	///////////////////////////////////////////////////////
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, ao_buffer.m_fbo));
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, ao_buffer.m_width, ao_buffer.m_height));
+		/**/ao_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
 		/**/ao_shader->use();
 		/**/ortho_cam.set_uniforms(ao_shader);
 		/**/ao_shader->set_uniform("width", (float)ao_buffer.m_width);
-		/**/ao_shader->set_uniform("noise", false);
 		/**/ao_shader->set_uniform("random_offset", vec2(random_float(-0.5f,0.5), random_float(-0.5, 0.5)));
 		/**/ao_shader->set_uniform("height", (float)ao_buffer.m_height);
 		/**/ao_shader->set_uniform("radius", m_render_options.ao_radius);
@@ -267,6 +268,30 @@ void c_renderer::update()
 		/**/glActiveTexture(GL_TEXTURE2);
 		/**/glBindTexture(GL_TEXTURE_2D, m_render_options.ao_noise.m_id);
 		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
+
+		/**/blur_shader->use();
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIN_DEPTH));
+		/**/blur_shader->set_uniform_subroutine(GL_FRAGMENT_SHADER, "do_bloom_blur");
+		/**/blur_shader->set_uniform("width", (float)ao_buffer.m_width);
+		/**/blur_shader->set_uniform("height", (float)ao_buffer.m_height);
+		/**/for (int i = 0; i < m_render_options.blur_ao_iterations; i++)
+		/**/ {
+		/**/		ao_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
+		/**/		blur_shader->set_uniform("pass", 0);
+		/**/		glActiveTexture(GL_TEXTURE0);
+		/**/		glBindTexture(GL_TEXTURE_2D, get_texture(AO));
+		/**/		m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/		ao_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 });
+		/**/		blur_shader->set_uniform("pass", 1);
+		/**/		glActiveTexture(GL_TEXTURE0);
+		/**/		glBindTexture(GL_TEXTURE_2D, get_texture(AO2));
+		/**/		m_models[2]->m_meshes[0]->draw(blur_shader);
+		/**/}
+		/**/ao_buffer.set_drawbuffers();
+
+
+
 		///////////////////////////////////////////////////////////////////////////
 	}
 	if (light_shader->is_valid() && skybox_shader->is_valid())
@@ -290,6 +315,8 @@ void c_renderer::update()
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(METALLIC));
 		/**/glActiveTexture(GL_TEXTURE3);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
+		/**/glActiveTexture(GL_TEXTURE4);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(AO));
 		/**/m_models[2]->m_meshes[0]->draw(light_shader);
 		/**/
 		/**/// Render Lights
@@ -329,7 +356,6 @@ void c_renderer::update()
 		/**/blur_shader->set_uniform("blur_mode", m_render_options.blur_mode);
 		/**/blur_shader->set_uniform("bilat_scale", m_render_options.bilat_scale);
 		/**/blur_shader->set_uniform("bilat_weight", m_render_options.bilat_weight);
-		/**/blur_shader->set_uniform("fov", scene_cam.m_fov);
 		/**/ortho_cam.set_uniforms(blur_shader);
 		/**/GL_CALL(glEnable(GL_BLEND));
 		/**/
@@ -552,6 +578,7 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::LIN_DEPTH);
 			show_image(c_renderer::SELECTION);
 			show_image(c_renderer::AO);
+			show_image(c_renderer::AO2);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Light"))
@@ -725,6 +752,7 @@ void c_renderer::drawGUI()
 		}
 		if (ImGui::TreeNode("Blur"))
 		{
+			ImGui::SliderInt("Blur AO Iterations", &m_render_options.blur_ao_iterations, 0, 10);
 			ImGui::SliderInt("Blur Bloom Iterations", &m_render_options.blur_bloom_iterations, 0, 10);
 			ImGui::SliderInt("Blur General Iterations", &m_render_options.blur_general_iterations, 0, 10);
 			static const char* modes[] = { "7x7 Gaussian", "7x7 Gaussian Bilateral" };
@@ -775,6 +803,8 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return selection_buffer.m_color_texture[0];
 	case c_renderer::e_texture::AO:
 		return ao_buffer.m_color_texture[0];
+	case c_renderer::e_texture::AO2:
+		return ao_buffer.m_color_texture[1];
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_CONTROL:

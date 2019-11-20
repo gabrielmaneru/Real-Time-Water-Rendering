@@ -58,6 +58,7 @@ public:
 		LIN_DEPTH,
 		DEPTH,
 		AO,
+		AO2,
 		LIGHT,
 		BLUR_CONTROL,
 		BLOOM,
@@ -91,9 +92,9 @@ public:
 		float aa_coef_normal{ 0.05f };
 		float aa_coef_depth{ 0.25f };
 
-		bool  do_depth_of_field{ true };
+		bool  do_depth_of_field{ false };
 		float df_plane_focus{ 45.f };
-		float df_aperture{ 0.0f };
+		float df_aperture{ 30.0f };
 		bool  df_auto_focus{ false };
 
 		bool  do_motion_blur{ false };
@@ -102,9 +103,10 @@ public:
 		bool  do_bloom{ true };
 		float bl_coef{ 1.f };
 
+		int   blur_ao_iterations{ 4 };
 		int   blur_bloom_iterations{ 2 };
 		int   blur_general_iterations{ 4 };
-		int   blur_mode{ 0 };
+		int   blur_mode{ 1 };
 		float bilat_scale{ 100.0f };
 		float bilat_weight{ 0.5f };
 
@@ -112,8 +114,8 @@ public:
 		int   dc_mode{ 0 };
 		bool  dc_active{ true };
 
-		float ao_radius{ 8.0 };
-		float ao_angle_bias{ 0.1f };
+		float ao_radius{ 10.0 };
+		float ao_angle_bias{ 0.5f };
 		int	  ao_num_dirs{ 8 };
 		int	  ao_num_steps{ 8 };
 		//float ao_att{ 0.1f };

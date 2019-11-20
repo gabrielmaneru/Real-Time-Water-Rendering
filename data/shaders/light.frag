@@ -10,6 +10,7 @@ layout (binding = 0) uniform sampler2D position_txt;
 layout (binding = 1) uniform sampler2D albedo_txt;
 layout (binding = 2) uniform sampler2D metallic_txt;
 layout (binding = 3) uniform sampler2D normal_txt;
+layout (binding = 4) uniform sampler2D ao_txt;
 uniform vec3 l_pos;
 uniform vec3 l_dir = vec3(0);
 uniform vec3 la;
@@ -155,6 +156,7 @@ void render_ambient()
 	vec4 position_value = texture(position_txt, new_uvs);
 	vec4 metallic_value = texture(metallic_txt, new_uvs);
 	vec4 normal_value = texture(normal_txt, new_uvs);
+	float ao = texture(ao_txt, new_uvs).r;
 	if(normal_value.xyz == vec3(0,0,0))
 		discard;
 	if(normal_value.xyz == vec3(1,1,1))
@@ -174,7 +176,7 @@ void render_ambient()
 			kdir = dirlight(albedo, metallic, roughness, frag_pos, normal);
 		}
 
-		out_color = (ka*la)*albedo + kdir;
+		out_color = (ka*la*ao)*albedo + kdir;
 	}
 }
 

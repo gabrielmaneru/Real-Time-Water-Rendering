@@ -18,7 +18,6 @@ out float out_color;
 
 const float PI = 3.1415926535897932384626433832795;
 
-uniform bool noise;
 uniform vec2 random_offset;
 uniform float radius = 2.0;
 uniform float bias = 0.1;
@@ -121,6 +120,4 @@ void main()
 	}
 
 	out_color = 1-ao;
-	if(noise)
-		out_color = random_value;
 }
