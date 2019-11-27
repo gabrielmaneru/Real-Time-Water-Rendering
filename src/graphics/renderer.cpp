@@ -13,7 +13,6 @@ Author: Gabriel Ma�eru - gabriel.m
 #include <platform/window.h>
 #include <platform/editor.h>
 #include <scene/scene.h>
-#include <utils/generate_noise.h>
 #include <GL/gl3w.h>
 #include <imgui/imgui.h>
 #include <iostream>
@@ -70,7 +69,6 @@ bool c_renderer::init()
 		decal_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/decal.frag");
 		ocean_shader = new Shader_Program("./data/shaders/ocean.vert", "./data/shaders/ocean.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
-		ao_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/hbao.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 		color_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/color.frag");
@@ -118,19 +116,10 @@ bool c_renderer::init()
 	m_curves.push_back(new curve_catmull("swim2"));
 	
 	// Setup Cameras
-	scene_cam.m_eye = { 29,16,-4 };
+	scene_cam.m_eye = { 0,2,0 };
 	scene_cam.update();
 
-	randomize_noise();
-	int noise_size = 512u;
-	map2d<float> noise = generate_noise(noise_size, 16.0f, 4, 2.0f, 0.5f);
-
-	m_render_options.ao_noise = noise;
-	m_render_options.ao_noise.load();
-
-	ocean.build_from_map(noise, 0.01f, 1.f);
-	ocean.compute_normals();
-	ocean.load();
+	m_ocean.init();
 
 	skybox.loadCubemapFromFile({
 		Texture::filter_name("px.png").c_str(),
@@ -139,7 +128,15 @@ bool c_renderer::init()
 		Texture::filter_name("ny.png").c_str(),
 		Texture::filter_name("pz.png").c_str(),
 		Texture::filter_name("nz.png").c_str(),
-		});
+	 	});
+	//skybox.loadCubemapFromFile({
+	//	Texture::filter_name("right.png").c_str(),
+	//	Texture::filter_name("left.png").c_str(),
+	//	Texture::filter_name("top.png").c_str(),
+	//	Texture::filter_name("bottom.png").c_str(),
+	//	Texture::filter_name("front.png").c_str(),
+	//	Texture::filter_name("back.png").c_str(),
+	//	});
 	return true;
 }
 
@@ -154,13 +151,11 @@ void c_renderer::update()
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_R16F, GL_RED, GL_FLOAT, GL_NEAREST
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
-			});
-		ao_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
-			GL_R16F, GL_RED, GL_FLOAT, GL_LINEAR
 			});
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST
@@ -189,31 +184,55 @@ void c_renderer::update()
 		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		/**/GL_CALL(glViewport(0, 0, g_buffer.m_width, g_buffer.m_height));
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
-		/**/
 		/**/g_buffer_shader->use();
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0,
+		/**/GL_COLOR_ATTACHMENT0 + 1,
+		/**/GL_COLOR_ATTACHMENT0 + 3,
+		/**/GL_COLOR_ATTACHMENT0 + 4,
+		/**/GL_COLOR_ATTACHMENT0 + 5 });
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
+		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/
+		/**/glDepthMask(GL_FALSE);
+		/**/GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, g_buffer.m_fbo));
+		/**/GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, selection_buffer.m_fbo));
+		/**/GL_CALL(glBlitFramebuffer(0, g_buffer.m_width, 0, g_buffer.m_height,
+		/**/	0, g_buffer.m_width, 0, g_buffer.m_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST));
+		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 2 });
+		/**/texture_shader->use();
+		/**/ortho_cam.set_uniforms(texture_shader);
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(TEMP_DIFFUSE));
+		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
+		/**/glDepthMask(GL_TRUE);
+		/**/
+		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/ocean_shader->use();
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0,
+		/**/GL_COLOR_ATTACHMENT0 + 2,
+		/**/GL_COLOR_ATTACHMENT0 + 3,
+		/**/GL_COLOR_ATTACHMENT0 + 4,
+		/**/GL_COLOR_ATTACHMENT0 + 5 });
 		/**/scene_cam.set_uniforms(ocean_shader);
 		/**/ocean_shader->set_uniform("near", scene_cam.m_near);
 		/**/ocean_shader->set_uniform("far", scene_cam.m_far);
-		/**/ocean_shader->set_uniform("M", mat4(1));
-		/**///GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-		/**///ocean_shader->set_uniform("line_render", true);
-		/**///ocean.draw();
-		/**/GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-		/**/ocean_shader->set_uniform("line_render", false);
+		/**/ocean_shader->set_uniform("Vnorm", glm::inverse(glm::transpose(mat3(scene_cam.m_view))));
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
-		/**/ocean.draw();
+		/**/glActiveTexture(GL_TEXTURE1);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(TEMP_DEPTH));
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(TEMP_DIFFUSE));
+		/**/m_ocean.draw(ocean_shader);
 		/**/
 		/**/if(m_render_options.dc_active)
 		/**/{
 		/**/	if (m_render_options.dc_mode == 0)
-		/**/		GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/		GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/	decal_shader->use();
 		/**/	scene_cam.set_uniforms(decal_shader);
 		/**/	decal_shader->set_uniform("width", (float)g_buffer.m_width);
@@ -263,31 +282,6 @@ void c_renderer::update()
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(color_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
-		///////////////////////////////////////////////////////////////////////////
-	}
-	if (ao_shader->is_valid())
-	{
-		// AO Pass	///////////////////////////////////////////////////////
-		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, ao_buffer.m_fbo));
-		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/GL_CALL(glViewport(0, 0, ao_buffer.m_width, ao_buffer.m_height));
-		/**/ao_shader->use();
-		/**/ortho_cam.set_uniforms(ao_shader);
-		/**/ao_shader->set_uniform("width", (float)ao_buffer.m_width);
-		/**/ao_shader->set_uniform("noise", false);
-		/**/ao_shader->set_uniform("random_offset", vec2(random_float(-0.5f,0.5), random_float(-0.5, 0.5)));
-		/**/ao_shader->set_uniform("height", (float)ao_buffer.m_height);
-		/**/ao_shader->set_uniform("radius", m_render_options.ao_radius);
-		/**/ao_shader->set_uniform("bias", m_render_options.ao_angle_bias);
-		/**/ao_shader->set_uniform("num_dirs", m_render_options.ao_num_dirs);
-		/**/ao_shader->set_uniform("num_steps", m_render_options.ao_num_steps);
-		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
-		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
-		/**/glActiveTexture(GL_TEXTURE2);
-		/**/glBindTexture(GL_TEXTURE_2D, m_render_options.ao_noise.m_id);
-		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
 		///////////////////////////////////////////////////////////////////////////
 	}
 	if (light_shader->is_valid() && skybox_shader->is_valid())
@@ -503,7 +497,6 @@ void c_renderer::shutdown()
 	delete g_buffer_shader;
 	delete decal_shader;
 	delete light_shader;
-	delete ao_shader;
 	delete skybox_shader;
 	delete blur_shader;
 	delete texture_shader;
@@ -565,8 +558,6 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::METALLIC);
 			show_image(c_renderer::NORMAL);
 			show_image(c_renderer::LIN_DEPTH);
-			show_image(c_renderer::SELECTION);
-			show_image(c_renderer::AO);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Light"))
@@ -590,7 +581,7 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &ocean_shader, &light_shader, &skybox_shader, &ao_shader, &blur_shader, &texture_shader, &color_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &ocean_shader, &light_shader, &skybox_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
 		}
@@ -730,14 +721,6 @@ void c_renderer::drawGUI()
 			ImGui::SliderFloat("Brightness Threshold", &m_render_options.bl_coef, 0.0f, 2.0f);
 			ImGui::TreePop();
 		}
-		if (ImGui::TreeNode("Ambient Occlusion"))
-		{
-			ImGui::SliderFloat("Radius", &m_render_options.ao_radius, 0.01f, 20.0f);
-			ImGui::SliderFloat("Angle Bias", &m_render_options.ao_angle_bias, 0.00f, glm::half_pi<float>());
-			ImGui::SliderInt("Num Dirs", &m_render_options.ao_num_dirs, 1, 20);
-			ImGui::SliderInt("Num Steps", &m_render_options.ao_num_steps, 1, 20);
-			ImGui::TreePop();
-		}
 		if (ImGui::TreeNode("Blur"))
 		{
 			ImGui::SliderInt("Blur Bloom Iterations", &m_render_options.blur_bloom_iterations, 0, 10);
@@ -775,20 +758,22 @@ GLuint c_renderer::get_texture(e_texture ref)
 	{
 	case c_renderer::e_texture::POSITION:
 		return g_buffer.m_color_texture[0]; 
-	case c_renderer::e_texture::DIFFUSE:
+	case c_renderer::e_texture::TEMP_DIFFUSE:
 		return g_buffer.m_color_texture[1];
-	case c_renderer::e_texture::METALLIC:
+	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[2];
-	case c_renderer::e_texture::NORMAL:
+	case c_renderer::e_texture::METALLIC:
 		return g_buffer.m_color_texture[3];
-	case c_renderer::e_texture::LIN_DEPTH:
+	case c_renderer::e_texture::NORMAL:
 		return g_buffer.m_color_texture[4];
+	case c_renderer::e_texture::LIN_DEPTH:
+		return g_buffer.m_color_texture[5];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:
 		return selection_buffer.m_color_texture[0];
-	case c_renderer::e_texture::AO:
-		return ao_buffer.m_color_texture[0];
+	case c_renderer::e_texture::TEMP_DEPTH:
+		return selection_buffer.m_depth_texture;
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_CONTROL:

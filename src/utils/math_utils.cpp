@@ -45,6 +45,11 @@ int floor_float(const float & value)
 	return static_cast<int>(value);
 }
 
+int ceil_float(const float & value)
+{
+	return static_cast<int>(glm::ceil(value));
+}
+
 float random_float(float min, float max)
 {
 	static bool init{ false };

@@ -1,6 +1,7 @@
 #pragma once
 #include <assert.h>
 #include <vector>
+#include <utils/math_utils.h>
 #include <functional>
 template <typename TYPE>
 struct map2d
@@ -11,6 +12,7 @@ struct map2d
 	void clear(TYPE default_value);
 	void loop(std::function<TYPE(size_t, size_t, TYPE)> loop_function);
 	TYPE get(size_t x, size_t y)const;
+	TYPE get_linear(vec2 xy)const;
 	void set(size_t x, size_t y, TYPE value);
 	TYPE get(size_t idx)const;
 	void set(size_t idx, TYPE value);
@@ -56,6 +58,22 @@ inline TYPE map2d<TYPE>::get(size_t x, size_t y) const
 {
 	assert(x >= 0 && y >= 0 && x < m_width && y < m_height);
 	return m_values[y * m_width + x];
+}
+
+template<typename TYPE>
+inline TYPE map2d<TYPE>::get_linear(vec2 xy) const
+{
+	assert(xy.x >= 0.0f && xy.y >= 0.0f && xy.x <= (float)m_width && xy.y <= (float)m_height);
+	TYPE v_0_0 = m_values[floor_float(xy.y)*m_width + floor_float(xy.x)];
+	TYPE v_0_1 = m_values[ceil_float(xy.y)*m_width + floor_float(xy.x)];
+	TYPE v_1_0 = m_values[floor_float(xy.y)*m_width + ceil_float(xy.x)];
+	TYPE v_1_1 = m_values[ceil_float(xy.y)*m_width + ceil_float(xy.x)];
+	float x_f = xy.x - floorf(xy.x);
+	float y_f = xy.y - floorf(xy.y);
+
+	TYPE l = lerp<TYPE>(v_0_0, v_0_1, y_f);
+	TYPE r = lerp<TYPE>(v_1_0, v_1_1, y_f);
+	return lerp(l, r, x_f);
 }
 
 template<typename TYPE>

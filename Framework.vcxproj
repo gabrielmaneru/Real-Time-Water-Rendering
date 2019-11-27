@@ -158,6 +158,7 @@
     <ClCompile Include="src\graphics\material.cpp" />
     <ClCompile Include="src\graphics\mesh.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
+    <ClCompile Include="src\graphics\ocean.cpp" />
     <ClCompile Include="src\graphics\ortho_camera.cpp" />
     <ClCompile Include="src\graphics\raw_mesh.cpp" />
     <ClCompile Include="src\graphics\raw_texture.cpp" />
@@ -507,6 +508,7 @@
     <ClInclude Include="dependencies\include\stb_image\stb_image.h" />
     <ClInclude Include="dependencies\include\stb_image\stb_image_write.h" />
     <ClInclude Include="src\graphics\curve.h" />
+    <ClInclude Include="src\graphics\ocean.h" />
     <ClInclude Include="src\graphics\raw_mesh.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
     <ClInclude Include="src\scene\decal.h" />
@@ -540,7 +542,6 @@
     <None Include="data\shaders\basic.vert" />
     <None Include="data\shaders\color.frag" />
     <None Include="data\shaders\decal.frag" />
-    <None Include="data\shaders\hbao.frag" />
     <None Include="data\shaders\light.frag" />
     <None Include="data\shaders\g_buffer.frag" />
     <None Include="data\shaders\ocean.frag" />

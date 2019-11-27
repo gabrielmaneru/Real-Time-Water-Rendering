@@ -14,8 +14,7 @@ Author: Gabriel Ma�eru - gabriel.m
 #include "model.h"
 #include "framebuffer.h"
 #include "curve.h"
-#include "raw_texture.h"
-#include "raw_mesh.h"
+#include "ocean.h"
 #include <glm/glm.h>
 
 class c_renderer
@@ -26,7 +25,6 @@ public:
 	Shader_Program* decal_shader;
 	Shader_Program* ocean_shader;
 	Shader_Program* light_shader;
-	Shader_Program* ao_shader;
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
 	Shader_Program* color_shader;
@@ -45,7 +43,6 @@ public:
 	// Framebuffer
 	framebuffer g_buffer;
 	framebuffer selection_buffer;
-	framebuffer ao_buffer;
 	framebuffer light_buffer;
 	framebuffer blur_control_buffer;
 	framebuffer bloom_buffer;
@@ -53,13 +50,14 @@ public:
 
 	enum e_texture {
 		DIFFUSE,
+		TEMP_DIFFUSE,
 		POSITION,
 		METALLIC,
 		NORMAL,
 		SELECTION,
 		LIN_DEPTH,
 		DEPTH,
-		AO,
+		TEMP_DEPTH,
 		LIGHT,
 		BLUR_CONTROL,
 		BLOOM,
@@ -69,7 +67,7 @@ public:
 	}m_txt_cur{ BLUR };
 
 	Texture skybox;
-	raw_mesh ocean;
+	Ocean m_ocean;
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
 	void update_max_draw_call_count();
@@ -113,14 +111,6 @@ public:
 		float dc_angle{ 0.8f };
 		int   dc_mode{ 0 };
 		bool  dc_active{ true };
-
-		float ao_radius{ 8.0 };
-		float ao_angle_bias{ 0.1f };
-		int	  ao_num_dirs{ 8 };
-		int	  ao_num_steps{ 8 };
-		//float ao_att{ 0.1f };
-		//float ao_constract{ 0.1f };
-		raw_texture_single ao_noise;
 	}m_render_options;
 
 	friend class c_editor;
