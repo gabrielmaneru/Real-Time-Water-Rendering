@@ -10,11 +10,10 @@ struct noise_layer
 		float speed, float height, vec2 dir);
 	noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count,
 		float speed, float height);
-	void build_layers();
+	void build_layers(size_t resolution);
 	void update_time(float dt);
 	void apply_height(std::vector<vec3>& vertices);
 
-	const size_t m_resolution;
 	const float m_noise_scale;
 	const int m_iterations;
 	const float m_complexity;
@@ -37,6 +36,8 @@ struct Ocean
 	void drawGUI();
 	void update_mesh();
 
+	size_t m_resolution{ 256u };
+	float m_mesh_scale{ 1.f };
 	std::vector<noise_layer*> m_noise;
 	raw_mesh m_mesh;
 };

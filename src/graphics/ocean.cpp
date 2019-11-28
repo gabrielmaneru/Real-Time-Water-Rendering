@@ -6,25 +6,25 @@
 #include <utils/generate_noise.h>
 #include <iostream>
 noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count, float speed, float height, vec2 dir)
-	: m_resolution(resolution), m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
+	: m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
 	m_layer_count(layer_count), m_speed(speed), m_height(height), m_mode(0u), m_dirs(straight(dir, resolution)), m_direction(dir), m_time(0.0f)
 {
-	build_layers();
+	build_layers(resolution);
 }
 
 noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count, float speed, float height)
-	: m_resolution(resolution), m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
+	: m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
 	m_layer_count(layer_count), m_speed(speed), m_height(height), m_mode(1u), m_dirs(whirlpool(resolution)), m_time(0.0f)
 {
-	build_layers();
+	build_layers(resolution);
 }
 
-void noise_layer::build_layers()
+void noise_layer::build_layers(size_t resolution)
 {
 	m_noise_layers.clear();
 	randomize_noise();
 	for (size_t i = 0; i < m_layer_count; i++)
-		m_noise_layers.emplace_back(generate_noise(m_resolution, ((float)m_resolution)*m_noise_scale, m_iterations, m_complexity, 1.0f / m_complexity));
+		m_noise_layers.emplace_back(generate_noise(resolution, ((float)resolution)*m_noise_scale, m_iterations, m_complexity, 1.0f / m_complexity));
 }
 
 void noise_layer::update_time(float dt)
@@ -59,7 +59,8 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 			vec2 dir = m_dirs.get(x, y);
 			float height_scale = glm::length(dir);
 			height_scale = 1 - glm::pow(1 - height_scale, 4);
-			dir = glm::normalize(dir);
+			if(height_scale > 0.0f)
+				dir = glm::normalize(dir);
 
 			float value = 0.0f;
 			for(size_t i = 0; i < m_layer_count; i++)
@@ -77,11 +78,10 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 
 void Ocean::init()
 {
-	size_t res = 256u;
-	m_noise.emplace_back(new noise_layer{ res, 0.1f, 4, 2.0f,
-		3u, 2.0f, 2.0f });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
+		3u, 0.5f, 5.0f });
 
-	m_mesh.build_plane(m_noise[0]->m_resolution, 0.1f);
+	m_mesh.build_plane(m_resolution, m_mesh_scale);
 	m_mesh.compute_normals();
 	m_mesh.load();
 }
@@ -101,18 +101,20 @@ void Ocean::draw(Shader_Program* shader)
 
 void Ocean::drawGUI()
 {
+	bool reset_all{ false };
+	if (ImGui::InputUInt("Resolution", &m_resolution)) reset_all = true;
+	if (ImGui::InputFloat("Mesh Scale", &m_mesh_scale)) reset_all = true;
+	if(reset_all)
+		m_mesh.build_plane(m_resolution, m_mesh_scale);
+
 	for (size_t l = 0; l < m_noise.size(); l++)
 	{
 		std::string name = "Layer " + std::to_string(l);
+		noise_layer* layer = m_noise[l];
 		if (ImGui::TreeNode(name.c_str()))
 		{
-			noise_layer* layer = m_noise[l];
-
 			ImGui::Text("Noise Properties");
 			bool reset_noise{ false };
-
-			size_t res =layer->m_resolution;
-			if (ImGui::InputUInt("Resolution", &res)) reset_noise = true;
 
 			float n_scale = layer->m_noise_scale;
 			if (ImGui::InputFloat("Noise Scale", &n_scale)) reset_noise = true;
@@ -126,14 +128,14 @@ void Ocean::drawGUI()
 			size_t l_count = layer->m_layer_count;
 			if (ImGui::InputUInt("Interpolation Layer Count", &l_count)) reset_noise = true;
 
-			if (reset_noise)
+			if (reset_noise || reset_all)
 			{
 				noise_layer * next{nullptr};
 				if (layer->m_mode == 0)
-					next = new noise_layer{ res, n_scale, it, complex,
+					next = new noise_layer{ m_resolution, n_scale, it, complex,
 						l_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0)};
 				else if(layer->m_mode == 1)
-					next = new noise_layer{ res, n_scale, it, complex,
+					next = new noise_layer{ m_resolution, n_scale, it, complex,
 						l_count, layer->m_speed, layer->m_height };
 				delete layer;
 				layer = m_noise[l] = next;
@@ -141,7 +143,7 @@ void Ocean::drawGUI()
 
 			ImGui::NewLine();
 			ImGui::NewLine();
-			ImGui::SliderFloat("Speed", &layer->m_speed, -10.f, 10.f);
+			ImGui::SliderFloat("Speed", &layer->m_speed, 0.f, 5.f);
 			ImGui::SliderFloat("Height", &layer->m_height, 0.f, 10.f);
 
 			const char * modes[] = { "Straight", "Whirpool" };
@@ -153,18 +155,30 @@ void Ocean::drawGUI()
 					{
 						layer->m_mode = n;
 						if (layer->m_mode == 0)
-							layer->m_dirs = straight(layer->m_direction, res);
+							layer->m_dirs = straight(layer->m_direction, m_resolution);
 						if (layer->m_mode == 1)
-							layer->m_dirs = whirlpool(res);
+							layer->m_dirs = whirlpool(m_resolution);
 					}
 				}
 				ImGui::EndCombo();
 			}
 			if (layer->m_mode == 0)
 				if(ImGui::SliderFloat2("Direction", &layer->m_direction.x, -1.0f, 1.0f))
-					layer->m_dirs = straight(layer->m_direction, res);
+					layer->m_dirs = straight(layer->m_direction, m_resolution);
 
 			ImGui::TreePop();
+		}
+		else if (reset_all)
+		{
+			noise_layer * next{ nullptr };
+			if (layer->m_mode == 0)
+				next = new noise_layer{ m_resolution, layer->m_noise_scale, layer->m_iterations, layer->m_complexity,
+					layer->m_layer_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0) };
+			else if (layer->m_mode == 1)
+				next = new noise_layer{ m_resolution, layer->m_noise_scale, layer->m_iterations, layer->m_complexity,
+					layer->m_layer_count, layer->m_speed, layer->m_height };
+			delete layer;
+			layer = m_noise[l] = next;
 		}
 	}
 }

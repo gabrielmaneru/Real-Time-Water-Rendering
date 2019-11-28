@@ -48,7 +48,7 @@ void main()
 		return;
 	}
 
-	float water_len = clamp(length(vPosition-get_vpos()),0.1,1.0);
+	float water_len = clamp(length(vPosition-get_vpos())/5,0.1,1.0);
 	vec3 view = normalize(vPosition);
 	vec3 to_sky = normalize(reflect(view, vNormal));
 	vec3 to_sky_w = normalize(inverse(Vnorm)*to_sky);
