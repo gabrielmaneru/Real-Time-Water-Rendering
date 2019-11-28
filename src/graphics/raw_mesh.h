@@ -16,7 +16,7 @@ struct raw_mesh
 	void load();
 	void free();
 	void draw();
-	void build_from_map(const map2d<float>& map, float size, float height);
+	void build_plane(int scale, float size);
 	void compute_normals();
 
 	unsigned int m_vao{ 0 };

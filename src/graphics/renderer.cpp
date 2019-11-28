@@ -116,7 +116,7 @@ bool c_renderer::init()
 	m_curves.push_back(new curve_catmull("swim2"));
 	
 	// Setup Cameras
-	scene_cam.m_eye = { 0,2,0 };
+	scene_cam.m_eye = { 5,5,0 };
 	scene_cam.update();
 
 	m_ocean.init();
