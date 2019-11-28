@@ -740,6 +740,12 @@ void c_renderer::drawGUI()
 		}
 		ImGui::TreePop();
 	}
+
+	if (ImGui::TreeNode("Ocean"))
+	{
+		m_ocean.drawGUI();
+		ImGui::TreePop();
+	}
 }
 
 void c_renderer::set_debug_color(vec3 c)

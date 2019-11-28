@@ -2,14 +2,19 @@
 #include "gl_error.h"
 #include <platform/window.h>
 #include <GL/gl3w.h>
+#include <imgui/imgui.h>
 #include <utils/generate_noise.h>
 #include <iostream>
-
-
-noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity,
-	size_t layer_count, float speed, map2d<vec2> dirs, float height)
+noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count, float speed, float height, vec2 dir)
 	: m_resolution(resolution), m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
-	m_layer_count(layer_count), m_speed(speed), m_dirs(dirs), m_height(height), m_time(0.0f)
+	m_layer_count(layer_count), m_speed(speed), m_height(height), m_mode(0u), m_dirs(straight(dir, resolution)), m_direction(dir), m_time(0.0f)
+{
+	build_layers();
+}
+
+noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count, float speed, float height)
+	: m_resolution(resolution), m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
+	m_layer_count(layer_count), m_speed(speed), m_height(height), m_mode(1u), m_dirs(whirlpool(resolution)), m_time(0.0f)
 {
 	build_layers();
 }
@@ -73,10 +78,10 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 void Ocean::init()
 {
 	size_t res = 256u;
-	m_noise.emplace_back(noise_layer{ res, 0.1f, 4, 2.0f,
-		3u, 2.0f, whirlpool(res), 2.0f });
+	m_noise.emplace_back(new noise_layer{ res, 0.1f, 4, 2.0f,
+		3u, 2.0f, 2.0f });
 
-	m_mesh.build_plane(m_noise[0].m_resolution, 0.1f);
+	m_mesh.build_plane(m_noise[0]->m_resolution, 0.1f);
 	m_mesh.compute_normals();
 	m_mesh.load();
 }
@@ -94,6 +99,76 @@ void Ocean::draw(Shader_Program* shader)
 	m_mesh.draw();
 }
 
+void Ocean::drawGUI()
+{
+	for (size_t l = 0; l < m_noise.size(); l++)
+	{
+		std::string name = "Layer " + std::to_string(l);
+		if (ImGui::TreeNode(name.c_str()))
+		{
+			noise_layer* layer = m_noise[l];
+
+			ImGui::Text("Noise Properties");
+			bool reset_noise{ false };
+
+			size_t res =layer->m_resolution;
+			if (ImGui::InputUInt("Resolution", &res)) reset_noise = true;
+
+			float n_scale = layer->m_noise_scale;
+			if (ImGui::InputFloat("Noise Scale", &n_scale)) reset_noise = true;
+
+			int it = layer->m_iterations;
+			if (ImGui::InputInt("Iterations", &it))reset_noise = true;
+
+			float complex = layer->m_complexity;
+			if (ImGui::InputFloat("Iteration Complexity", &complex)) reset_noise = true;
+
+			size_t l_count = layer->m_layer_count;
+			if (ImGui::InputUInt("Interpolation Layer Count", &l_count)) reset_noise = true;
+
+			if (reset_noise)
+			{
+				noise_layer * next{nullptr};
+				if (layer->m_mode == 0)
+					next = new noise_layer{ res, n_scale, it, complex,
+						l_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0)};
+				else if(layer->m_mode == 1)
+					next = new noise_layer{ res, n_scale, it, complex,
+						l_count, layer->m_speed, layer->m_height };
+				delete layer;
+				layer = m_noise[l] = next;
+			}
+
+			ImGui::NewLine();
+			ImGui::NewLine();
+			ImGui::SliderFloat("Speed", &layer->m_speed, -10.f, 10.f);
+			ImGui::SliderFloat("Height", &layer->m_height, 0.f, 10.f);
+
+			const char * modes[] = { "Straight", "Whirpool" };
+			if (ImGui::BeginCombo("Direction Modes", modes[layer->m_mode]))
+			{
+				for (size_t n = 0; n < 2; n++)
+				{
+					if (ImGui::Selectable(modes[n], layer->m_mode == n))
+					{
+						layer->m_mode = n;
+						if (layer->m_mode == 0)
+							layer->m_dirs = straight(layer->m_direction, res);
+						if (layer->m_mode == 1)
+							layer->m_dirs = whirlpool(res);
+					}
+				}
+				ImGui::EndCombo();
+			}
+			if (layer->m_mode == 0)
+				if(ImGui::SliderFloat2("Direction", &layer->m_direction.x, -1.0f, 1.0f))
+					layer->m_dirs = straight(layer->m_direction, res);
+
+			ImGui::TreePop();
+		}
+	}
+}
+
 void Ocean::update_mesh()
 {
 	for (auto& v : m_mesh.vertices)
@@ -103,8 +178,8 @@ void Ocean::update_mesh()
 
 	for (auto& l : m_noise)
 	{
-		l.apply_height(m_mesh.vertices);
-		l.update_time(dt);
+		l->apply_height(m_mesh.vertices);
+		l->update_time(dt);
 	}
 
 	m_mesh.compute_normals();

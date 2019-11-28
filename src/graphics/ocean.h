@@ -6,9 +6,10 @@
 
 struct noise_layer
 {
-	noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, 
-		size_t layer_count, float speed, map2d<vec2> dirs, float height);
-
+	noise_layer(size_t resolution, float noise_scale, int iterations, float complexity,	size_t layer_count,
+		float speed, float height, vec2 dir);
+	noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count,
+		float speed, float height);
 	void build_layers();
 	void update_time(float dt);
 	void apply_height(std::vector<vec3>& vertices);
@@ -20,8 +21,11 @@ struct noise_layer
 	const size_t m_layer_count;
 
 	float m_speed;
-	map2d<vec2> m_dirs;
 	float m_height;
+	size_t m_mode;
+	map2d<vec2> m_dirs;
+	vec2 m_direction{ 0.0f, 1.0f };
+
 	float m_time;
 	std::vector<map2d<float>> m_noise_layers;
 };
@@ -30,9 +34,10 @@ struct Ocean
 {
 	void init();
 	void draw(Shader_Program*);
+	void drawGUI();
 	void update_mesh();
 
-	std::vector<noise_layer> m_noise;
+	std::vector<noise_layer*> m_noise;
 	raw_mesh m_mesh;
 };
 map2d<vec2> straight(vec2 dir, size_t scale);
