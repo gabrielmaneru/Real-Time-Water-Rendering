@@ -56,7 +56,7 @@ void vectorial_camera::release_target()
 }
 
 constexpr float MOUSE_SENSITIVITY{ 0.25f };
-constexpr float MOUSE_SPEED{ 0.005f };
+constexpr float MOUSE_SPEED{ 0.5f };
 constexpr float ROTATION_SPEED{ 0.005f };
 void vectorial_camera::update_free_mode()
 {

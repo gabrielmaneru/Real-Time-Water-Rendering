@@ -107,6 +107,7 @@ bool c_renderer::init()
 
 		// Complex
 		//m_models.push_back(new Model("./data/meshes/sponza.obj"));
+		m_models.push_back(new Model("./data/meshes/terrain.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	
