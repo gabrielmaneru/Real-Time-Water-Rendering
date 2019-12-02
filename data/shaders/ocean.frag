@@ -32,11 +32,11 @@ vec3 get_vpos()
 	view_point /= view_point.w;
 	return view_point.xyz;
 }
-vec4 get_prev_diff()
+vec4 get_prev_diff(vec2 dUv)
 {
 	vec2 size = vec2(textureSize(diffuse_txt,0));
 	vec2 txt_uvs = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y);
-	return texture(diffuse_txt, txt_uvs);
+	return texture(diffuse_txt, txt_uvs+dUv);
 }
 
 void main()
@@ -48,26 +48,28 @@ void main()
 		return;
 	}
 
-	const float sea_view = 10.0f;
-	float water_len = clamp(pow(length(vPosition-get_vpos())/sea_view,2),0.1,1.0);
-	vec3 view = normalize(vPosition);
-	vec3 to_sky = normalize(reflect(view, vNormal));
-	vec3 to_sky_w = normalize(inverse(Vnorm)*to_sky);
+	float water_len = length(vPosition-get_vpos());
+	const float sea_view = 50.0f;
+	float water_len_factor = pow(clamp(water_len/sea_view,0.0,1.0),0.5);
+	vec3 water_color = vec3(0,0.5,1);
 
-	float color_scale = 2.0;
-	vec3 sky_color = color_scale*texture(skybox_txt, to_sky_w).rgb;
-	vec3 water_color = color_scale*vec3(0,1,2);
-	if(to_sky_w.y < 0) 
-		sky_color = vec3(color_scale);
+	vec3 vView = normalize(vPosition);
+	vec3 vReflect_View = normalize(reflect(vView, vNormal));
+	vec3 wReflect_View = normalize(inverse(Vnorm)*vReflect_View);
+	vec3 sky_color = texture(skybox_txt, wReflect_View).rgb;
+	if(wReflect_View.y < 0) 
+		sky_color = vec3(0.9);
 
-	vec3 diffuse = mix(sky_color,water_color,0.4)/water_len;
-	vec4 prev_diff = get_prev_diff();
+	vec3 vRefract_View = normalize(refract(vView, vNormal, 0.75));
+	vec2 delta_Refract = vRefract_View.xy-vView.xy;
+	vec4 prev_diff = get_prev_diff(delta_Refract*water_len*0.005);
+	vec3 prev_color = prev_diff.xyz;
 
-	if(prev_diff.a > 0.5)
-		diffuse = mix(prev_diff.rgb,diffuse,water_len);
+	vec3 diffuse = mix(prev_color,water_color,water_len_factor);//+sky_color;
+	//diffuse = vec3(prev_color,0.0);
+
 
 	attr_albedo = vec4(diffuse, 1.0);
-
 	attr_metallic = vec4(vec3(0.0), 1.0);
 	attr_normal = vec4(normalize(vNormal), 1.0);
 	attr_position = vec4(vPosition, 2.0);

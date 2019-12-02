@@ -152,7 +152,6 @@ void c_renderer::update()
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
-			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_R16F, GL_RED, GL_FLOAT, GL_NEAREST
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
@@ -186,50 +185,11 @@ void c_renderer::update()
 		/**/GL_CALL(glViewport(0, 0, g_buffer.m_width, g_buffer.m_height));
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/g_buffer_shader->use();
-		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0,
-		/**/GL_COLOR_ATTACHMENT0 + 1,
-		/**/GL_COLOR_ATTACHMENT0 + 3,
-		/**/GL_COLOR_ATTACHMENT0 + 4,
-		/**/GL_COLOR_ATTACHMENT0 + 5 });
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
-		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
-		/**/
-		/**/glDepthMask(GL_FALSE);
-		/**/GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, g_buffer.m_fbo));
-		/**/GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, selection_buffer.m_fbo));
-		/**/GL_CALL(glBlitFramebuffer(0, g_buffer.m_width, 0, g_buffer.m_height,
-		/**/	0, g_buffer.m_width, 0, g_buffer.m_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST));
-		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
-		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 2 });
-		/**/texture_shader->use();
-		/**/ortho_cam.set_uniforms(texture_shader);
-		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(TEMP_DIFFUSE));
-		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
-		/**/glDepthMask(GL_TRUE);
-		/**/
-		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
-		/**/ocean_shader->use();
-		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0,
-		/**/GL_COLOR_ATTACHMENT0 + 2,
-		/**/GL_COLOR_ATTACHMENT0 + 3,
-		/**/GL_COLOR_ATTACHMENT0 + 4,
-		/**/GL_COLOR_ATTACHMENT0 + 5 });
-		/**/scene_cam.set_uniforms(ocean_shader);
-		/**/ocean_shader->set_uniform("near", scene_cam.m_near);
-		/**/ocean_shader->set_uniform("far", scene_cam.m_far);
-		/**/ocean_shader->set_uniform("Vnorm", glm::inverse(glm::transpose(mat3(scene_cam.m_view))));
-		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
-		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(TEMP_DEPTH));
-		/**/glActiveTexture(GL_TEXTURE2);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(TEMP_DIFFUSE));
-		/**/m_ocean.draw(ocean_shader);
-		/**/
+
 		/**/if(m_render_options.dc_active)
 		/**/{
 		/**/	if (m_render_options.dc_mode == 0)
@@ -257,31 +217,6 @@ void c_renderer::update()
 		/**/	scene->draw_debug_lights(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
 		/**/	scene->draw_debug_curves(g_buffer_shader);
-		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
-		///////////////////////////////////////////////////////////////////////////
-	}
-	if (color_shader->is_valid())
-	{
-		// Selection Pass	///////////////////////////////////////////////////////
-		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, selection_buffer.m_fbo));
-		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/GL_CALL(glViewport(0, 0, selection_buffer.m_width, selection_buffer.m_height));
-		/**/color_shader->use();
-		/**/scene_cam.set_uniforms(color_shader);
-		/**/scene_cam.set_prev_uniforms(color_shader);
-		/**/color_shader->set_uniform("mb_camera_motion", m_render_options.mb_camera_blur);
-		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
-		/**/update_max_draw_call_count();
-		/**/for (auto p_obj : scene->m_objects)
-		/**/ {
-		/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
-		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
-		/**/	color_shader->set_uniform("color", compute_selection_color());
-		/**/	if (p_obj->m_model != nullptr)
-		/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
-		/**/}
-		/**/if (m_render_options.render_lights)
-		/**/	scene->draw_debug_lights(color_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -333,6 +268,67 @@ void c_renderer::update()
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/GL_CALL(glDepthMask(GL_TRUE));
 		/**/GL_CALL(glDisable(GL_BLEND));
+		///////////////////////////////////////////////////////////////////////////
+	}
+	if (ocean_shader->is_valid())
+	{
+		/**/GL_CALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, g_buffer.m_fbo));
+		/**/GL_CALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, selection_buffer.m_fbo));
+		/**/GL_CALL(glBlitFramebuffer(0, g_buffer.m_width, 0, g_buffer.m_height,
+		/**/	0, g_buffer.m_width, 0, g_buffer.m_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST));
+
+		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
+		/**/texture_shader->use();
+		/**/ortho_cam.set_uniforms(texture_shader);
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
+		/**/
+		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/ocean_shader->use();
+		/**/scene_cam.set_uniforms(ocean_shader);
+		/**/ocean_shader->set_uniform("near", scene_cam.m_near);
+		/**/ocean_shader->set_uniform("far", scene_cam.m_far);
+		/**/ocean_shader->set_uniform("Vnorm", glm::inverse(glm::transpose(mat3(scene_cam.m_view))));
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
+		/**/glActiveTexture(GL_TEXTURE1);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(COPY_DEPTH));
+		/**/glActiveTexture(GL_TEXTURE2);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/m_ocean.draw(ocean_shader);
+		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
+		/**/
+		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
+		/**/texture_shader->use();
+		/**/ortho_cam.set_uniforms(texture_shader);
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
+		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
+	}
+	if (color_shader->is_valid())
+	{
+		// Selection Pass	///////////////////////////////////////////////////////
+		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, selection_buffer.m_fbo));
+		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		/**/GL_CALL(glViewport(0, 0, selection_buffer.m_width, selection_buffer.m_height));
+		/**/color_shader->use();
+		/**/scene_cam.set_uniforms(color_shader);
+		/**/scene_cam.set_prev_uniforms(color_shader);
+		/**/color_shader->set_uniform("mb_camera_motion", m_render_options.mb_camera_blur);
+		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
+		/**/update_max_draw_call_count();
+		/**/for (auto p_obj : scene->m_objects)
+		/**/ {
+		/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
+		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
+		/**/	color_shader->set_uniform("color", compute_selection_color());
+		/**/	if (p_obj->m_model != nullptr)
+		/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
+		/**/}
+		/**/if (m_render_options.render_lights)
+		/**/	scene->draw_debug_lights(color_shader);
+		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
 	if (blur_shader->is_valid())
@@ -764,22 +760,20 @@ GLuint c_renderer::get_texture(e_texture ref)
 	switch (ref)
 	{
 	case c_renderer::e_texture::POSITION:
-		return g_buffer.m_color_texture[0]; 
-	case c_renderer::e_texture::TEMP_DIFFUSE:
-		return g_buffer.m_color_texture[1];
+		return g_buffer.m_color_texture[0];
 	case c_renderer::e_texture::DIFFUSE:
-		return g_buffer.m_color_texture[2];
+		return g_buffer.m_color_texture[1];
 	case c_renderer::e_texture::METALLIC:
-		return g_buffer.m_color_texture[3];
+		return g_buffer.m_color_texture[2];
 	case c_renderer::e_texture::NORMAL:
-		return g_buffer.m_color_texture[4];
+		return g_buffer.m_color_texture[3];
 	case c_renderer::e_texture::LIN_DEPTH:
-		return g_buffer.m_color_texture[5];
+		return g_buffer.m_color_texture[4];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:
 		return selection_buffer.m_color_texture[0];
-	case c_renderer::e_texture::TEMP_DEPTH:
+	case c_renderer::e_texture::COPY_DEPTH:
 		return selection_buffer.m_depth_texture;
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];

@@ -251,6 +251,7 @@ bool c_scene::init()
 	tr.set_scl(vec3(1.f));
 
 	light_data ld;
+	ld.m_diffuse={ 0.4f, 0.4f, 0.4f };
 	m_dir_light = new dir_light(tr, ld);
 
 	return true;

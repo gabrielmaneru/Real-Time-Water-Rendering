@@ -50,14 +50,13 @@ public:
 
 	enum e_texture {
 		DIFFUSE,
-		TEMP_DIFFUSE,
 		POSITION,
 		METALLIC,
 		NORMAL,
 		SELECTION,
 		LIN_DEPTH,
 		DEPTH,
-		TEMP_DEPTH,
+		COPY_DEPTH,
 		LIGHT,
 		BLUR_CONTROL,
 		BLOOM,
