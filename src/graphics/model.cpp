@@ -113,7 +113,7 @@ void Model::draw(Shader_Program * shader, animator * m_animator, bool use_mat) c
 	if (m_bones.size())
 	{
 		// Update Final Transformations of Bones
-		update(m_hierarchy,m_animator, mat4(1.0f));
+		update_node_hierarchy(m_hierarchy,m_animator, mat4(1.0f));
 
 		// Load Bone transformations
 		for (size_t i = 0; i < m_bones.size(); i++)
@@ -400,7 +400,7 @@ Texture Model::loadMaterialTexture(aiMaterial * material, aiTextureType type)
 	return texture;
 }
 
-void Model::update(node * node_, animator * m_animator, mat4 parent) const
+void Model::update_node_hierarchy(node * node_, animator * m_animator, mat4 parent) const
 {
 	mat4 node_transformation = node_->m_transformation;
 	if (m_animator && m_animations.size() > 0 && m_animator->m_current_animation != -1 && m_animator->m_current_animation < m_animations.size())
@@ -431,7 +431,7 @@ void Model::update(node * node_, animator * m_animator, mat4 parent) const
 	}
 
 	for (auto c : node_->m_children)
-		update(c, m_animator, node_transformation);
+		update_node_hierarchy(c, m_animator, node_transformation);
 }
 
 node::node(node * parent)

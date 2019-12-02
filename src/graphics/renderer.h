@@ -24,7 +24,6 @@ public:
 	Shader_Program* g_buffer_shader;
 	Shader_Program* decal_shader;
 	Shader_Program* light_shader;
-	Shader_Program* ao_shader;
 	Shader_Program* blur_shader;
 	Shader_Program* texture_shader;
 	Shader_Program* color_shader;
@@ -85,6 +84,7 @@ public:
 	struct Options
 	{
 		bool render_lights{ false };
+		bool render_bones{ true };
 		bool render_curves{ false };
 
 		bool  do_antialiasing{ true };
@@ -110,14 +110,6 @@ public:
 		float dc_angle{ 0.8f };
 		int   dc_mode{ 0 };
 		bool  dc_active{ true };
-
-		float ao_radius{ 8.0 };
-		float ao_angle_bias{ 0.1f };
-		int	  ao_num_dirs{ 8 };
-		int	  ao_num_steps{ 8 };
-		//float ao_att{ 0.1f };
-		//float ao_constract{ 0.1f };
-		raw_texture_single ao_noise;
 	}m_render_options;
 
 	friend class c_editor;

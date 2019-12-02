@@ -69,7 +69,6 @@ bool c_renderer::init()
 		g_buffer_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/g_buffer.frag");
 		decal_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/decal.frag");
 		light_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/light.frag");
-		ao_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/hbao.frag");
 		blur_shader	= new Shader_Program("./data/shaders/basic.vert", "./data/shaders/blur.frag");
 		texture_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/texture.frag");
 		color_shader = new Shader_Program("./data/shaders/basic.vert", "./data/shaders/color.frag");
@@ -108,21 +107,16 @@ bool c_renderer::init()
 
 		// Complex
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
+		m_models.push_back(new Model("./data/meshes/sneak.dae", {"plastic","copper" }));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	
 	// Curves
 	m_curves.push_back(new curve_catmull("walk"));
-	m_curves.push_back(new curve_catmull("swim"));
-	m_curves.push_back(new curve_catmull("swim2"));
 	
 	// Setup Cameras
 	scene_cam.m_eye = { 29,16,-4 };
 	scene_cam.update();
-
-	randomize_noise();
-	m_render_options.ao_noise = generate_noise(512, 1.0f, 1, 1.0f, 1.0f);
-	m_render_options.ao_noise.load();
 
 	skybox.loadCubemapFromFile({
 		Texture::filter_name("px.png").c_str(),
@@ -213,6 +207,8 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
+		/**/if (m_render_options.render_bones)
+		/**/	scene->draw_debug_bones(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
 		/**/	scene->draw_debug_curves(g_buffer_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
@@ -242,31 +238,6 @@ void c_renderer::update()
 		/**/if (m_render_options.render_lights)
 			/**/	scene->draw_debug_lights(color_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
-		///////////////////////////////////////////////////////////////////////////
-	}
-	if (ao_shader->is_valid())
-	{
-		// AO Pass	///////////////////////////////////////////////////////
-		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, ao_buffer.m_fbo));
-		/**/GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		/**/GL_CALL(glViewport(0, 0, ao_buffer.m_width, ao_buffer.m_height));
-		/**/ao_shader->use();
-		/**/ortho_cam.set_uniforms(ao_shader);
-		/**/ao_shader->set_uniform("width", (float)ao_buffer.m_width);
-		/**/ao_shader->set_uniform("noise", false);
-		/**/ao_shader->set_uniform("random_offset", vec2(random_float(-0.5f,0.5), random_float(-0.5, 0.5)));
-		/**/ao_shader->set_uniform("height", (float)ao_buffer.m_height);
-		/**/ao_shader->set_uniform("radius", m_render_options.ao_radius);
-		/**/ao_shader->set_uniform("bias", m_render_options.ao_angle_bias);
-		/**/ao_shader->set_uniform("num_dirs", m_render_options.ao_num_dirs);
-		/**/ao_shader->set_uniform("num_steps", m_render_options.ao_num_steps);
-		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
-		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(NORMAL));
-		/**/glActiveTexture(GL_TEXTURE2);
-		/**/glBindTexture(GL_TEXTURE_2D, m_render_options.ao_noise.m_id);
-		/**/m_models[2]->m_meshes[0]->draw(ao_shader);
 		///////////////////////////////////////////////////////////////////////////
 	}
 	if (light_shader->is_valid() && skybox_shader->is_valid())
@@ -482,7 +453,6 @@ void c_renderer::shutdown()
 	delete g_buffer_shader;
 	delete decal_shader;
 	delete light_shader;
-	delete ao_shader;
 	delete skybox_shader;
 	delete blur_shader;
 	delete texture_shader;
@@ -569,7 +539,7 @@ void c_renderer::drawGUI()
 	{
 		if (ImGui::Button("Recompile Shaders"))
 		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &skybox_shader, &ao_shader, &blur_shader, &texture_shader, &color_shader };
+			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &light_shader, &skybox_shader, &blur_shader, &texture_shader, &color_shader };
 			for (Shader_Program ** s : sh)
 				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
 		}
@@ -707,31 +677,6 @@ void c_renderer::drawGUI()
 		{
 			ImGui::Checkbox("Do Bloom", &m_render_options.do_bloom);
 			ImGui::SliderFloat("Brightness Threshold", &m_render_options.bl_coef, 0.0f, 2.0f);
-			ImGui::TreePop();
-		}
-		if (ImGui::TreeNode("Ambient Occlusion"))
-		{
-			ImGui::SliderFloat("Radius", &m_render_options.ao_radius, 0.01f, 20.0f);
-			ImGui::SliderFloat("Angle Bias", &m_render_options.ao_angle_bias, 0.00f, glm::half_pi<float>());
-			ImGui::SliderInt("Num Dirs", &m_render_options.ao_num_dirs, 1, 20);
-			ImGui::SliderInt("Num Steps", &m_render_options.ao_num_steps, 1, 20);
-			ImGui::TreePop();
-		}
-		if (ImGui::TreeNode("Blur"))
-		{
-			ImGui::SliderInt("Blur Bloom Iterations", &m_render_options.blur_bloom_iterations, 0, 10);
-			ImGui::SliderInt("Blur General Iterations", &m_render_options.blur_general_iterations, 0, 10);
-			static const char* modes[] = { "7x7 Gaussian", "7x7 Gaussian Bilateral" };
-			if (ImGui::BeginCombo("Mode", modes[m_render_options.blur_mode]))
-			{
-				for (int n = 0; n < (int)IM_ARRAYSIZE(modes); n++)
-				{
-					if (ImGui::Selectable(modes[n], n == m_render_options.blur_mode))
-						m_render_options.blur_mode = n;
-				}
-				ImGui::EndCombo();
-			}
-			ImGui::InputFloat("Bilateral Threshold", &m_render_options.bilat_threshold);
 			ImGui::TreePop();
 		}
 		ImGui::TreePop();

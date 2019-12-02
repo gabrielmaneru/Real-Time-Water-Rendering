@@ -29,6 +29,7 @@ public:
 	void draw_point_lights(Shader_Program*);
 	void draw_decals(Shader_Program*);
 	void draw_debug_lights(Shader_Program*);
+	void draw_debug_bones(Shader_Program*);
 	void draw_debug_curves(Shader_Program*);
 	void shutdown();
 	void drawGUI();

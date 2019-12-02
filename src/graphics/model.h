@@ -68,9 +68,12 @@ public:
 	Model(const std::string& path, const std::vector<std::string>& def_mats = {}, const std::vector<size_t>& skip_meshes = {}, const std::vector<std::pair<size_t,size_t>>& break_animation = {});
 	~Model();
 	void draw(Shader_Program *, animator* m_animator, bool use_mat = true)const;
+	void update_node_hierarchy(node* node_, animator* m_animator, mat4 parent)const;
 
 	std::string m_name;
 	std::vector<Mesh*> m_meshes;
+	std::vector<bone_data*> m_bones;
+	node* m_hierarchy;
 
 	static std::vector<Material*> m_def_materials;
 
@@ -81,12 +84,9 @@ private:
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
 	int processMaterial(aiMaterial * material);
 	Texture loadMaterialTexture(aiMaterial *material, aiTextureType type);
-	void update(node* node_, animator* m_animator, mat4 parent)const;
 
 	std::vector<Texture> m_textures;
 	std::vector<Material> m_materials;
-	node* m_hierarchy;
-	std::vector<bone_data*> m_bones;
 	std::map<std::string, int> m_bone_mapping;
 	std::vector<animation*> m_animations;
 	friend class scene_object;

@@ -247,10 +247,12 @@ bool c_scene::init()
 		return false;
 
 	transform3d tr;
-	tr.set_pos({ 250,1250,3000 });
+	tr.set_pos({ 0,1000,0 });
 	tr.set_scl(vec3(1.f));
 
 	light_data ld;
+	ld.m_diffuse = vec3(0.5f);
+
 	m_dir_light = new dir_light(tr, ld);
 
 	return true;
@@ -290,7 +292,8 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 	{
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
-		shader->set_uniform("selection_color", renderer->compute_selection_color());
+		if(shader == renderer->color_shader)
+			shader->set_uniform("selection_color", renderer->compute_selection_color());
 		renderer->get_model("sphere")->draw(shader, nullptr, false);
 	}
 	if(m_dir_light)
@@ -299,6 +302,29 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 		shader->set_uniform("M", tr.get_model());
 		renderer->get_model("octohedron")->draw(shader, nullptr, false);
 	}
+}
+
+void c_scene::draw_debug_bones(Shader_Program * shader)
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	for (auto p_obj : m_objects)
+		if (p_obj->m_model && !p_obj->m_model->m_bones.empty())
+		{
+			// Update Transformations
+			p_obj->m_model->update_node_hierarchy(p_obj->m_model->m_hierarchy, p_obj->m_animator, mat4{ 1.0f });
+
+
+			for (auto& b : p_obj->m_model->m_bones)
+			{
+				mat4 M = p_obj->m_transform.get_model() * b->m_final_transform;
+				shader->set_uniform("M",M);
+				renderer->set_debug_color({ 0,0,0 });
+
+				renderer->get_model("octohedron")->draw(shader, nullptr);
+				renderer->reset_debug_color();
+			}
+		}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void c_scene::draw_debug_curves(Shader_Program * shader)
