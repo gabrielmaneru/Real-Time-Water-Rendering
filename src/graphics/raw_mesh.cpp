@@ -130,7 +130,7 @@ void raw_mesh::compute_normals()
 			vec3 dy = vertices[y_post*scale + x] - vertices[y_prev*scale + x];
 			dy /= static_cast<float>(y_post - y_prev);
 			
-			normals[y*scale + x] = glm::normalize(glm::cross(dx, dy));
+			normals[y*scale + x] = glm::normalize(glm::cross(dy, dx));
 		}
 	}
 }

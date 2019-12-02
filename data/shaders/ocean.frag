@@ -50,8 +50,9 @@ void main()
 
 	float water_len = length(vPosition-get_vpos());
 	const float sea_view = 50.0f;
-	float water_len_factor = pow(clamp(water_len/sea_view,0.0,1.0),0.5);
-	vec3 water_color = vec3(0,0.5,1);
+	float depth_factor = clamp(water_len/sea_view,0.0,1.0);
+	vec3 blue_water_color = 0.5*vec3(0.00,0.47,0.75);
+	vec3 green_water_color = 0.5*vec3(0.08,0.85,0.57);
 
 	vec3 vView = normalize(vPosition);
 	vec3 vReflect_View = normalize(reflect(vView, vNormal));
@@ -61,13 +62,18 @@ void main()
 		sky_color = vec3(0.9);
 
 	vec3 vRefract_View = normalize(refract(vView, vNormal, 0.75));
-	vec2 delta_Refract = vRefract_View.xy-vView.xy;
-	vec4 prev_diff = get_prev_diff(delta_Refract*water_len*0.005);
+	float refract_factor = pow(depth_factor,0.8);
+	vec2 delta_Refract = (vRefract_View.xy-vView.xy)*refract_factor;
+	vec4 prev_diff = get_prev_diff(delta_Refract);
 	vec3 prev_color = prev_diff.xyz;
 
-	vec3 diffuse = mix(prev_color,water_color,water_len_factor);//+sky_color;
-	//diffuse = vec3(prev_color,0.0);
-
+	float drag_factor = pow(depth_factor,0.3);
+	vec3 drag_color = mix(green_water_color,blue_water_color,drag_factor);
+	float color_factor = pow(depth_factor,0.25);
+	vec3 diffuse = mix(prev_color,drag_color,color_factor);
+	
+	diffuse += clamp(pow(vNormal.y, 4),0,1)*vec3(0.5*sky_color);
+	//diffuse = vec3 (refract_factor);
 
 	attr_albedo = vec4(diffuse, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

@@ -30,12 +30,14 @@ layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
 layout (location = 4) out float attr_lindepth;
 
+uniform float uv_scale = 1.0f;
+
 void main()
 {
 	vec3 albedo;
 	if(albedo_txt_active)
 	{
-		vec4 txt = texture(albedo_txt, vUv);
+		vec4 txt = texture(albedo_txt, vUv*uv_scale);
 		if(txt.a < 0.5)
 			discard;
 		albedo = txt.rgb;
@@ -45,13 +47,13 @@ void main()
 	
 	vec3 metallic;
 	if(metallic_txt_active)
-		metallic = vec3(texture(metallic_txt, vUv).r);
+		metallic = vec3(texture(metallic_txt, vUv*uv_scale).r);
 	else
 		metallic = kmetallic;
 	
 	float roughness;
 	if(roughness_txt_active)
-		roughness = texture(roughness_txt, vUv).r;
+		roughness = texture(roughness_txt, vUv*uv_scale).r;
 	else
 		roughness = kroughness;
 
@@ -63,7 +65,7 @@ void main()
 		const vec3 N = normalize(vNormal);
 
 		mat3 TBN = mat3(T,B,N);
-		normal = normalize(TBN * (2.0 * texture(normal_txt, vUv).xyz - 1.0));
+		normal = normalize(TBN * (2.0 * texture(normal_txt, vUv*uv_scale).xyz - 1.0));
 	}
 	else
 		normal = normalize(vNormal);

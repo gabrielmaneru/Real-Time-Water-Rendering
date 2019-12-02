@@ -27,6 +27,13 @@ void c_renderer::update_max_draw_call_count()
 		m_selection_calls.second += scene->m_point_lights.size();
 }
 
+void c_renderer::recompile_shaders()
+{
+	Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &ocean_shader, &light_shader, &skybox_shader, &blur_shader, &texture_shader, &color_shader };
+	for (Shader_Program ** s : sh)
+		*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
+}
+
 vec3 c_renderer::compute_selection_color()
 {
 	float scalar = static_cast<float>(m_selection_calls.first++) / static_cast<float>(m_selection_calls.second)*360.f;
@@ -95,6 +102,12 @@ bool c_renderer::init()
 		{},"oxidized-coppper-roughness.png",
 		1.0f,"oxidized-copper-normal-ue.png"
 		});
+	Model::m_def_materials.push_back(new Material{ "sand",
+		{},"sand1-albedo.png",
+		{},"sand1-metalness.png",
+		{},"sand1-roughness.png",
+		1.0f,"sand1-normal-ue.png"
+		});
 
 	// Load Resources
 	try
@@ -107,7 +120,7 @@ bool c_renderer::init()
 
 		// Complex
 		//m_models.push_back(new Model("./data/meshes/sponza.obj"));
-		m_models.push_back(new Model("./data/meshes/terrain.obj"));
+		m_models.push_back(new Model("./data/meshes/terrain.obj", {"sand"}));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	
@@ -186,6 +199,7 @@ void c_renderer::update()
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/g_buffer_shader->use();
 		/**/scene_cam.set_uniforms(g_buffer_shader);
+		/**/g_buffer_shader->set_uniform("uv_scale", 10.0f);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
@@ -278,11 +292,13 @@ void c_renderer::update()
 		/**/	0, g_buffer.m_width, 0, g_buffer.m_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST));
 
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
 		/**/texture_shader->use();
 		/**/ortho_cam.set_uniforms(texture_shader);
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
 		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
+		/**/g_buffer.set_drawbuffers();
 		/**/
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/ocean_shader->use();
@@ -577,11 +593,7 @@ void c_renderer::drawGUI()
 	if (ImGui::TreeNode("RenderOptions"))
 	{
 		if (ImGui::Button("Recompile Shaders"))
-		{
-			Shader_Program ** sh[]{ &g_buffer_shader, &decal_shader, &ocean_shader, &light_shader, &skybox_shader, &blur_shader, &texture_shader, &color_shader };
-			for (Shader_Program ** s : sh)
-				*s = new Shader_Program((*s)->paths[0], (*s)->paths[1], (*s)->paths[2], (*s)->paths[3], (*s)->paths[4]);
-		}
+			recompile_shaders();
 		ImGui::Checkbox("Render Lights", &m_render_options.render_lights);
 
 		if(ImGui::TreeNode("Curves"))

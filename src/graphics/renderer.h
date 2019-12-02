@@ -70,6 +70,7 @@ public:
 
 	std::pair<size_t,size_t> m_selection_calls{0u,0u};
 	void update_max_draw_call_count();
+	void recompile_shaders();
 
 	bool init();
 	void update();

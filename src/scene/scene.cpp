@@ -372,6 +372,7 @@ void c_scene::drawGUI()
 	if (window_manager->is_key_down(GLFW_KEY_LEFT_CONTROL)
 	&&  window_manager->is_key_triggered(GLFW_KEY_R))
 	{
+		renderer->recompile_shaders();
 		shutdown();
 		init();
 	}
