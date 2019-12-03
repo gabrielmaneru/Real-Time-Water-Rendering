@@ -53,7 +53,7 @@ vec3 ik_bone::get_relative_pos()
 	mat4 p_rot = glm::mat4_cast(m_parent->m_rotation);
 	mat4 p_tr = glm::translate(mat4(1.0f), vec3(m_parent->m_length, 0, 0));
 
-	return {p_tr * p_rot * vec4(p_pos, 1.0f)};
+	return { p_rot * p_tr * vec4(p_pos, 1.0f)};
 }
 
 quat ik_bone::get_relative_rotation()

@@ -144,11 +144,10 @@ void c_editor::draw_selected_window()
 			m_operation, m_mode, &model[0][0],
 			NULL, m_snap ? &m_cur_step : NULL);
 
-		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-		ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
-
 		if (dynamic_cast<ik_chain*>(m_selected) == nullptr)
 		{
+			float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+			ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
 			switch (m_operation)
 			{
 			case ImGuizmo::TRANSLATE:
@@ -164,7 +163,19 @@ void c_editor::draw_selected_window()
 		}
 		else
 		{
+			ik_bone* b = c->m_bones[c->m_selected];
+			model = glm::inverse(c->m_transform.get_model()) * model;
 
+			float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+			ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
+
+			quat rot;
+			if (b->m_parent != nullptr)
+				rot = b->m_parent->get_relative_rotation();
+			quat cur_rot = normalize(quat(radians(vec3{ matrixRotation[0], matrixRotation[1], matrixRotation[2] })));
+			b->m_rotation = normalize(cur_rot * glm::inverse(rot));
+
+			b->m_length = matrixScale[0];
 		}
 		
 		m_selected->draw_GUI();
