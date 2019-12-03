@@ -95,7 +95,6 @@ void c_editor::draw_selected_window()
 		ImGui::SameLine();
 		if (ImGui::RadioButton("Scale", m_operation == ImGuizmo::SCALE))
 			m_operation = ImGuizmo::SCALE;
-
 		ImGui::Checkbox("", &m_snap);
 		ImGui::SameLine();
 		static vec3 m_snap_step{1.0f};
@@ -115,13 +114,29 @@ void c_editor::draw_selected_window()
 			m_cur_step = m_snap_step.z;
 			break;
 		}
-		
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-		mat4 model = m_selected->m_transform.m_tr.m_model;
-		if(dynamic_cast<dir_light*>(m_selected)!=nullptr
-		|| dynamic_cast<point_light*>(m_selected)!=nullptr)
+
+
+		mat4 model;
+		ik_chain* c = dynamic_cast<ik_chain*>(m_selected);
+		if(dynamic_cast<dir_light*>(m_selected) != nullptr
+		|| dynamic_cast<point_light*>(m_selected) != nullptr)
 			model = m_selected->m_transform.get_model();
+		else if (c != nullptr)
+		{
+			ik_bone* b = c->m_bones[c->m_selected];
+			transform3d tr;
+			tr.set_pos(b->get_relative_pos());
+			tr.set_scl(vec3(b->m_length, 1, 1));
+			tr.set_rot(b->get_relative_rotation());
+			model = c->m_transform.get_model() * tr.get_model();
+
+		}
+		else
+			model = m_selected->m_transform.m_tr.m_model;
+
+
 		ImGuizmo::BeginFrame();
 		ImGuizmo::Manipulate(
 			&renderer->scene_cam.m_view[0][0],
@@ -131,31 +146,41 @@ void c_editor::draw_selected_window()
 
 		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
 		ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
-		vec3 eu_angles{ matrixRotation[0], matrixRotation[1], matrixRotation[2] };
-		switch (m_operation)
+
+		if (dynamic_cast<ik_chain*>(m_selected) == nullptr)
 		{
-		case ImGuizmo::TRANSLATE:
-			m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
-			break;
-		case ImGuizmo::ROTATE:
-			m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(eu_angles)));
-			break;
-		case ImGuizmo::SCALE:
-			m_selected->m_transform.m_tr.m_scl = vec3(matrixScale[0], matrixScale[1], matrixScale[2]);
-			break;
+			switch (m_operation)
+			{
+			case ImGuizmo::TRANSLATE:
+				m_selected->m_transform.m_tr.m_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
+				break;
+			case ImGuizmo::ROTATE:
+				m_selected->m_transform.m_tr.m_rot = normalize(quat(radians(vec3{ matrixRotation[0], matrixRotation[1], matrixRotation[2] })));
+				break;
+			case ImGuizmo::SCALE:
+				m_selected->m_transform.m_tr.m_scl = vec3(matrixScale[0], matrixScale[1], matrixScale[2]);
+				break;
+			}
+		}
+		else
+		{
+
 		}
 		
 		m_selected->draw_GUI();
-		m_selected->m_transform.m_tr.upd();
-		if (ImGui::Button("Delete Object") || window_manager->is_key_triggered(GLFW_KEY_DELETE))
+		if (dynamic_cast<ik_chain*>(m_selected) == nullptr)
 		{
-			for (size_t i = 0; i < scene->m_objects.size(); i++)
-				if (scene->m_objects[i] == m_selected)
-				{
-					scene->m_objects.erase(scene->m_objects.begin() + i);
-					delete m_selected;
-					m_selected = nullptr;
-				}
+			m_selected->m_transform.m_tr.upd();
+			if (ImGui::Button("Delete Object") || window_manager->is_key_triggered(GLFW_KEY_DELETE))
+			{
+				for (size_t i = 0; i < scene->m_objects.size(); i++)
+					if (scene->m_objects[i] == m_selected)
+					{
+						scene->m_objects.erase(scene->m_objects.begin() + i);
+						delete m_selected;
+						m_selected = nullptr;
+					}
+			}
 		}
 	}
 	ImGui::End();
@@ -167,7 +192,10 @@ void c_editor::selector()
 {
 	if (m_selected)
 		draw_selected_window();
-	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) && window::mouse_but_left_triggered)
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)
+	&&  !ImGuizmo::IsUsing()
+	&&  !ImGuizmo::IsOver()
+	&&  window::mouse_but_left_triggered)
 		select_object();
 }
 
@@ -211,5 +239,18 @@ void c_editor::select_object()
 	if (idx < scene->m_objects.size())
 		m_selected = scene->m_objects[idx];
 	else
-		m_selected = scene->m_point_lights[idx - scene->m_objects.size()];
+	{
+		idx -= scene->m_objects.size();
+		for (auto c : scene->m_chains)
+		{
+			if (idx < c->m_bones.size())
+			{
+				m_selected = c;
+				c->m_selected = idx;
+				break;
+			}
+			else
+				idx -= c->m_bones.size();
+		}
+	}
 }

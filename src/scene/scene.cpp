@@ -248,12 +248,14 @@ bool c_scene::init()
 
 	transform3d tr;
 	tr.set_pos({ 0,1000,0 });
-	tr.set_scl(vec3(1.f));
-
 	light_data ld;
-	ld.m_diffuse = vec3(0.5f);
-
+	ld.m_diffuse = vec3(0.4f);
 	m_dir_light = new dir_light(tr, ld);
+
+	tr.set_pos({ 0,1,1 });
+	m_chains.push_back(new ik_chain(tr, 10));
+	tr.set_pos({ 0,0,-1 });
+	m_chains.push_back(new ik_chain(tr, 20));
 
 	return true;
 }
@@ -267,7 +269,9 @@ void c_scene::update()
 void c_scene::draw_objs(Shader_Program * shader)
 {
 	for (auto p_obj : m_objects)
-			p_obj->draw(shader);
+		p_obj->draw(shader);
+	for (auto p_c : m_chains)
+		p_c->draw(shader);
 }
 
 void c_scene::draw_point_lights(Shader_Program * shader)
@@ -292,8 +296,6 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 	{
 		tr.set_pos(p_li->m_transform.get_pos());
 		shader->set_uniform("M", tr.get_model());
-		if(shader == renderer->color_shader)
-			shader->set_uniform("selection_color", renderer->compute_selection_color());
 		renderer->get_model("sphere")->draw(shader, nullptr, false);
 	}
 	if(m_dir_light)
@@ -302,29 +304,6 @@ void c_scene::draw_debug_lights(Shader_Program * shader)
 		shader->set_uniform("M", tr.get_model());
 		renderer->get_model("octohedron")->draw(shader, nullptr, false);
 	}
-}
-
-void c_scene::draw_debug_bones(Shader_Program * shader)
-{
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	for (auto p_obj : m_objects)
-		if (p_obj->m_model && !p_obj->m_model->m_bones.empty())
-		{
-			// Update Transformations
-			p_obj->m_model->update_node_hierarchy(p_obj->m_model->m_hierarchy, p_obj->m_animator, mat4{ 1.0f });
-
-
-			for (auto& b : p_obj->m_model->m_bones)
-			{
-				mat4 M = p_obj->m_transform.get_model() * b->m_final_transform;
-				shader->set_uniform("M",M);
-				renderer->set_debug_color({ 0,0,0 });
-
-				renderer->get_model("octohedron")->draw(shader, nullptr);
-				renderer->reset_debug_color();
-			}
-		}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void c_scene::draw_debug_curves(Shader_Program * shader)
@@ -386,9 +365,14 @@ void c_scene::shutdown()
 	for (auto p_obj : m_objects)
 		delete p_obj;
 	m_objects.clear();
+
 	for (auto p_li : m_point_lights)
 		delete p_li;
 	m_point_lights.clear();
+
+	for (auto p_c : m_chains)
+		delete p_c;
+	m_chains.clear();
 }
 
 void c_scene::drawGUI()

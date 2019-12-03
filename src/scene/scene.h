@@ -11,6 +11,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include "scene_object.h"
 #include "light.h"
 #include "decal.h"
+#include "ik_bone.h"
 #include "graphics/shader_program.h"
 #include <vector>
 class c_scene
@@ -19,6 +20,7 @@ class c_scene
 	std::vector<point_light*> m_point_lights;
 	dir_light* m_dir_light{ nullptr };
 	std::vector<decal*> m_decals;
+	std::vector<ik_chain*> m_chains;
 	std::string m_scene_name{"scene"};
 	bool load_scene(std::string);
 
@@ -29,7 +31,6 @@ public:
 	void draw_point_lights(Shader_Program*);
 	void draw_decals(Shader_Program*);
 	void draw_debug_lights(Shader_Program*);
-	void draw_debug_bones(Shader_Program*);
 	void draw_debug_curves(Shader_Program*);
 	void shutdown();
 	void drawGUI();

@@ -40,7 +40,7 @@ public:
 	scene_object(std::string mesh, transform3d tr, animator * anim, curve_interpolator* curve);
 	~scene_object();
 	void update();
-	void draw(Shader_Program*);
+	virtual void draw(Shader_Program*);
 
 	virtual void draw_GUI();
 

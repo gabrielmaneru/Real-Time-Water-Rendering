@@ -42,7 +42,6 @@ public:
 	// Framebuffer
 	framebuffer g_buffer;
 	framebuffer selection_buffer;
-	framebuffer ao_buffer;
 	framebuffer light_buffer;
 	framebuffer blur_control_buffer;
 	framebuffer bloom_buffer;
@@ -56,7 +55,6 @@ public:
 		SELECTION,
 		LIN_DEPTH,
 		DEPTH,
-		AO,
 		LIGHT,
 		BLUR_CONTROL,
 		BLOOM,

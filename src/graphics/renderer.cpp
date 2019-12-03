@@ -24,8 +24,8 @@ c_renderer* renderer = new c_renderer;
 void c_renderer::update_max_draw_call_count()
 {
 	m_selection_calls = { 0u, scene->m_objects.size() };
-	if (m_render_options.render_lights)
-		m_selection_calls.second += scene->m_point_lights.size();
+	for (auto& c : scene->m_chains)
+		m_selection_calls.second += c->m_bones.size();
 }
 
 vec3 c_renderer::compute_selection_color()
@@ -83,12 +83,6 @@ bool c_renderer::init()
 		{1.0f},{},
 		1.0f,{}
 		});
-	Model::m_def_materials.push_back(new Material{ "plastic",
-		{},"plasticpattern1-albedo.png",
-		{},"Dielectric_metallic.tga",
-		{},"plasticpattern1-roughness2.png",
-		1.0f,"plasticpattern1-normal2b.png"
-		});
 	Model::m_def_materials.push_back(new Material{ "copper",
 		{},"plasticpattern1-albedo.png",
 		{},"oxidized-copper-metal.png",
@@ -106,13 +100,10 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
+		m_models.push_back(new Model("./data/meshes/joint.obj", { "copper" }));
 		m_models.push_back(new Model("./data/meshes/sponza.obj"));
-		m_models.push_back(new Model("./data/meshes/sneak.dae", {"plastic","copper" }));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
-	
-	// Curves
-	m_curves.push_back(new curve_catmull("walk"));
 	
 	// Setup Cameras
 	scene_cam.m_eye = { 29,16,-4 };
@@ -144,9 +135,6 @@ void c_renderer::update()
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST
-			});
-		ao_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
-			GL_R16F, GL_RED, GL_FLOAT, GL_LINEAR
 			});
 		light_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
 			GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST
@@ -207,8 +195,6 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/if (m_render_options.render_lights)
 		/**/	scene->draw_debug_lights(g_buffer_shader);
-		/**/if (m_render_options.render_bones)
-		/**/	scene->draw_debug_bones(g_buffer_shader);
 		/**/if (m_render_options.render_curves)
 		/**/	scene->draw_debug_curves(g_buffer_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
@@ -227,16 +213,15 @@ void c_renderer::update()
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/update_max_draw_call_count();
 		/**/for (auto p_obj : scene->m_objects)
-			/**/ {
-			/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
-			/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
-			/**/	color_shader->set_uniform("color", compute_selection_color());
-			/**/	if (p_obj->m_model != nullptr)
-			/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
-			/**/
-		}
-		/**/if (m_render_options.render_lights)
-			/**/	scene->draw_debug_lights(color_shader);
+		/**/ {
+		/**/	color_shader->set_uniform("M", p_obj->m_transform.get_model());
+		/**/	color_shader->set_uniform("M_prev", p_obj->m_transform.m_tr.get_prev_model());
+		/**/	color_shader->set_uniform("color", compute_selection_color());
+		/**/	if (p_obj->m_model != nullptr)
+		/**/		p_obj->m_model->draw(color_shader, p_obj->m_animator, false);
+		/**/}
+		/**/for (auto p_c : scene->m_chains)
+		/**/	p_c->draw(color_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		///////////////////////////////////////////////////////////////////////////
 	}
@@ -515,7 +500,6 @@ void c_renderer::drawGUI()
 			show_image(c_renderer::NORMAL);
 			show_image(c_renderer::LIN_DEPTH);
 			show_image(c_renderer::SELECTION);
-			show_image(c_renderer::AO);
 			ImGui::TreePop();
 		}
 		if (ImGui::TreeNode("Light"))
@@ -711,8 +695,6 @@ GLuint c_renderer::get_texture(e_texture ref)
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:
 		return selection_buffer.m_color_texture[0];
-	case c_renderer::e_texture::AO:
-		return ao_buffer.m_color_texture[0];
 	case c_renderer::e_texture::LIGHT:
 		return light_buffer.m_color_texture[0];
 	case c_renderer::e_texture::BLUR_CONTROL:

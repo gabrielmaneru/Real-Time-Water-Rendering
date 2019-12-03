@@ -12,7 +12,7 @@ Author: Gabriel Mañeru - gabriel.m
 #include <graphics/transform3d.h>
 #include <imgui/imgui.h>
 
-vec3 light_data::m_ambient = vec3{ 0.1f };
+vec3 light_data::m_ambient = vec3{ 0.4f };
 float light_data::m_att_max{ 0.025f };
 
 void light_data::drawGUI()

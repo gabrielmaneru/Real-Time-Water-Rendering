@@ -29,6 +29,11 @@ Model::Model(const std::string & path, const std::vector<std::string>& def_mats,
 	load_obj(path);
 	if (def_mats.size())
 	{
+		if (m_materials.size() == 0)
+		{
+			m_materials.resize(def_mats.size());
+			m_meshes[0]->m_material_idx = 0;
+		}
 		for (int i = 0; i < def_mats.size() && i < m_materials.size(); i++)
 			for (auto pMat : m_def_materials)
 				if (pMat->m_name == def_mats[i])
