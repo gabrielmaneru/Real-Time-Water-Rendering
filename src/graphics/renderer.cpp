@@ -199,7 +199,7 @@ void c_renderer::update()
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/g_buffer_shader->use();
 		/**/scene_cam.set_uniforms(g_buffer_shader);
-		/**/g_buffer_shader->set_uniform("uv_scale", 10.0f);
+		/**/g_buffer_shader->set_uniform("uv_scale", 50.0f);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
