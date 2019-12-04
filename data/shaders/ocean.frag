@@ -37,7 +37,6 @@ vec4 get_prev_diff(vec2 dUv)
 	return texture(diffuse_txt, txt_uvs+dUv);
 }
 const float step = 5;
-const float min_ray_step = 0.1;
 const float max_steps = 30;
 const int num_binary = 5;
 vec3 raymarch(vec3 dir, vec3 hit_pos)
@@ -119,8 +118,8 @@ void main()
 	float water_len = length(vPosition-get_vpos(txt_uv));
 	const float sea_view = 50.0f;
 	float depth_factor = clamp(water_len/sea_view,0.0,1.0);
-	vec3 blue_water_color = 0.5*vec3(0.00,0.47,0.75);
-	vec3 green_water_color = 0.5*vec3(0.08,0.85,0.57);
+	vec3 blue_water_color = vec3(0.0,0.2,1.0);
+	vec3 green_water_color = vec3(0.0,1.0,0.2);
 
 
 	vec3 vView = normalize(vPosition);
@@ -138,9 +137,9 @@ void main()
 	vec3 prev_color = prev_diff.xyz;
 
 
-	float drag_factor = pow(depth_factor,0.3);
+	float drag_factor = pow(depth_factor,0.8);
 	vec3 drag_color = mix(green_water_color,blue_water_color,drag_factor);
-	float color_factor = pow(depth_factor,0.25);
+	float color_factor = pow(depth_factor,0.8);
 	vec3 diffuse = mix(prev_color,drag_color,color_factor);
 	diffuse += clamp(pow(vNormal.y, 4),0,1)*0.5*reflected_color;
 	//diffuse = reflected_color;

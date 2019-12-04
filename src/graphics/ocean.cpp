@@ -79,7 +79,7 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 void Ocean::init()
 {
 	m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
-		3u, 0.5f, 5.0f });
+		3u, 0.5f, 1.0f });
 
 	m_mesh.build_plane(m_resolution, m_mesh_scale);
 	m_mesh.compute_normals();
