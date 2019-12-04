@@ -9,10 +9,13 @@ in vec2 vUv;
 uniform float near;
 uniform float far;
 uniform mat3 Vnorm;
+uniform mat4 V;
 uniform mat4 P;
 layout (binding = 0) uniform samplerCube skybox_txt;
 layout (binding = 1) uniform sampler2D depth_txt;
 layout (binding = 2) uniform sampler2D diffuse_txt;
+layout (binding = 3) uniform sampler2D caustic_txt;
+layout (binding = 4) uniform sampler2D dither_txt;
 
 uniform bool line_render;
 
@@ -102,6 +105,20 @@ vec3 get_sky_color(vec3 vReflect_View)
 	else
 		return texture(skybox_txt, wReflect_View).rgb;
 }
+float get_caustic(vec2 world_uv)
+{
+	if(world_uv.x < 0.0 || world_uv.x >= 1.0 || world_uv.y < 0.0 || world_uv.y >=1.0)
+		return 1.0;
+	return texture(caustic_txt, world_uv).r;
+}
+bool get_dither(float factor, vec2 world_uv)
+{
+	float n = texture(dither_txt, world_uv*100).r;
+	if(n>factor)
+		return true;
+	else 
+		return false;
+}
 
 
 void main()
@@ -115,7 +132,10 @@ void main()
 	
 	vec2 size = vec2(textureSize(depth_txt,0));
 	vec2 txt_uv = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y);
-	float water_len = length(vPosition-get_vpos(txt_uv));
+	vec3 vpos = get_vpos(txt_uv);
+	vec2 world_uv = (inverse(V)*vec4(vpos, 1.0)).xz/256 + 0.5;
+
+	float water_len = length(vPosition-vpos);
 	const float sea_view = 50.0f;
 	float depth_factor = clamp(water_len/sea_view,0.0,1.0);
 	vec3 blue_water_color = vec3(0.0,0.2,1.0);
@@ -133,16 +153,23 @@ void main()
 	vec3 vRefract_View = normalize(refract(vView, vNormal, 0.75));
 	float refract_factor = pow(depth_factor,0.8);
 	vec2 delta_Refract = (vRefract_View.xy-vView.xy)*refract_factor;
-	vec4 prev_diff = get_prev_diff(delta_Refract);
-	vec3 prev_color = prev_diff.xyz;
+	vec3 prev_color = get_prev_diff(delta_Refract).xyz;
+	float caustic = pow(get_caustic(world_uv),16);
+	prev_color *= pow(caustic, 0.3);
 
 
-	float drag_factor = pow(depth_factor,0.8);
+	float drag_factor = pow(depth_factor,0.5);
 	vec3 drag_color = mix(green_water_color,blue_water_color,drag_factor);
 	float color_factor = pow(depth_factor,0.8);
 	vec3 diffuse = mix(prev_color,drag_color,color_factor);
+	const float foam_limit = 0.05;
+	if(depth_factor < foam_limit)
+	{
+		float foam_factor = pow(depth_factor/foam_limit,0.5);
+		if(get_dither(foam_factor, world_uv))
+			;//diffuse = vec3(1);
+	}
 	diffuse += clamp(pow(vNormal.y, 4),0,1)*0.5*reflected_color;
-	//diffuse = reflected_color;
 
 	attr_albedo = vec4(diffuse, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

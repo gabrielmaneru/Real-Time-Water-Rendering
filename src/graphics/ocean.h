@@ -1,5 +1,6 @@
 #pragma once
 #include "raw_texture.h"
+#include "texture.h"
 #include "raw_mesh.h"
 #include "shader_program.h"
 
@@ -40,6 +41,9 @@ struct Ocean
 	float m_mesh_scale{ 1.f };
 	std::vector<noise_layer*> m_noise;
 	raw_mesh m_mesh;
+	raw_texture_single m_caustics;
+	Texture m_dither;
 };
+
 map2d<vec2> straight(vec2 dir, size_t scale);
 map2d<vec2> whirlpool(size_t scale);

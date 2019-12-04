@@ -33,7 +33,7 @@ Model::Model(const std::string & path, const std::vector<std::string>& def_mats,
 		{
 			m_materials.resize(def_mats.size());
 			for(int i = 0; i < m_meshes.size(); i++)
-				m_meshes[i]->m_material_idx = min(i,m_materials.size()-1);
+				m_meshes[i]->m_material_idx = min(i,(int)m_materials.size()-1);
 		}
 		for (int i = 0; i < def_mats.size() && i < m_materials.size(); i++)
 			for (auto pMat : m_def_materials)

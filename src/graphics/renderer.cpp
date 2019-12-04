@@ -119,8 +119,8 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		//m_models.push_back(new Model("./data/meshes/sponza.obj"));
 		m_models.push_back(new Model("./data/meshes/terrain.obj", {"sand"}));
+		//m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 	
@@ -189,6 +189,7 @@ void c_renderer::update()
 	// Camera Update
 	scene_cam.save_prev();
 	scene_cam.update();
+	m_ocean.update_mesh();
 
 	if (g_buffer_shader->is_valid())
 	{
@@ -203,7 +204,7 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
-
+		/**/
 		/**/if(m_render_options.dc_active)
 		/**/{
 		/**/	if (m_render_options.dc_mode == 0)
@@ -312,6 +313,10 @@ void c_renderer::update()
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(COPY_DEPTH));
 		/**/glActiveTexture(GL_TEXTURE2);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
+		/**/glActiveTexture(GL_TEXTURE3);
+		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_caustics.m_id);
+		/**/glActiveTexture(GL_TEXTURE4);
+		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_dither.m_id);
 		/**/m_ocean.draw(ocean_shader);
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/

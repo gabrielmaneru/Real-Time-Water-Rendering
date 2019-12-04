@@ -1,9 +1,11 @@
 #include "ocean.h"
 #include "gl_error.h"
+#include "renderer.h"
 #include <platform/window.h>
 #include <GL/gl3w.h>
 #include <imgui/imgui.h>
 #include <utils/generate_noise.h>
+#include <stb_image/stb_image.h>
 #include <iostream>
 noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count, float speed, float height, vec2 dir)
 	: m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
@@ -68,7 +70,7 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 				if (w[i] > 0.0f)
 				{
 					vec2 uv_temp = clamp(uv + dir * m_uv_step * f[i], 0.0f, 1.0f);
-					float val = m_noise_layers[i].get_linear(uv_temp*vec2(scale - 1));
+					float val = m_noise_layers[i].get_linear(uv_temp*vec2((float)scale - 1));
 					value += val * w[i];
 				}
 			}
@@ -81,15 +83,18 @@ void Ocean::init()
 	m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
 		3u, 0.5f, 1.0f });
 
-	m_mesh.build_plane(m_resolution, m_mesh_scale);
+	m_mesh.build_plane((int)m_resolution, m_mesh_scale);
 	m_mesh.compute_normals();
 	m_mesh.load();
+
+	m_caustics.setup(256, 256);
+	m_caustics.clear(0.0f);
+
+	m_dither.loadFromFile(Texture::filter_name("dither.png").c_str());
 }
 
 void Ocean::draw(Shader_Program* shader)
 {
-	update_mesh();
-
 	//GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
 	//shader->set_uniform("line_render", true);
 	//m_mesh.draw();
@@ -105,7 +110,7 @@ void Ocean::drawGUI()
 	if (ImGui::InputUInt("Resolution", &m_resolution)) reset_all = true;
 	if (ImGui::InputFloat("Mesh Scale", &m_mesh_scale)) reset_all = true;
 	if(reset_all)
-		m_mesh.build_plane(m_resolution, m_mesh_scale);
+		m_mesh.build_plane((int)m_resolution, m_mesh_scale);
 
 	for (size_t l = 0; l < m_noise.size(); l++)
 	{
@@ -188,7 +193,7 @@ void Ocean::update_mesh()
 	for (auto& v : m_mesh.vertices)
 		v.y = 0.0f;
 
-	float dt = (float)1.0 / window::frameTime;
+	float dt = (float)(1.0 / window::frameTime);
 
 	for (auto& l : m_noise)
 	{
@@ -198,6 +203,20 @@ void Ocean::update_mesh()
 
 	m_mesh.compute_normals();
 	m_mesh.load();
+
+	map2d<vec3> copy_norm{ m_resolution, m_resolution };
+	copy_norm.loop([&](size_t x, size_t y, vec3)->vec3
+	{
+		return m_mesh.normals[y*m_resolution + x];
+	});
+	m_caustics.loop([&](size_t x, size_t y, float)->float
+	{
+		return glm::normalize(copy_norm.get_linear(vec2{
+			map<size_t,float>(x, 0u, m_caustics.m_width - 1, 0.0f, (float)m_resolution-1),
+			map<size_t,float>(y, 0u, m_caustics.m_height - 1, 0.0f, (float)m_resolution-1)
+			})).y;
+	});
+	m_caustics.load();
 }
 
 map2d<vec2> straight(vec2 dir, size_t scale)
