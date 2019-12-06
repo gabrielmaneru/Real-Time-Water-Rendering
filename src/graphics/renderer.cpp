@@ -25,7 +25,7 @@ void c_renderer::update_max_draw_call_count()
 {
 	m_selection_calls = { 0u, scene->m_objects.size() };
 	for (auto& c : scene->m_chains)
-		m_selection_calls.second += c->m_bones.size();
+		m_selection_calls.second += c->m_bones.size()+1;
 }
 
 vec3 c_renderer::compute_selection_color()
@@ -106,7 +106,8 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 	
 	// Setup Cameras
-	scene_cam.m_eye = { 29,16,-4 };
+	scene_cam.m_eye = { -8,16,16 };
+	scene_cam.m_yaw = 270.0f;
 	scene_cam.update();
 
 	skybox.loadCubemapFromFile({

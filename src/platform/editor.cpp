@@ -87,54 +87,60 @@ void c_editor::draw_selected_window()
 	bool opened = true;
 	if (ImGui::Begin("Object", &opened, 0))
 	{
-		if (ImGui::RadioButton("Translate", m_operation == ImGuizmo::TRANSLATE))
-			m_operation = ImGuizmo::TRANSLATE;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Rotate", m_operation == ImGuizmo::ROTATE))
-			m_operation = ImGuizmo::ROTATE;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Scale", m_operation == ImGuizmo::SCALE))
-			m_operation = ImGuizmo::SCALE;
-		ImGui::Checkbox("", &m_snap);
-		ImGui::SameLine();
 		static vec3 m_snap_step{1.0f};
 		float m_cur_step;
-		switch (m_operation)
-		{
-		case ImGuizmo::TRANSLATE:
-			ImGui::InputFloat3("Snap", &m_snap_step.x);
-			m_cur_step = m_snap_step.x;
-			break;
-		case ImGuizmo::ROTATE:
-			ImGui::InputFloat("Angle Snap", &m_snap_step.y);
-			m_cur_step = m_snap_step.y;
-			break;
-		case ImGuizmo::SCALE:
-			ImGui::InputFloat("Scale Snap", &m_snap_step.z);
-			m_cur_step = m_snap_step.z;
-			break;
-		}
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-
-
 		mat4 model;
 		ik_chain* c = dynamic_cast<ik_chain*>(m_selected);
-		if(dynamic_cast<dir_light*>(m_selected) != nullptr
+		if (dynamic_cast<dir_light*>(m_selected) != nullptr
 		|| dynamic_cast<point_light*>(m_selected) != nullptr)
+		{
+			m_operation = ImGuizmo::TRANSLATE;
+			m_cur_step = m_snap_step.x;
 			model = m_selected->m_transform.get_model();
+		}
 		else if (c != nullptr)
 		{
-			ik_bone* b = c->m_bones[c->m_selected];
-			transform3d tr;
-			tr.set_pos(b->get_relative_pos());
-			tr.set_scl(vec3(b->m_length, 1, 1));
-			tr.set_rot(b->get_relative_rotation());
-			model = c->m_transform.get_model() * tr.get_model();
-
+			m_operation = c->m_selected == c->m_bones.size() ? ImGuizmo::TRANSLATE : ImGuizmo::ROTATE;
+			m_cur_step = m_snap_step.y;
+			if (c->m_selected == c->m_bones.size())
+				model = glm::translate(c->m_transform.get_model(), c->m_end_effector);
+			else
+			{
+				ik_bone* b = c->m_bones[c->m_selected];
+				model = c->m_transform.get_model() * b->get_model();
+			}
 		}
 		else
+		{
+			if (ImGui::RadioButton("Translate", m_operation == ImGuizmo::TRANSLATE))
+				m_operation = ImGuizmo::TRANSLATE;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Rotate", m_operation == ImGuizmo::ROTATE))
+				m_operation = ImGuizmo::ROTATE;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Scale", m_operation == ImGuizmo::SCALE))
+				m_operation = ImGuizmo::SCALE;
+			ImGui::Checkbox("", &m_snap);
+			ImGui::SameLine();
+			switch (m_operation)
+			{
+			case ImGuizmo::TRANSLATE:
+				ImGui::InputFloat3("Snap", &m_snap_step.x);
+				m_cur_step = m_snap_step.x;
+				break;
+			case ImGuizmo::ROTATE:
+				ImGui::InputFloat("Angle Snap", &m_snap_step.y);
+				m_cur_step = m_snap_step.y;
+				break;
+			case ImGuizmo::SCALE:
+				ImGui::InputFloat("Scale Snap", &m_snap_step.z);
+				m_cur_step = m_snap_step.z;
+				break;
+			}
 			model = m_selected->m_transform.m_tr.m_model;
+		}
 
 
 		ImGuizmo::BeginFrame();
@@ -163,19 +169,20 @@ void c_editor::draw_selected_window()
 		}
 		else
 		{
-			ik_bone* b = c->m_bones[c->m_selected];
-			model = glm::inverse(c->m_transform.get_model()) * model;
+			if (c->m_selected == c->m_bones.size())
+			{
+				model = glm::inverse(c->m_transform.get_model()) * model;
 
-			float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-			ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
-
-			quat rot;
-			if (b->m_parent != nullptr)
-				rot = b->m_parent->get_relative_rotation();
-			quat cur_rot = normalize(quat(radians(vec3{ matrixRotation[0], matrixRotation[1], matrixRotation[2] })));
-			b->m_rotation = normalize(cur_rot * glm::inverse(rot));
-
-			b->m_length = matrixScale[0];
+				float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+				ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
+				c->m_end_effector = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
+			}
+			else
+			{
+				ik_bone* b = c->m_bones[c->m_selected];
+				model = glm::inverse(c->m_transform.get_model()) * model;
+				b->set_model(model);
+			}
 		}
 		
 		m_selected->draw_GUI();
@@ -254,14 +261,14 @@ void c_editor::select_object()
 		idx -= scene->m_objects.size();
 		for (auto c : scene->m_chains)
 		{
-			if (idx < c->m_bones.size())
+			if (idx < c->m_bones.size()+1)
 			{
 				m_selected = c;
 				c->m_selected = idx;
 				break;
 			}
 			else
-				idx -= c->m_bones.size();
+				idx -= c->m_bones.size()+1;
 		}
 	}
 }

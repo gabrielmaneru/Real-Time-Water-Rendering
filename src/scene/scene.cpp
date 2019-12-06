@@ -252,10 +252,27 @@ bool c_scene::init()
 	ld.m_diffuse = vec3(0.4f);
 	m_dir_light = new dir_light(tr, ld);
 
-	tr.set_pos({ 0,1,1 });
-	m_chains.push_back(new ik_chain(tr, 10));
-	tr.set_pos({ 0,0,-1 });
-	m_chains.push_back(new ik_chain(tr, 20));
+	tr.set_pos({ -43.42f, 16.35f, -27.50f });
+	m_chains.push_back(new ik_chain(tr, 2));
+	m_chains.back()->m_bones[0]->m_length = 5.25f;
+	m_chains.back()->m_bones[1]->m_length = 1.75f;
+	m_chains.back()->m_active = true;
+	m_chains.back()->m_end_effector.x = 7.0f;
+	m_chains.back()->m_solver = 0;
+
+	tr.set_pos({ -7.52f, 16.89f , -26.00f });
+	m_chains.push_back(new ik_chain(tr, 4));
+	m_chains.back()->m_bones[0]->m_length = 2.00f;
+	m_chains.back()->m_bones[1]->m_length = 1.00f;
+	m_chains.back()->m_bones[2]->m_length = 1.00f;
+	m_chains.back()->m_bones[3]->m_length = 2.00f;
+	m_chains.back()->m_active = true;
+	m_chains.back()->m_end_effector.x = 6.0f;
+	m_chains.back()->m_solver = 1;
+	
+	//tr.set_pos({ 5,0,5 });
+	//m_chains.push_back(new ik_chain(tr, 10));
+	//m_chains.back()->m_solver = 2;
 
 	return true;
 }
