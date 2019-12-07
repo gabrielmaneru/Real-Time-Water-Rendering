@@ -36,8 +36,16 @@ vec3 get_vpos(vec2 txt_uv)
 vec4 get_prev_diff(vec2 dUv)
 {
 	vec2 size = vec2(textureSize(diffuse_txt,0));
-	vec2 txt_uvs = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y);
-	return texture(diffuse_txt, txt_uvs+dUv);
+	vec2 txt_uvs = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y)+dUv;
+	if(txt_uvs.x < 0)
+		txt_uvs.x = - txt_uvs.x;
+	if(txt_uvs.y < 0)
+		txt_uvs.y = - txt_uvs.y;
+	if(txt_uvs.x > 1)
+		txt_uvs.x = 2 - txt_uvs.x;
+	if(txt_uvs.y > 1)
+		txt_uvs.y = 2 - txt_uvs.y;
+	return texture(diffuse_txt, txt_uvs);
 }
 const float step = 5;
 const float max_steps = 30;
