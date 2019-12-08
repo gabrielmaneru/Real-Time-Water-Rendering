@@ -12,7 +12,7 @@ uniform mat3 Vnorm;
 uniform mat4 V;
 uniform mat4 P;
 layout (binding = 0) uniform samplerCube skybox_txt;
-layout (binding = 1) uniform sampler2D depth_txt;
+layout (binding = 1) uniform sampler2D position_txt;
 layout (binding = 2) uniform sampler2D diffuse_txt;
 layout (binding = 3) uniform sampler2D caustic_txt;
 layout (binding = 4) uniform sampler2D dither_txt;
@@ -27,11 +27,11 @@ layout (location = 4) out float attr_lindepth;
 
 vec3 get_vpos(vec2 txt_uv)
 {
-	float depth = texture(depth_txt, txt_uv).x;
-	vec4 view_point = vec4(txt_uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-	view_point = inverse(P) * view_point;
-	view_point /= view_point.w;
-	return view_point.xyz;
+	//float depth = texture(position_txt, txt_uv).xyz;
+	//vec4 view_point = vec4(txt_uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+	//view_point = inverse(P) * view_point;
+	//view_point /= view_point.w;
+	return texture(position_txt, txt_uv).xyz;
 }
 vec4 get_prev_diff(vec2 dUv)
 {
@@ -138,7 +138,7 @@ void main()
 		return;
 	}
 	
-	vec2 size = vec2(textureSize(depth_txt,0));
+	vec2 size = vec2(textureSize(position_txt,0));
 	vec2 txt_uv = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y);
 	vec3 vpos = get_vpos(txt_uv);
 	vec2 world_uv = (inverse(V)*vec4(vpos, 1.0)).xz/256 + 0.5;
@@ -175,7 +175,7 @@ void main()
 	{
 		float foam_factor = pow(depth_factor/foam_limit,0.5);
 		if(get_dither(foam_factor, world_uv))
-			;//diffuse = vec3(1);
+			diffuse = vec3(1);
 	}
 	diffuse += clamp(pow(vNormal.y, 4),0,1)*0.5*reflected_color;
 

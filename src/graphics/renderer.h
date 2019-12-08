@@ -49,8 +49,9 @@ public:
 	framebuffer blur_buffer;
 
 	enum e_texture {
-		DIFFUSE,
 		POSITION,
+		SOLID_POSITION,
+		DIFFUSE,
 		METALLIC,
 		NORMAL,
 		SELECTION,

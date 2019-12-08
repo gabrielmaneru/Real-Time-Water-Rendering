@@ -165,6 +165,7 @@ void c_renderer::update()
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
+			GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST,
 			GL_R16F, GL_RED, GL_FLOAT, GL_NEAREST
 			});
 		selection_buffer.setup(window_manager->get_width(), window_manager->get_height(), {
@@ -199,11 +200,14 @@ void c_renderer::update()
 		/**/GL_CALL(glViewport(0, 0, g_buffer.m_width, g_buffer.m_height));
 		/**/GL_CALL(glEnable(GL_DEPTH_TEST));
 		/**/g_buffer_shader->use();
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 });
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("uv_scale", 50.0f);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
 		/**/scene->draw_objs(g_buffer_shader);
+		/**/g_buffer.set_drawbuffers();
 		/**/
 		/**/if(m_render_options.dc_active)
 		/**/{
@@ -215,7 +219,7 @@ void c_renderer::update()
 		/**/	decal_shader->set_uniform("height", (float)g_buffer.m_height);
 		/**/	decal_shader->set_uniform("angle", m_render_options.dc_angle);
 		/**/	decal_shader->set_uniform("mode", m_render_options.dc_mode);
-		/**/	g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1, GL_COLOR_ATTACHMENT0+3 });
+		/**/	g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT4 });
 		/**/	glActiveTexture(GL_TEXTURE2);
 		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(DEPTH));
 		/**/	scene->draw_decals(decal_shader);
@@ -249,7 +253,7 @@ void c_renderer::update()
 		/**/ortho_cam.set_uniforms(light_shader);
 		/**/if (scene->m_dir_light) scene->m_dir_light->draw(light_shader);
 		/**/glActiveTexture(GL_TEXTURE0);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(POSITION));
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(SOLID_POSITION));
 		/**/glActiveTexture(GL_TEXTURE1);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(DIFFUSE));
 		/**/glActiveTexture(GL_TEXTURE2);
@@ -293,9 +297,13 @@ void c_renderer::update()
 		/**/	0, g_buffer.m_width, 0, g_buffer.m_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST));
 
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, g_buffer.m_fbo));
-		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
 		/**/texture_shader->use();
 		/**/ortho_cam.set_uniforms(texture_shader);
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT1 });
+		/**/glActiveTexture(GL_TEXTURE0);
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(SOLID_POSITION));
+		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT2 });
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
 		/**/m_models[2]->m_meshes[0]->draw(texture_shader);
@@ -310,14 +318,17 @@ void c_renderer::update()
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
 		/**/glActiveTexture(GL_TEXTURE1);
-		/**/glBindTexture(GL_TEXTURE_2D, get_texture(COPY_DEPTH));
+		/**/glBindTexture(GL_TEXTURE_2D, get_texture(SOLID_POSITION));
 		/**/glActiveTexture(GL_TEXTURE2);
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
 		/**/glActiveTexture(GL_TEXTURE3);
 		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_caustics.m_id);
 		/**/glActiveTexture(GL_TEXTURE4);
 		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_dither.m_id);
+		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,
+			GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 });
 		/**/m_ocean.draw(ocean_shader);
+		/**/g_buffer.set_drawbuffers();
 		/**/GL_CALL(glDisable(GL_DEPTH_TEST));
 		/**/
 		/**/GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, light_buffer.m_fbo));
@@ -419,7 +430,7 @@ void c_renderer::update()
 		/**/	blur_shader->set_uniform("height", (float)bloom_buffer.m_height);
 		/**/	for (int i = 0; i < m_render_options.blur_bloom_iterations; i++)
 		/**/	{
-		/**/		bloom_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0 + 1 });
+		/**/		bloom_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT1 });
 		/**/		blur_shader->set_uniform("pass", 0);
 		/**/		glActiveTexture(GL_TEXTURE0);
 		/**/		glBindTexture(GL_TEXTURE_2D, get_texture(BLOOM));
@@ -464,7 +475,7 @@ void c_renderer::update()
 		/**/	glActiveTexture(GL_TEXTURE0);
 		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR2));
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
-		/**/	blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0+1 });
+		/**/	blur_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT1 });
 		/**/	glActiveTexture(GL_TEXTURE0);
 		/**/	glBindTexture(GL_TEXTURE_2D, get_texture(BLUR));
 		/**/	m_models[2]->m_meshes[0]->draw(blur_shader);
@@ -776,16 +787,18 @@ GLuint c_renderer::get_texture(e_texture ref)
 {
 	switch (ref)
 	{
-	case c_renderer::e_texture::POSITION:
+	case c_renderer::e_texture::SOLID_POSITION:
 		return g_buffer.m_color_texture[0];
-	case c_renderer::e_texture::DIFFUSE:
+	case c_renderer::e_texture::POSITION:
 		return g_buffer.m_color_texture[1];
-	case c_renderer::e_texture::METALLIC:
+	case c_renderer::e_texture::DIFFUSE:
 		return g_buffer.m_color_texture[2];
-	case c_renderer::e_texture::NORMAL:
+	case c_renderer::e_texture::METALLIC:
 		return g_buffer.m_color_texture[3];
-	case c_renderer::e_texture::LIN_DEPTH:
+	case c_renderer::e_texture::NORMAL:
 		return g_buffer.m_color_texture[4];
+	case c_renderer::e_texture::LIN_DEPTH:
+		return g_buffer.m_color_texture[5];
 	case c_renderer::e_texture::DEPTH:
 		return g_buffer.m_depth_texture;
 	case c_renderer::e_texture::SELECTION:
