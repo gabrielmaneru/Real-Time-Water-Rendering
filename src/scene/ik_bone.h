@@ -9,27 +9,43 @@ struct ik_bone
 	mat4 get_concat_rotation()const;
 	vec3 get_head()const;
 	vec3 get_tail()const;
+	void set_tail(const vec3 &);
 
 	quat m_rotation{};
 	float m_length{1.0f};
 	ik_bone * m_parent{ nullptr };
-	std::vector<ik_bone *> m_children;
 };
 
 class ik_chain : public scene_object
 {
+	enum e_Solver {
+		e_2BoneIK,
+		e_CCD,
+		e_FABRIK
+	} m_solver{ e_2BoneIK };
+	enum e_Status {
+		e_Running,
+		e_Finished,
+		e_OutofReach
+	} m_status{ e_Running };
+	void run_solver();
+	bool is_end_outofreach();
+
 public:
 	ik_chain(transform3d tr = {}, size_t start_count=2u);
 	void draw(Shader_Program*)override;
 	void draw_GUI()override;
-	void run_2_bone_ik();
-	bool run_ccd();
+	e_Status run_2_bone_ik();
+	e_Status run_ccd();
+	e_Status run_FABRIK();
 
 	int m_iterations{ 1 };
-	int m_solver{ 0 };
+	float m_epsilon{ 0.1f };
 	bool m_active{false};
 	ik_bone* m_root;
 	vec3 m_end_effector;
 	size_t m_selected{0};
 	std::vector<ik_bone*> m_bones;
+
+	friend class c_scene;
 };

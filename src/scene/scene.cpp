@@ -258,7 +258,7 @@ bool c_scene::init()
 	m_chains.back()->m_bones[1]->m_length = 1.75f;
 	m_chains.back()->m_active = true;
 	m_chains.back()->m_end_effector.x = 7.0f;
-	m_chains.back()->m_solver = 0;
+	m_chains.back()->m_solver = ik_chain::e_2BoneIK;
 
 	tr.set_pos({ -7.52f, 16.89f , -26.00f });
 	m_chains.push_back(new ik_chain(tr, 4));
@@ -268,11 +268,23 @@ bool c_scene::init()
 	m_chains.back()->m_bones[3]->m_length = 2.00f;
 	m_chains.back()->m_active = true;
 	m_chains.back()->m_end_effector.x = 6.0f;
-	m_chains.back()->m_solver = 1;
-	
-	//tr.set_pos({ 5,0,5 });
-	//m_chains.push_back(new ik_chain(tr, 10));
-	//m_chains.back()->m_solver = 2;
+	m_chains.back()->m_solver = ik_chain::e_CCD;
+
+	tr.set_pos({ 30.38f, 16.30f , -27.22f });
+	m_chains.push_back(new ik_chain(tr, 10));
+	m_chains.back()->m_bones[0]->m_length = 1.00f;
+	m_chains.back()->m_bones[1]->m_length = 0.50f;
+	m_chains.back()->m_bones[2]->m_length = 0.50f;
+	m_chains.back()->m_bones[3]->m_length = 0.50f;
+	m_chains.back()->m_bones[4]->m_length = 0.50f;
+	m_chains.back()->m_bones[5]->m_length = 0.50f;
+	m_chains.back()->m_bones[6]->m_length = 0.50f;
+	m_chains.back()->m_bones[7]->m_length = 0.50f;
+	m_chains.back()->m_bones[8]->m_length = 0.50f;
+	m_chains.back()->m_bones[9]->m_length = 1.00f;
+	m_chains.back()->m_active = true;
+	m_chains.back()->m_end_effector.x = 6.0f;
+	m_chains.back()->m_solver = ik_chain::e_FABRIK;
 
 	return true;
 }
