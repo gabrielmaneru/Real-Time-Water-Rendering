@@ -24,9 +24,11 @@ noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, f
 void noise_layer::build_layers(size_t resolution)
 {
 	m_noise_layers.clear();
-	randomize_noise();
 	for (size_t i = 0; i < m_layer_count; i++)
+	{
+		randomize_noise();
 		m_noise_layers.emplace_back(generate_noise(resolution, ((float)resolution)*m_noise_scale, m_iterations, m_complexity, 1.0f / m_complexity));
+	}
 }
 
 void noise_layer::update_time(float dt)
@@ -80,8 +82,14 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 
 void Ocean::init()
 {
-	m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
-		3u, 0.5f, 1.0f });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 0.1f, 2, 2.0f,
+		3u, 0.2f, 5.0f, {0.0f, 1.0f} });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 2.0f, 4, 4.0f,
+		3u, 0.3f, 2.0f, {0.0f, 1.0f} });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 8.0f, 4, 4.0f,
+		3u, 0.5f, 0.5f, {0.0f, 1.0f} });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 0.05f, 2, 2.0f,
+		3u, 0.2f, 7.5f, {0.0f, -1.0f} });
 
 	m_mesh.build_plane((int)m_resolution, m_mesh_scale);
 	m_mesh.compute_normals();
@@ -89,8 +97,6 @@ void Ocean::init()
 
 	m_caustics.setup(256, 256);
 	m_caustics.clear(0.0f);
-
-	m_dither.loadFromFile(Texture::filter_name("dither.png").c_str());
 }
 
 void Ocean::draw(Shader_Program* shader)
@@ -112,6 +118,9 @@ void Ocean::drawGUI()
 	if(reset_all)
 		m_mesh.build_plane((int)m_resolution, m_mesh_scale);
 
+	if (ImGui::Button("Add New Layer"))
+		m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
+			3u, 0.5f, 1.0f, {0.0f, 1.0f} });
 	for (size_t l = 0; l < m_noise.size(); l++)
 	{
 		std::string name = "Layer " + std::to_string(l);
@@ -171,6 +180,12 @@ void Ocean::drawGUI()
 				if(ImGui::SliderFloat2("Direction", &layer->m_direction.x, -1.0f, 1.0f))
 					layer->m_dirs = straight(layer->m_direction, m_resolution);
 
+			if (ImGui::Button("Remove Layer"))
+			{
+				m_noise.erase(m_noise.begin() + l);
+				ImGui::TreePop();
+				return;
+			}
 			ImGui::TreePop();
 		}
 		else if (reset_all)
@@ -185,6 +200,7 @@ void Ocean::drawGUI()
 			delete layer;
 			layer = m_noise[l] = next;
 		}
+
 	}
 }
 

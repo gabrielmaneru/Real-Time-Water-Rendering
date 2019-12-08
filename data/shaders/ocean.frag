@@ -9,13 +9,13 @@ in vec2 vUv;
 uniform float near;
 uniform float far;
 uniform mat3 Vnorm;
+uniform vec3 l_dir;
 uniform mat4 V;
 uniform mat4 P;
 layout (binding = 0) uniform samplerCube skybox_txt;
 layout (binding = 1) uniform sampler2D position_txt;
 layout (binding = 2) uniform sampler2D diffuse_txt;
 layout (binding = 3) uniform sampler2D caustic_txt;
-layout (binding = 4) uniform sampler2D dither_txt;
 
 uniform bool line_render;
 
@@ -25,13 +25,9 @@ layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
 layout (location = 4) out float attr_lindepth;
 
-vec3 get_vpos(vec2 txt_uv)
+vec4 get_vpos(vec2 txt_uv)
 {
-	//float depth = texture(position_txt, txt_uv).xyz;
-	//vec4 view_point = vec4(txt_uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-	//view_point = inverse(P) * view_point;
-	//view_point /= view_point.w;
-	return texture(position_txt, txt_uv).xyz;
+	return texture(position_txt, txt_uv);
 }
 vec4 get_prev_diff(vec2 dUv)
 {
@@ -119,15 +115,6 @@ float get_caustic(vec2 world_uv)
 		return 1.0;
 	return texture(caustic_txt, world_uv).r;
 }
-bool get_dither(float factor, vec2 world_uv)
-{
-	float n = texture(dither_txt, world_uv*100).r;
-	if(n>factor)
-		return true;
-	else 
-		return false;
-}
-
 
 void main()
 {
@@ -140,11 +127,16 @@ void main()
 	
 	vec2 size = vec2(textureSize(position_txt,0));
 	vec2 txt_uv = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y);
-	vec3 vpos = get_vpos(txt_uv);
-	vec2 world_uv = (inverse(V)*vec4(vpos, 1.0)).xz/256 + 0.5;
-
-	float water_len = length(vPosition-vpos);
+	vec4 vpos = get_vpos(txt_uv);
+	vec2 world_uv = (inverse(V)*vec4(vpos.xyz, 1.0)).xz/256 + 0.5;
 	const float sea_view = 50.0f;
+	float water_len = length(vPosition-vpos.xyz);
+	if(vpos.w < 0.5)
+	{
+		water_len = sea_view;
+		world_uv = vec2(0);
+	}
+
 	float depth_factor = clamp(water_len/sea_view,0.0,1.0);
 	vec3 blue_water_color = vec3(0.0,0.2,1.0);
 	vec3 green_water_color = vec3(0.0,1.0,0.2);
@@ -163,21 +155,18 @@ void main()
 	vec2 delta_Refract = (vRefract_View.xy-vView.xy)*refract_factor;
 	vec3 prev_color = get_prev_diff(delta_Refract).xyz;
 	float caustic = pow(get_caustic(world_uv),16);
-	prev_color *= pow(caustic, 0.3);
+	prev_color *= clamp(pow(caustic, 0.2), 0.8, 1.0);
 
 
 	float drag_factor = pow(depth_factor,0.5);
 	vec3 drag_color = mix(green_water_color,blue_water_color,drag_factor);
 	float color_factor = pow(depth_factor,0.8);
 	vec3 diffuse = mix(prev_color,drag_color,color_factor);
-	const float foam_limit = 0.05;
-	if(depth_factor < foam_limit)
-	{
-		float foam_factor = pow(depth_factor/foam_limit,0.5);
-		if(get_dither(foam_factor, world_uv))
-			diffuse = vec3(1);
-	}
-	diffuse += clamp(pow(vNormal.y, 4),0,1)*0.5*reflected_color;
+	//diffuse += 0.5*reflected_color;
+	float l_factor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
+	vec3 r_light = normalize(reflect(-normalize(l_dir),vNormal));
+	float s_factor = pow(max(dot(r_light,-vView),0),4);
+	diffuse +=reflected_color * (mix(0.0,0.75,l_factor)+s_factor);
 
 	attr_albedo = vec4(diffuse, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

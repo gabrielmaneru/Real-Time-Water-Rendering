@@ -42,7 +42,6 @@ struct Ocean
 	std::vector<noise_layer*> m_noise;
 	raw_mesh m_mesh;
 	raw_texture_single m_caustics;
-	Texture m_dither;
 };
 
 map2d<vec2> straight(vec2 dir, size_t scale);

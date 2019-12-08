@@ -130,7 +130,9 @@ bool c_renderer::init()
 	m_curves.push_back(new curve_catmull("swim2"));
 	
 	// Setup Cameras
-	scene_cam.m_eye = { 10,10,0 };
+	scene_cam.m_eye = { 0,50,0 };
+	scene_cam.m_yaw = 90;
+	scene_cam.m_pitch = -30;
 	scene_cam.update();
 
 	m_ocean.init();
@@ -314,6 +316,7 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(ocean_shader);
 		/**/ocean_shader->set_uniform("near", scene_cam.m_near);
 		/**/ocean_shader->set_uniform("far", scene_cam.m_far);
+		/**/ocean_shader->set_uniform("l_dir", glm::inverse(glm::transpose(mat3(scene_cam.m_view))) * scene->m_dir_light->m_transform.get_pos());
 		/**/ocean_shader->set_uniform("Vnorm", glm::inverse(glm::transpose(mat3(scene_cam.m_view))));
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);
@@ -323,8 +326,6 @@ void c_renderer::update()
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
 		/**/glActiveTexture(GL_TEXTURE3);
 		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_caustics.m_id);
-		/**/glActiveTexture(GL_TEXTURE4);
-		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_dither.m_id);
 		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,
 			GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 });
 		/**/m_ocean.draw(ocean_shader);
