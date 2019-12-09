@@ -43,9 +43,9 @@ vec4 get_prev_diff(vec2 dUv)
 		txt_uvs.y = 2 - txt_uvs.y;
 	return texture(diffuse_txt, txt_uvs);
 }
-const float step = 5;
-const float max_steps = 30;
-const int num_binary = 5;
+const float step = 0.05;
+const float max_steps = 80;
+const int num_binary = 10;
 vec3 raymarch(vec3 dir, vec3 hit_pos)
 {
 	dir *= step;
