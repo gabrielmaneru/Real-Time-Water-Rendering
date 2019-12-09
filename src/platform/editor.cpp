@@ -175,7 +175,9 @@ void c_editor::draw_selected_window()
 
 				float matrixTranslation[3], matrixRotation[3], matrixScale[3];
 				ImGuizmo::DecomposeMatrixToComponents(&model[0][0], matrixTranslation, matrixRotation, matrixScale);
-				c->m_end_effector = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
+				vec3 new_pos = vec3(matrixTranslation[0], matrixTranslation[1], matrixTranslation[2]);
+				if(glm::length(new_pos - c->m_end_effector) > c->m_epsilon)
+					c->m_end_effector = new_pos, c->reset();
 			}
 			else
 			{

@@ -55,45 +55,36 @@ void ik_bone::set_tail(const vec3 & t)
 
 void ik_chain::run_solver()
 {
-	switch (m_solver)
+	for (int i = 0; i < m_iterations.iteration_per_frame; i++)
 	{
-	case ik_chain::e_2BoneIK:
-		if (m_bones.size() == 2)
+		switch (m_solver)
 		{
-			m_end_effector.z = 0.0f;
-			m_status = run_2_bone_ik();
+		case ik_chain::e_2BoneIK:
+			if (m_bones.size() == 2)
+			{
+				m_end_effector.z = 0.0f;
+				m_status = run_2_bone_ik();
+			}
+			else
+			{
+				ImGui::TextColored(ImColor(255, 0, 0), "Bone size must be 2");
+				m_status = e_Failed;
+			}
+			break;
+		case ik_chain::e_CCD:
+			m_status = run_ccd();
+			break;
+		case ik_chain::e_FABRIK:
+			m_status = run_FABRIK();
+			break;
 		}
-		else
-		{
-			ImGui::TextColored(ImColor(255, 0, 0), "Bone size must be 2");
-			m_status = e_OutofReach;
-		}
-		break;
-	case ik_chain::e_CCD:
-		for (int i = 0; i < m_iterations; i++)
-			if ((m_status = run_ccd()) != e_Running)
-				break;
-		break;
-	case ik_chain::e_FABRIK:
-		for (int i = 0; i < m_iterations; i++)
-			if ((m_status = run_FABRIK()) != e_Running)
-				break;
-		break;
-	default:
-		break;
-	}
 
-	switch (m_status)
-	{
-	case ik_chain::e_Running:
-		ImGui::TextColored(ImColor(255, 255, 255), "Running");
-		break;
-	case ik_chain::e_Finished:
-		ImGui::TextColored(ImColor(55, 255, 55), "Finished");
-		break;
-	case ik_chain::e_OutofReach:
-		ImGui::TextColored(ImColor(255, 55, 55), "Failed");
-		break;
+		if (++m_iterations.iteration_count > m_iterations.iteration_maximum
+		&& m_status == e_Running)
+			m_status = e_Failed;
+
+		if (m_status != e_Running)
+			break;
 	}
 }
 
@@ -107,10 +98,24 @@ bool ik_chain::is_end_outofreach()
 	if (m_bones.size() == 2)
 	{
 		float diff = fabsf(m_bones[0]->m_length - m_bones[1]->m_length);
-		if (glm::length(m_end_effector) < diff)
+		if (glm::length(m_end_effector) <= diff)
 			return true;
 	}
 	return false;
+}
+
+bool ik_chain::is_finished()
+{
+	return glm::length(m_bones.back()->get_tail() - m_end_effector) < m_epsilon;
+}
+
+ik_chain::e_Status ik_chain::status_check()
+{
+	if (is_finished())
+		return e_Finished;
+	if (is_end_outofreach())
+		return e_OutofReach;
+	return e_Running;
 }
 
 ik_chain::ik_chain(transform3d tr, size_t start_count)
@@ -119,7 +124,6 @@ ik_chain::ik_chain(transform3d tr, size_t start_count)
 	ik_bone * last{nullptr};
 	for (size_t i = 0; i < start_count; i++)
 	{
-
 		ik_bone* b = new ik_bone(last);
 		m_bones.push_back(b);
 		if (last == nullptr)
@@ -151,6 +155,13 @@ void ik_chain::draw(Shader_Program * shader)
 	else
 		renderer->get_model("octohedron")->draw(shader, nullptr);
 }
+
+void ik_chain::reset()
+{
+	m_iterations.iteration_count = 0;
+	m_status = e_Running;
+}
+
 void ik_chain::draw_GUI()
 {
 	ImGui::Text("IK Chain");
@@ -161,9 +172,7 @@ void ik_chain::draw_GUI()
 		ImGui::InputFloat4("Bone rotation", &m_bones[m_selected]->m_rotation.x);
 	}
 	else
-	{
 		ImGui::Text("Selected End Effector");
-	}
 
 	ImGui::NewLine();
 	ImGui::NewLine();
@@ -180,36 +189,45 @@ void ik_chain::draw_GUI()
 		ImGui::EndCombo();
 	}
 	ImGui::Checkbox("Active", &m_active);
-	if (m_active) run_solver();
+	ImGui::Text(("Iteration Count: " + std::to_string(m_iterations.iteration_count)).c_str());
+	ImGui::InputInt("Iterations Limit", &m_iterations.iteration_maximum);
+	ImGui::InputInt("Iterations per Frame", &m_iterations.iteration_per_frame);
+	if (m_active && m_status == e_Running)
+		run_solver();
+
+	switch (m_status)
+	{
+	case ik_chain::e_Running:
+		ImGui::TextColored(ImColor(255, 255, 255), "Running");
+		break;
+	case ik_chain::e_Finished:
+		ImGui::TextColored(ImColor(55, 255, 55), "Finished");
+		break;
+	case ik_chain::e_OutofReach:
+		ImGui::TextColored(ImColor(55, 55, 255), "OutofReach");
+		break;
+	case ik_chain::e_Failed:
+		ImGui::TextColored(ImColor(255, 55, 55), "Failed");
+		break;
+	}
 }
 ik_chain::e_Status ik_chain::run_2_bone_ik()
 {
-	if (glm::length(m_bones.back()->get_tail() - m_end_effector) < m_epsilon)
-		return e_Finished;
-	if (is_end_outofreach())
-		return e_OutofReach;
-
-
 	float x = m_end_effector.x;
 	float y = m_end_effector.y;
 	float d1 = m_bones[0]->m_length;
 	float d2 = m_bones[1]->m_length;
-	float theta_2 = acosf((x*x + y*y - ((d1*d1) + (d2*d2))) / (2.0f*d1*d2));
+	float theta_2 = acosf(glm::clamp((x*x + y*y - ((d1*d1) + (d2*d2))) / (2.0f*d1*d2), -1.0f, 1.0f));
 	float theta_1 = atan2f(
 		y*(d1 + d2 * cosf(theta_2)) - x * (d2*sinf(theta_2)),
 		x*(d1 + d2 * cosf(theta_2)) + y * (d2*sinf(theta_2)) );
 	m_bones[0]->m_rotation = normalize(quat{ vec3{0.0f, 0.0f, theta_1} });
 	m_bones[1]->m_rotation = normalize(quat{ vec3{0.0f, 0.0f, theta_2} });
-	return e_Running;
+
+	return status_check();
 }
 ik_chain::e_Status ik_chain::run_ccd()
 {
-	if (glm::length(m_bones.back()->get_tail() - m_end_effector) < m_epsilon)
-		return e_Finished;
-	if(is_end_outofreach())
-		return e_OutofReach;
-
-
 	for (int i = m_bones.size() - 1; i >= 0; i--)
 	{
 		vec3 head = m_bones[i]->get_head();
@@ -224,16 +242,12 @@ ik_chain::e_Status ik_chain::run_ccd()
 		quat q{ to_tail, to_end_effector };
 		m_bones[i]->m_rotation = normalize(m_bones[i]->m_rotation * normalize(q));
 	}
-	return e_Running;
+
+	return status_check();
 }
 
 ik_chain::e_Status ik_chain::run_FABRIK()
 {
-	if (glm::length(m_bones.back()->get_tail() - m_end_effector) < m_epsilon)
-		return e_Finished;
-	if (is_end_outofreach())
-		return e_OutofReach;
-
 	std::vector<vec3> m_positions;
 	for (size_t i = 0; i < m_bones.size(); i++)
 		m_positions.push_back(m_bones[i]->get_head());
@@ -245,5 +259,6 @@ ik_chain::e_Status ik_chain::run_FABRIK()
 		m_positions[i] = m_positions[i - 1] - m_bones[i-1]->m_length * glm::normalize(m_positions[i - 1] - m_positions[i]);
 	for (int i = 0; i < (int)m_bones.size(); i++)
 		m_bones[i]->set_tail(m_positions[i + 1]);
-	return e_Running;
+
+	return status_check();
 }

@@ -26,20 +26,29 @@ class ik_chain : public scene_object
 	enum e_Status {
 		e_Running,
 		e_Finished,
-		e_OutofReach
+		e_OutofReach,
+		e_Failed
 	} m_status{ e_Running };
 	void run_solver();
 	bool is_end_outofreach();
+	bool is_finished();
+	e_Status status_check();
 
 public:
 	ik_chain(transform3d tr = {}, size_t start_count=2u);
 	void draw(Shader_Program*)override;
+	void reset();
 	void draw_GUI()override;
 	e_Status run_2_bone_ik();
 	e_Status run_ccd();
 	e_Status run_FABRIK();
 
-	int m_iterations{ 1 };
+	struct Iteration_Info
+	{
+		int iteration_per_frame{50};
+		int iteration_count{0};
+		int iteration_maximum{ 1000 };
+	} m_iterations;
 	float m_epsilon{ 0.1f };
 	bool m_active{false};
 	ik_bone* m_root;
