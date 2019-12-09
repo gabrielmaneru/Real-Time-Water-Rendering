@@ -43,9 +43,9 @@ vec4 get_prev_diff(vec2 dUv)
 		txt_uvs.y = 2 - txt_uvs.y;
 	return texture(diffuse_txt, txt_uvs);
 }
-const float step = 0.05;
-const float max_steps = 80;
-const int num_binary = 10;
+const float step = 0.1;
+const float max_steps = 500;
+const int num_binary = 8;
 vec3 raymarch(vec3 dir, vec3 hit_pos)
 {
 	dir *= step;
@@ -62,8 +62,8 @@ vec3 raymarch(vec3 dir, vec3 hit_pos)
 			return vec3(0.0);
 		z_hit = get_vpos(proj.xy).z;
 		float delta_z = hit_pos.z - z_hit;
-
-		if((dir.z - delta_z) < 1.2)
+		float error_margin = dir.z - delta_z;
+		if(error_margin <= 1)
 		{
 			if(delta_z <= 0.0)
 			{
@@ -81,25 +81,11 @@ vec3 raymarch(vec3 dir, vec3 hit_pos)
 					z_hit = get_vpos(proj.xy).z;
 					delta_z = hit_pos.z - z_hit;
 				}
-				return vec3(proj.xy, 1.0);
+				return vec3(proj.xy, 1);
 			}
 		}
 	}
 	return vec3(0.0);
-}
-vec3 get_reflected_color(vec3 vPosition, vec3 vReflect_View, out bool hitted)
-{
-	vec3 result = raymarch(vReflect_View, vPosition);
-	if(result.z == 1.0)
-	{
-		hitted = true;
-		return texture(diffuse_txt, result.xy).rgb;
-	}
-	else
-	{
-		hitted = false;
-		return vec3(0,0,0);
-	}
 }
 vec3 get_sky_color(vec3 vReflect_View)
 {
@@ -108,6 +94,11 @@ vec3 get_sky_color(vec3 vReflect_View)
 		return vec3(0.9);
 	else
 		return texture(skybox_txt, wReflect_View).rgb;
+}
+vec3 get_reflected_color(vec3 vPosition, vec3 vReflect_View)
+{
+	vec3 result = raymarch(vReflect_View, vPosition);
+	return mix(get_sky_color(vReflect_View),texture(diffuse_txt, result.xy).rgb,result.z);
 }
 float get_caustic(vec2 world_uv)
 {
@@ -144,10 +135,7 @@ void main()
 
 	vec3 vView = normalize(vPosition);
 	vec3 vReflect_View = normalize(reflect(vView, vNormal));
-	bool hitted;
-	vec3 reflected_color = get_reflected_color(vPosition, vReflect_View, hitted);
-	if(!hitted)
-		reflected_color = get_sky_color(vReflect_View);
+	vec3 reflected_color = get_reflected_color(vPosition, vReflect_View);
 
 
 	vec3 vRefract_View = normalize(refract(vView, vNormal, 0.75));
@@ -162,11 +150,11 @@ void main()
 	vec3 drag_color = mix(green_water_color,blue_water_color,drag_factor);
 	float color_factor = pow(depth_factor,0.8);
 	vec3 diffuse = mix(prev_color,drag_color,color_factor);
-	//diffuse += 0.5*reflected_color;
 	float l_factor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
 	vec3 r_light = normalize(reflect(-normalize(l_dir),vNormal));
 	float s_factor = pow(max(dot(r_light,-vView),0),4);
 	diffuse +=reflected_color * (mix(0.0,0.75,l_factor)+s_factor);
+	//diffuse = reflected_color;
 
 	attr_albedo = vec4(diffuse, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

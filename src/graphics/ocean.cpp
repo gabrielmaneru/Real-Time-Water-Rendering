@@ -244,11 +244,12 @@ void Ocean::update_mesh()
 	vec3 real_pos = scene->m_objects[1]->m_transform.get_pos();
 	vec2 uv = { real_pos.x+128.0f, real_pos.z+128.0f };
 
-	vec3 w_pos = copy_vtx.get_linear(uv);
+	vec3 w_pos = { real_pos.x, copy_vtx.get_linear(uv).y, real_pos.z };
 	vec3 w_pos_front = copy_vtx.get_linear(uv + vec2(2, 0));
 	vec3 w_pos_back = copy_vtx.get_linear(uv + vec2(-2, 0));
 	vec3 w_pos_right = copy_vtx.get_linear(uv + vec2(0, 2));
 	vec3 w_pos_left = copy_vtx.get_linear(uv + vec2(0, -2));
+
 	w_pos.y = w_pos.y + w_pos_back.y + w_pos_front.y + w_pos_right.y + w_pos_left.y;
 	w_pos.y /= 5.0f;
 
@@ -256,7 +257,7 @@ void Ocean::update_mesh()
 	vec3 to_front = glm::normalize(w_pos_front - w_pos_back);
 	vec3 up = glm::normalize(glm::cross(to_right, to_front));
 
-	scene->m_objects[1]->m_transform.set_pos(w_pos + vec3(0, 1.5, 0));
+	scene->m_objects[1]->m_transform.set_pos(w_pos + vec3(0, 1.0, 0));
 	scene->m_objects[1]->m_transform.set_rot(glm::quatLookAt(to_front, up));
 	scene->m_objects[1]->m_transform.get_model();
 	scene->m_objects[1]->m_transform.m_tr.m_pos = real_pos;
