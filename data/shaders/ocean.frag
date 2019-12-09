@@ -152,7 +152,7 @@ void main()
 
 	vec3 vRefract_View = normalize(refract(vView, vNormal, 0.75));
 	float refract_factor = pow(depth_factor,0.8);
-	vec2 delta_Refract = (vRefract_View.xy-vView.xy)*refract_factor;
+	vec2 delta_Refract = (vRefract_View.xy-vView.xy)*refract_factor*0;
 	vec3 prev_color = get_prev_diff(delta_Refract).xyz;
 	float caustic = pow(get_caustic(world_uv),16);
 	prev_color *= clamp(pow(caustic, 0.2), 0.8, 1.0);

@@ -108,6 +108,12 @@ bool c_renderer::init()
 		{},"sand1-roughness.png",
 		1.0f,"sand1-normal-ue.png"
 		});
+	Model::m_def_materials.push_back(new Material{ "boat",
+		{},"Boat_albedo.jpg",
+		{},"Boat_metallic.jpg",
+		{},"Boat_roughness.jpg",
+		1.0f,"Boat_normal.png"
+		});
 
 	// Load Resources
 	try
@@ -119,7 +125,8 @@ bool c_renderer::init()
 		m_models.push_back(new Model("./data/meshes/sphere.obj"));
 
 		// Complex
-		m_models.push_back(new Model("./data/meshes/terrain.obj", {"sand"}));
+		m_models.push_back(new Model("./data/meshes/terrain.obj", { "sand" }));
+		m_models.push_back(new Model("./data/meshes/boat.dae", { "boat" }));
 		//m_models.push_back(new Model("./data/meshes/sponza.obj"));
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -205,10 +212,12 @@ void c_renderer::update()
 		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT2,
 			GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 });
 		/**/scene_cam.set_uniforms(g_buffer_shader);
-		/**/g_buffer_shader->set_uniform("uv_scale", 50.0f);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
-		/**/scene->draw_objs(g_buffer_shader);
+		/**/g_buffer_shader->set_uniform("uv_scale", 50.0f);
+		/**/scene->m_objects[0]->draw(g_buffer_shader);
+		/**/g_buffer_shader->set_uniform("uv_scale", 1.0f);
+		/**/scene->m_objects[1]->draw(g_buffer_shader);
 		/**/g_buffer.set_drawbuffers();
 		/**/
 		/**/if(m_render_options.dc_active)

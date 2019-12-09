@@ -15,7 +15,6 @@ Author: Gabriel Mañeru - gabriel.m
 #include <vector>
 class c_scene
 {
-	std::vector<scene_object*> m_objects;
 	std::vector<point_light*> m_point_lights;
 	dir_light* m_dir_light{ nullptr };
 	std::vector<decal*> m_decals;
@@ -23,6 +22,7 @@ class c_scene
 	bool load_scene(std::string);
 
 public:
+	std::vector<scene_object*> m_objects;
 	bool init();
 	void update();
 	void draw_objs(Shader_Program*);

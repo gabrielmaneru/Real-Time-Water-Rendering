@@ -6,6 +6,7 @@
 #include <imgui/imgui.h>
 #include <utils/generate_noise.h>
 #include <stb_image/stb_image.h>
+#include <scene/scene.h>
 #include <iostream>
 noise_layer::noise_layer(size_t resolution, float noise_scale, int iterations, float complexity, size_t layer_count, float speed, float height, vec2 dir)
 	: m_noise_scale(noise_scale), m_iterations(iterations), m_complexity(complexity),
@@ -233,6 +234,19 @@ void Ocean::update_mesh()
 			})).y;
 	});
 	m_caustics.load();
+
+
+	map2d<vec3> copy_vtx{ m_resolution, m_resolution };
+	copy_vtx.loop([&](size_t x, size_t y, vec3)->vec3
+	{
+		return m_mesh.vertices[y*m_resolution + x];
+	});
+	vec3 real_pos = scene->m_objects[1]->m_transform.get_pos();
+	vec2 uv = { real_pos.x+128.0f, real_pos.z+128.0f };
+	vec3 w_pos = copy_vtx.get_linear(uv);
+	scene->m_objects[1]->m_transform.set_pos(w_pos);
+	scene->m_objects[1]->m_transform.get_model();
+	scene->m_objects[1]->m_transform.m_tr.m_pos = real_pos;
 }
 
 map2d<vec2> straight(vec2 dir, size_t scale)
