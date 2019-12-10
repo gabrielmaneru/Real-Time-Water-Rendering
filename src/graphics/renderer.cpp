@@ -336,6 +336,8 @@ void c_renderer::update()
 		/**/glBindTexture(GL_TEXTURE_2D, get_texture(LIGHT));
 		/**/glActiveTexture(GL_TEXTURE3);
 		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_caustics.m_id);
+		/**/glActiveTexture(GL_TEXTURE4);
+		/**/glBindTexture(GL_TEXTURE_2D, m_ocean.m_foam.m_id);
 		/**/g_buffer.set_drawbuffers({ GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,
 			GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 });
 		/**/m_ocean.draw(ocean_shader);

@@ -16,6 +16,7 @@ layout (binding = 0) uniform samplerCube skybox_txt;
 layout (binding = 1) uniform sampler2D position_txt;
 layout (binding = 2) uniform sampler2D diffuse_txt;
 layout (binding = 3) uniform sampler2D caustic_txt;
+layout (binding = 4) uniform sampler2D foam_txt;
 
 uniform bool WireframeMode;
 uniform float ShoreDistance;
@@ -157,6 +158,9 @@ void main()
 	vec3 ReflectedLight = normalize(reflect(normalize(-l_dir),vNormal));
 	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),4);
 	WaterColor += ReflectedColor * (mix(LightInterval.x,LightInterval.y,LightFactor)+LightSpecular*SpecularFactor);
+	float foam = texture(foam_txt, vUv*15).r;
+	float foam_factor = pow(length(mNormal.xz),1.2);
+	WaterColor += vec3(foam)*foam_factor;
 
 	attr_albedo = vec4(WaterColor, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

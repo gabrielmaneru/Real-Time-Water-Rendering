@@ -98,6 +98,7 @@ void Ocean::init()
 
 	m_caustics.setup(256, 256);
 	m_caustics.clear(0.0f);
+	m_foam.loadFromFile(Texture::filter_name("foam.jpg").c_str());
 }
 
 void Ocean::draw(Shader_Program* shader)
