@@ -102,106 +102,137 @@ void Ocean::init()
 
 void Ocean::draw(Shader_Program* shader)
 {
-	//GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-	//shader->set_uniform("line_render", true);
-	//m_mesh.draw();
+	if (shade_info.m_wireframe_mode)
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
+	else
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
 
-	GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-	shader->set_uniform("line_render", false);
+	shader->set_uniform("WireframeMode", shade_info.m_wireframe_mode);
+	shader->set_uniform("ShoreDistance", shade_info.m_shore_distance);
+	shader->set_uniform("ShoreWaterColor", shade_info.m_shore_water_color);
+	shader->set_uniform("DeepWaterColor", shade_info.m_deep_water_color);
+	shader->set_uniform("ReflectionStep", shade_info.m_reflection_step);
+	shader->set_uniform("ReflectionStepMax", shade_info.m_reflection_step_max);
+	shader->set_uniform("ReflectionRefinementCount", shade_info.m_reflection_refinement_count);
+	shader->set_uniform("RefractionAngle", shade_info.m_refraction_angle);
+
+
 	m_mesh.draw();
+	GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL))
 }
 
 void Ocean::drawGUI()
 {
-	bool reset_all{ false };
-	if (ImGui::InputUInt("Resolution", &m_resolution)) reset_all = true;
-	if (ImGui::InputFloat("Mesh Scale", &m_mesh_scale)) reset_all = true;
-	if(reset_all)
-		m_mesh.build_plane((int)m_resolution, m_mesh_scale);
-
-	if (ImGui::Button("Add New Layer"))
-		m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
-			3u, 0.5f, 1.0f, {0.0f, 1.0f} });
-	for (size_t l = 0; l < m_noise.size(); l++)
+	if (ImGui::TreeNode("Layers:"))
 	{
-		std::string name = "Layer " + std::to_string(l);
-		noise_layer* layer = m_noise[l];
-		if (ImGui::TreeNode(name.c_str()))
+		bool reset_all{ false };
+		if (ImGui::InputUInt("Resolution", &m_resolution)) reset_all = true;
+		if (ImGui::InputFloat("Mesh Scale", &m_mesh_scale)) reset_all = true;
+		if(reset_all)
+			m_mesh.build_plane((int)m_resolution, m_mesh_scale);
+
+		if (ImGui::Button("Add New Layer"))
+			m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
+				3u, 0.5f, 1.0f, {0.0f, 1.0f} });
+
+		for (size_t l = 0; l < m_noise.size(); l++)
 		{
-			ImGui::Text("Noise Properties");
-			bool reset_noise{ false };
-
-			float n_scale = layer->m_noise_scale;
-			if (ImGui::InputFloat("Noise Scale", &n_scale)) reset_noise = true;
-
-			int it = layer->m_iterations;
-			if (ImGui::InputInt("Iterations", &it))reset_noise = true;
-
-			float complex = layer->m_complexity;
-			if (ImGui::InputFloat("Iteration Complexity", &complex)) reset_noise = true;
-
-			size_t l_count = layer->m_layer_count;
-			if (ImGui::InputUInt("Interpolation Layer Count", &l_count)) reset_noise = true;
-
-			if (reset_noise || reset_all)
+			std::string name = "Layer " + std::to_string(l);
+			noise_layer* layer = m_noise[l];
+			if (ImGui::TreeNode(name.c_str()))
 			{
-				noise_layer * next{nullptr};
+				ImGui::Text("Noise Properties");
+				bool reset_noise{ false };
+
+				float n_scale = layer->m_noise_scale;
+				if (ImGui::InputFloat("Noise Scale", &n_scale)) reset_noise = true;
+
+				int it = layer->m_iterations;
+				if (ImGui::InputInt("Iterations", &it))reset_noise = true;
+
+				float complex = layer->m_complexity;
+				if (ImGui::InputFloat("Iteration Complexity", &complex)) reset_noise = true;
+
+				size_t l_count = layer->m_layer_count;
+				if (ImGui::InputUInt("Interpolation Layer Count", &l_count)) reset_noise = true;
+
+				if (reset_noise || reset_all)
+				{
+					noise_layer * next{nullptr};
+					if (layer->m_mode == 0)
+						next = new noise_layer{ m_resolution, n_scale, it, complex,
+							l_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0)};
+					else if(layer->m_mode == 1)
+						next = new noise_layer{ m_resolution, n_scale, it, complex,
+							l_count, layer->m_speed, layer->m_height };
+					delete layer;
+					layer = m_noise[l] = next;
+				}
+
+				ImGui::NewLine();
+				ImGui::NewLine();
+				ImGui::SliderFloat("Speed", &layer->m_speed, 0.f, 5.f);
+				ImGui::SliderFloat("Height", &layer->m_height, 0.f, 10.f);
+
+				const char * modes[] = { "Straight", "Whirpool" };
+				if (ImGui::BeginCombo("Direction Modes", modes[layer->m_mode]))
+				{
+					for (size_t n = 0; n < 2; n++)
+					{
+						if (ImGui::Selectable(modes[n], layer->m_mode == n))
+						{
+							layer->m_mode = n;
+							if (layer->m_mode == 0)
+								layer->m_dirs = straight(layer->m_direction, m_resolution);
+							if (layer->m_mode == 1)
+								layer->m_dirs = whirlpool(m_resolution);
+						}
+					}
+					ImGui::EndCombo();
+				}
 				if (layer->m_mode == 0)
-					next = new noise_layer{ m_resolution, n_scale, it, complex,
-						l_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0)};
-				else if(layer->m_mode == 1)
-					next = new noise_layer{ m_resolution, n_scale, it, complex,
-						l_count, layer->m_speed, layer->m_height };
+					if(ImGui::SliderFloat2("Direction", &layer->m_direction.x, -1.0f, 1.0f))
+						layer->m_dirs = straight(layer->m_direction, m_resolution);
+
+				if (ImGui::Button("Remove Layer"))
+				{
+					m_noise.erase(m_noise.begin() + l);
+					ImGui::TreePop();
+					return;
+				}
+				ImGui::TreePop();
+			}
+			else if (reset_all)
+			{
+				noise_layer * next{ nullptr };
+				if (layer->m_mode == 0)
+					next = new noise_layer{ m_resolution, layer->m_noise_scale, layer->m_iterations, layer->m_complexity,
+						layer->m_layer_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0) };
+				else if (layer->m_mode == 1)
+					next = new noise_layer{ m_resolution, layer->m_noise_scale, layer->m_iterations, layer->m_complexity,
+						layer->m_layer_count, layer->m_speed, layer->m_height };
 				delete layer;
 				layer = m_noise[l] = next;
 			}
 
-			ImGui::NewLine();
-			ImGui::NewLine();
-			ImGui::SliderFloat("Speed", &layer->m_speed, 0.f, 5.f);
-			ImGui::SliderFloat("Height", &layer->m_height, 0.f, 10.f);
-
-			const char * modes[] = { "Straight", "Whirpool" };
-			if (ImGui::BeginCombo("Direction Modes", modes[layer->m_mode]))
-			{
-				for (size_t n = 0; n < 2; n++)
-				{
-					if (ImGui::Selectable(modes[n], layer->m_mode == n))
-					{
-						layer->m_mode = n;
-						if (layer->m_mode == 0)
-							layer->m_dirs = straight(layer->m_direction, m_resolution);
-						if (layer->m_mode == 1)
-							layer->m_dirs = whirlpool(m_resolution);
-					}
-				}
-				ImGui::EndCombo();
-			}
-			if (layer->m_mode == 0)
-				if(ImGui::SliderFloat2("Direction", &layer->m_direction.x, -1.0f, 1.0f))
-					layer->m_dirs = straight(layer->m_direction, m_resolution);
-
-			if (ImGui::Button("Remove Layer"))
-			{
-				m_noise.erase(m_noise.begin() + l);
-				ImGui::TreePop();
-				return;
-			}
-			ImGui::TreePop();
 		}
-		else if (reset_all)
-		{
-			noise_layer * next{ nullptr };
-			if (layer->m_mode == 0)
-				next = new noise_layer{ m_resolution, layer->m_noise_scale, layer->m_iterations, layer->m_complexity,
-					layer->m_layer_count, layer->m_speed, layer->m_height, layer->m_dirs.get(0) };
-			else if (layer->m_mode == 1)
-				next = new noise_layer{ m_resolution, layer->m_noise_scale, layer->m_iterations, layer->m_complexity,
-					layer->m_layer_count, layer->m_speed, layer->m_height };
-			delete layer;
-			layer = m_noise[l] = next;
-		}
+		ImGui::TreePop();
+	}
 
+	if (ImGui::TreeNode("Shading:"))
+	{
+		ImGui::Checkbox("Wireframe", &shade_info.m_wireframe_mode);
+		ImGui::Text("Shore Properties");
+		ImGui::SliderFloat("Distance", &shade_info.m_shore_distance, 0.1f, 100.0f);
+		ImGui::ColorEdit3("Shore Color", &shade_info.m_shore_water_color.x);
+		ImGui::ColorEdit3("Deep Color", &shade_info.m_deep_water_color.x);
+		ImGui::Text("Reflection");
+		ImGui::SliderFloat("Step", &shade_info.m_reflection_step, 0.01f, 10.0f);
+		ImGui::SliderInt("Max Step", &shade_info.m_reflection_step_max, 1, 500);
+		ImGui::SliderInt("Refinement", &shade_info.m_reflection_refinement_count, 0, 16);
+		ImGui::Text("Refraction");
+		ImGui::SliderFloat("Angle", &shade_info.m_refraction_angle, 0.1f, 1.0f);
+		ImGui::TreePop();
 	}
 }
 

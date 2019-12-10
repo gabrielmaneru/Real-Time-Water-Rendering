@@ -42,6 +42,21 @@ struct Ocean
 	std::vector<noise_layer*> m_noise;
 	raw_mesh m_mesh;
 	raw_texture_single m_caustics;
+
+	struct Shading
+	{
+		bool m_wireframe_mode{false};
+
+		float m_shore_distance{ 50.0f };
+		vec3 m_shore_water_color{ 0.0f, 1.0f, 0.2f };
+		vec3 m_deep_water_color{ 0.0f, 0.2f, 1.0f };
+
+		float m_reflection_step{ 0.01f };
+		int m_reflection_step_max{ 225 };
+		int m_reflection_refinement_count{ 4 };
+
+		float m_refraction_angle{ 0.75f };
+	} shade_info{};
 };
 
 map2d<vec2> straight(vec2 dir, size_t scale);

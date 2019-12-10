@@ -17,7 +17,14 @@ layout (binding = 1) uniform sampler2D position_txt;
 layout (binding = 2) uniform sampler2D diffuse_txt;
 layout (binding = 3) uniform sampler2D caustic_txt;
 
-uniform bool line_render;
+uniform bool WireframeMode;
+uniform float ShoreDistance;
+uniform vec3 ShoreWaterColor;
+uniform vec3 DeepWaterColor;
+uniform float ReflectionStep;
+uniform int ReflectionStepMax;
+uniform int ReflectionRefinementCount;
+uniform float RefractionAngle;
 
 layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
@@ -25,138 +32,127 @@ layout (location = 2) out vec4 attr_metallic;
 layout (location = 3) out vec4 attr_normal;
 layout (location = 4) out float attr_lindepth;
 
-vec4 get_vpos(vec2 txt_uv)
+vec4 get_vPrevPos(vec2 ScrUv)
 {
-	return texture(position_txt, txt_uv);
+	return texture(position_txt, ScrUv);
 }
-vec4 get_prev_diff(vec2 dUv)
+vec4 get_PrevColor(vec2 uv)
 {
-	vec2 size = vec2(textureSize(diffuse_txt,0));
-	vec2 txt_uvs = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y)+dUv;
-	if(txt_uvs.x < 0)
-		txt_uvs.x = - txt_uvs.x;
-	if(txt_uvs.y < 0)
-		txt_uvs.y = - txt_uvs.y;
-	if(txt_uvs.x > 1)
-		txt_uvs.x = 2 - txt_uvs.x;
-	if(txt_uvs.y > 1)
-		txt_uvs.y = 2 - txt_uvs.y;
-	return texture(diffuse_txt, txt_uvs);
+	if(uv.x < 0)
+		uv.x = - uv.x;
+	if(uv.y < 0)
+		uv.y = - uv.y;
+	if(uv.x > 1)
+		uv.x = 2 - uv.x;
+	if(uv.y > 1)
+		uv.y = 2 - uv.y;
+	return texture(diffuse_txt, uv);
 }
-const float step = 0.1;
-const float max_steps = 500;
-const int num_binary = 8;
-vec3 raymarch(vec3 dir, vec3 hit_pos)
+vec3 RaymarchPosition(vec3 vReflectView, vec3 vRayPos)
 {
-	dir *= step;
-	vec4 proj;
-	float z_hit;
+	vReflectView *= ReflectionStep;
+	vec4 HitUv;
+	float vHitZ;
 
-	for(int i = 0; i < max_steps; i++)
+	for(int i = 0; i < ReflectionStepMax; i++)
 	{
-		hit_pos += dir;
-		proj = P * vec4(hit_pos, 1.0);
-		proj.xy /= proj.w;
-		proj.xy = proj.xy * 0.5 + 0.5;
-		if(proj.x < 0 || proj.x >= 1 || proj.y < 0 || proj.y >= 1)
+		vRayPos += vReflectView;
+		HitUv = P * vec4(vRayPos, 1.0);
+		HitUv.xy /= HitUv.w;
+		HitUv.xy = HitUv.xy * 0.5 + 0.5;
+		if(HitUv.x < 0 || HitUv.x >= 1 || HitUv.y < 0 || HitUv.y >= 1)
 			return vec3(0.0);
-		z_hit = get_vpos(proj.xy).z;
-		float delta_z = hit_pos.z - z_hit;
-		float error_margin = dir.z - delta_z;
+		vHitZ = get_vPrevPos(HitUv.xy).z;
+		float delta_z = vRayPos.z - vHitZ;
+		float error_margin = vReflectView.z - delta_z;
+
 		if(error_margin <= 1)
 		{
 			if(delta_z <= 0.0)
 			{
-				for(int j = 0; j < num_binary; j++)
+				for(int j = 0; j < ReflectionRefinementCount; j++)
 				{
-					dir *= 0.5;
+					vReflectView *= 0.5;
 					if(delta_z > 0.0)
-						hit_pos += dir;
+						vRayPos += vReflectView;
 					else
-						hit_pos -= dir;
+						vRayPos -= vReflectView;
 
-					proj = P * vec4(hit_pos, 1.0);
-					proj.xy /= proj.w;
-					proj.xy = proj.xy * 0.5 + 0.5;
-					z_hit = get_vpos(proj.xy).z;
-					delta_z = hit_pos.z - z_hit;
+					HitUv = P * vec4(vRayPos, 1.0);
+					HitUv.xy /= HitUv.w;
+					HitUv.xy = HitUv.xy * 0.5 + 0.5;
+					vHitZ = get_vPrevPos(HitUv.xy).z;
+					delta_z = vRayPos.z - vHitZ;
 				}
-				return vec3(proj.xy, 1);
+				return vec3(HitUv.xy, 1);
 			}
 		}
 	}
 	return vec3(0.0);
 }
-vec3 get_sky_color(vec3 vReflect_View)
+vec3 get_sky_color(vec3 vReflectView)
 {
-	vec3 wReflect_View = normalize(inverse(Vnorm)*vReflect_View);
+	vec3 wReflect_View = normalize(inverse(Vnorm)*vReflectView);
 	if(wReflect_View.y < 0) 
 		return vec3(0.9);
 	else
 		return texture(skybox_txt, wReflect_View).rgb;
 }
-vec3 get_reflected_color(vec3 vPosition, vec3 vReflect_View)
+vec3 get_ReflectedColor(vec3 vPosition, vec3 vReflectView)
 {
-	vec3 result = raymarch(vReflect_View, vPosition);
-	return mix(get_sky_color(vReflect_View),texture(diffuse_txt, result.xy).rgb,result.z);
+	vec3 result = RaymarchPosition(vReflectView, vPosition);
+	return mix(get_sky_color(vReflectView),texture(diffuse_txt, result.xy).rgb,result.z);
 }
-float get_caustic(vec2 world_uv)
+float get_Caustic(vec2 wUv)
 {
-	if(world_uv.x < 0.0 || world_uv.x >= 1.0 || world_uv.y < 0.0 || world_uv.y >=1.0)
+	if(wUv.x < 0.0 || wUv.x >= 1.0 || wUv.y < 0.0 || wUv.y >=1.0)
 		return 1.0;
-	return texture(caustic_txt, world_uv).r;
+	return texture(caustic_txt, wUv).r;
 }
 
 void main()
 {
-	if(line_render)
+	if(WireframeMode)
 	{
 		attr_albedo = vec4(0.0, 0.0, 0.0, 1.0);
 		attr_normal = vec4(normalize(vNormal), 1.0);
 		return;
 	}
 	
-	vec2 size = vec2(textureSize(position_txt,0));
-	vec2 txt_uv = vec2(gl_FragCoord.x/size.x, gl_FragCoord.y/size.y);
-	vec4 vpos = get_vpos(txt_uv);
-	vec2 world_uv = (inverse(V)*vec4(vpos.xyz, 1.0)).xz/256 + 0.5;
-	const float sea_view = 50.0f;
-	float water_len = length(vPosition-vpos.xyz);
-	if(vpos.w < 0.5)
+	vec2 TxtSize = vec2(textureSize(position_txt,0));
+	vec2 ScrUv = vec2(gl_FragCoord.x/TxtSize.x, gl_FragCoord.y/TxtSize.y);
+
+	vec4 vPrevPos = get_vPrevPos(ScrUv);
+	vec2 wUv = (inverse(V)*vec4(vPrevPos.xyz, 1.0)).xz/256 + 0.5;
+	float ShoreLength = length(vPosition-vPrevPos.xyz);
+	if(vPrevPos.w < 0.5)
 	{
-		water_len = sea_view;
-		world_uv = vec2(0);
+		ShoreLength = ShoreDistance;
+		wUv = vec2(0);
 	}
-
-	float depth_factor = clamp(water_len/sea_view,0.0,1.0);
-	vec3 blue_water_color = vec3(0.0,0.2,1.0);
-	vec3 green_water_color = vec3(0.0,1.0,0.2);
-
+	float ShoreFactor = clamp(ShoreLength/ShoreDistance,0.0,1.0);
 
 	vec3 vView = normalize(vPosition);
-	vec3 vReflect_View = normalize(reflect(vView, vNormal));
-	vec3 reflected_color = get_reflected_color(vPosition, vReflect_View);
+	vec3 vReflectView = normalize(reflect(vView, vNormal));
+	vec3 ReflectedColor = get_ReflectedColor(vPosition, vReflectView);
 
+	vec3 vRefractView = normalize(refract(vView, vNormal, RefractionAngle));
+	vec2 dRefractUv = (vRefractView.xy-vView.xy)*ShoreFactor;
+	vec3 PrevColor = get_PrevColor(ScrUv + dRefractUv).xyz;
+	float CausticValue = pow(get_Caustic(wUv),16);
+	PrevColor *= clamp(CausticValue, 0.8, 1.0);
 
-	vec3 vRefract_View = normalize(refract(vView, vNormal, 0.75));
-	float refract_factor = pow(depth_factor,0.8);
-	vec2 delta_Refract = (vRefract_View.xy-vView.xy)*refract_factor*0;
-	vec3 prev_color = get_prev_diff(delta_Refract).xyz;
-	float caustic = pow(get_caustic(world_uv),16);
-	prev_color *= clamp(pow(caustic, 0.2), 0.8, 1.0);
+	float ShoreColorFactor = pow(ShoreFactor,0.5);
+	vec3 ShoreColor = mix(ShoreWaterColor,DeepWaterColor,ShoreColorFactor);
+	float ShoreBlendFactor = pow(ShoreFactor,0.8);
+	vec3 WaterColor = mix(PrevColor,ShoreColor,ShoreBlendFactor);
+	float LightFactor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
+	vec3 ReflectedLight = normalize(reflect(-normalize(l_dir),vNormal));
+	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),4);
+	WaterColor += ReflectedColor * (mix(0.0,0.75,LightFactor)+SpecularFactor);
+	//WaterColor = ReflectedColor;
 
-
-	float drag_factor = pow(depth_factor,0.5);
-	vec3 drag_color = mix(green_water_color,blue_water_color,drag_factor);
-	float color_factor = pow(depth_factor,0.8);
-	vec3 diffuse = mix(prev_color,drag_color,color_factor);
-	float l_factor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
-	vec3 r_light = normalize(reflect(-normalize(l_dir),vNormal));
-	float s_factor = pow(max(dot(r_light,-vView),0),4);
-	diffuse +=reflected_color * (mix(0.0,0.75,l_factor)+s_factor);
-	//diffuse = reflected_color;
-
-	attr_albedo = vec4(diffuse, 1.0);
+	attr_albedo = vec4(WaterColor, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);
 	attr_normal = vec4(normalize(vNormal), 1.0);
 	attr_position = vec4(vPosition, 2.0);
