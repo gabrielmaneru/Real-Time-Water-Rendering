@@ -290,16 +290,16 @@ void Ocean::update_mesh()
 		return m_mesh.vertices[y*m_resolution + x];
 	});
 	vec3 real_pos = scene->m_objects[1]->m_transform.get_pos();
-	vec2 uv = { real_pos.x+128.0f, real_pos.z+128.0f };
+	real_pos.x = glm::clamp(real_pos.x, -120.f, 120.f);
+	real_pos.z = glm::clamp(real_pos.z, -120.f, 120.f);
 
+	vec2 uv = { real_pos.x+128.0f, real_pos.z+128.0f };
 	vec3 w_pos = { real_pos.x, copy_vtx.get_linear(uv).y, real_pos.z };
 	vec3 w_pos_front = copy_vtx.get_linear(uv + vec2(2, 0));
 	vec3 w_pos_back = copy_vtx.get_linear(uv + vec2(-2, 0));
 	vec3 w_pos_right = copy_vtx.get_linear(uv + vec2(0, 2));
 	vec3 w_pos_left = copy_vtx.get_linear(uv + vec2(0, -2));
-
-	w_pos.y = w_pos.y + w_pos_back.y + w_pos_front.y + w_pos_right.y + w_pos_left.y;
-	w_pos.y /= 5.0f;
+	w_pos.y = (w_pos.y + w_pos_back.y + w_pos_front.y + w_pos_right.y + w_pos_left.y)/5.f;
 
 	vec3 to_right = glm::normalize(w_pos_right - w_pos_left);
 	vec3 to_front = glm::normalize(w_pos_front - w_pos_back);

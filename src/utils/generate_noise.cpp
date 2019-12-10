@@ -44,7 +44,7 @@ map2d<float> generate_noise(size_t size, float scale, int iterations, float pers
 	noise_map.loop(
 		[&](size_t, size_t, float prev) -> float
 		{
-			return map(prev, min_value, max_value, 0.0f, 1.0f);
+			return glm::pow(map(prev, min_value, max_value, 0.0f, 1.0f),4);
 		}
 	);
 	return noise_map;
