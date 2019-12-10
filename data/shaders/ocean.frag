@@ -19,12 +19,18 @@ layout (binding = 3) uniform sampler2D caustic_txt;
 
 uniform bool WireframeMode;
 uniform float ShoreDistance;
+uniform float ShoreColorPower;
 uniform vec3 ShoreWaterColor;
 uniform vec3 DeepWaterColor;
+uniform float ShoreBlendPower;
 uniform float ReflectionStep;
 uniform int ReflectionStepMax;
 uniform int ReflectionRefinementCount;
 uniform float RefractionAngle;
+uniform float CausticPower;
+uniform vec2 CausticInterval;
+uniform vec2 LightInterval;
+uniform float LightSpecular;
 
 layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
@@ -139,18 +145,18 @@ void main()
 	vec3 vRefractView = normalize(refract(vView, vNormal, RefractionAngle));
 	vec2 dRefractUv = (vRefractView.xy-vView.xy)*ShoreFactor;
 	vec3 PrevColor = get_PrevColor(ScrUv + dRefractUv).xyz;
-	float CausticValue = pow(get_Caustic(wUv),16);
-	PrevColor *= clamp(CausticValue, 0.8, 1.0);
+	float CausticValue = pow(get_Caustic(wUv),CausticPower);
+	PrevColor *= mix(1.0,mix(CausticInterval.x, CausticInterval.y,CausticValue),ShoreFactor);
 
-	float ShoreColorFactor = pow(ShoreFactor,0.5);
+	float ShoreColorFactor = pow(ShoreFactor,ShoreColorPower);
 	vec3 ShoreColor = mix(ShoreWaterColor,DeepWaterColor,ShoreColorFactor);
-	float ShoreBlendFactor = pow(ShoreFactor,0.8);
+	float ShoreBlendFactor = pow(ShoreFactor,ShoreBlendPower);
 	vec3 WaterColor = mix(PrevColor,ShoreColor,ShoreBlendFactor);
+
 	float LightFactor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
-	vec3 ReflectedLight = normalize(reflect(-normalize(l_dir),vNormal));
+	vec3 ReflectedLight = normalize(reflect(normalize(-l_dir),vNormal));
 	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),4);
-	WaterColor += ReflectedColor * (mix(0.0,0.75,LightFactor)+SpecularFactor);
-	//WaterColor = ReflectedColor;
+	WaterColor += ReflectedColor * (mix(LightInterval.x,LightInterval.y,LightFactor)+LightSpecular*SpecularFactor);
 
 	attr_albedo = vec4(WaterColor, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

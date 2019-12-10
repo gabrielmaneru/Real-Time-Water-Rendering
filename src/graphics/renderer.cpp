@@ -217,7 +217,8 @@ void c_renderer::update()
 		/**/g_buffer_shader->set_uniform("uv_scale", 50.0f);
 		/**/scene->m_objects[0]->draw(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("uv_scale", 1.0f);
-		/**/scene->m_objects[1]->draw(g_buffer_shader);
+		/**/for (size_t i = 1; i < scene->m_objects.size(); i++)
+		/**/	scene->m_objects[i]->draw(g_buffer_shader);
 		/**/g_buffer.set_drawbuffers();
 		/**/
 		/**/if(m_render_options.dc_active)
@@ -325,7 +326,7 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(ocean_shader);
 		/**/ocean_shader->set_uniform("near", scene_cam.m_near);
 		/**/ocean_shader->set_uniform("far", scene_cam.m_far);
-		/**/ocean_shader->set_uniform("l_dir", glm::inverse(glm::transpose(mat3(scene_cam.m_view))) * scene->m_dir_light->m_transform.get_pos());
+		/**/ocean_shader->set_uniform("l_dir", glm::inverse(glm::transpose(mat3(scene_cam.m_view))) * glm::normalize(scene->m_dir_light->m_transform.get_pos()));
 		/**/ocean_shader->set_uniform("Vnorm", glm::inverse(glm::transpose(mat3(scene_cam.m_view))));
 		/**/glActiveTexture(GL_TEXTURE0);
 		/**/glBindTexture(GL_TEXTURE_CUBE_MAP, skybox.m_id);

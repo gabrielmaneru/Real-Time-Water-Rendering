@@ -109,12 +109,18 @@ void Ocean::draw(Shader_Program* shader)
 
 	shader->set_uniform("WireframeMode", shade_info.m_wireframe_mode);
 	shader->set_uniform("ShoreDistance", shade_info.m_shore_distance);
+	shader->set_uniform("ShoreColorPower", shade_info.m_shore_color_power);
 	shader->set_uniform("ShoreWaterColor", shade_info.m_shore_water_color);
 	shader->set_uniform("DeepWaterColor", shade_info.m_deep_water_color);
+	shader->set_uniform("ShoreBlendPower", shade_info.m_shore_blend_power);
 	shader->set_uniform("ReflectionStep", shade_info.m_reflection_step);
 	shader->set_uniform("ReflectionStepMax", shade_info.m_reflection_step_max);
 	shader->set_uniform("ReflectionRefinementCount", shade_info.m_reflection_refinement_count);
 	shader->set_uniform("RefractionAngle", shade_info.m_refraction_angle);
+	shader->set_uniform("CausticPower", shade_info.m_caustic_power);
+	shader->set_uniform("CausticInterval", shade_info.m_caustic_interval);
+	shader->set_uniform("LightInterval", shade_info.m_light_interval);
+	shader->set_uniform("LightSpecular", shade_info.m_light_specular);
 
 
 	m_mesh.draw();
@@ -198,6 +204,7 @@ void Ocean::drawGUI()
 				{
 					m_noise.erase(m_noise.begin() + l);
 					ImGui::TreePop();
+					ImGui::TreePop();
 					return;
 				}
 				ImGui::TreePop();
@@ -224,14 +231,24 @@ void Ocean::drawGUI()
 		ImGui::Checkbox("Wireframe", &shade_info.m_wireframe_mode);
 		ImGui::Text("Shore Properties");
 		ImGui::SliderFloat("Distance", &shade_info.m_shore_distance, 0.1f, 100.0f);
+		ImGui::SliderFloat("Color Power", &shade_info.m_shore_color_power, 0.1f, 10.0f);
 		ImGui::ColorEdit3("Shore Color", &shade_info.m_shore_water_color.x);
 		ImGui::ColorEdit3("Deep Color", &shade_info.m_deep_water_color.x);
+		ImGui::SliderFloat("Blend Power", &shade_info.m_shore_blend_power, 0.1f, 10.0f);
 		ImGui::Text("Reflection");
 		ImGui::SliderFloat("Step", &shade_info.m_reflection_step, 0.01f, 10.0f);
 		ImGui::SliderInt("Max Step", &shade_info.m_reflection_step_max, 1, 500);
 		ImGui::SliderInt("Refinement", &shade_info.m_reflection_refinement_count, 0, 16);
 		ImGui::Text("Refraction");
 		ImGui::SliderFloat("Angle", &shade_info.m_refraction_angle, 0.1f, 1.0f);
+		ImGui::Text("Caustic");
+		ImGui::SliderFloat("Power", &shade_info.m_caustic_power, 1.0f, 64.0f);
+		ImGui::SliderFloat("MinFactor", &shade_info.m_caustic_interval.x, 0.0f, shade_info.m_caustic_interval.y - 0.01f);
+		ImGui::SliderFloat("MaxFactor", &shade_info.m_caustic_interval.y, shade_info.m_caustic_interval.x + 0.01f, 2.0f);
+		ImGui::Text("Light Reflection");
+		ImGui::SliderFloat("MinLight", &shade_info.m_light_interval.x, 0.0f, shade_info.m_light_interval.y - 0.01f);
+		ImGui::SliderFloat("MaxLight", &shade_info.m_light_interval.y, shade_info.m_light_interval.x + 0.01f, 1.0f);
+		ImGui::SliderFloat("Specular Factor", &shade_info.m_light_specular, 0.0f, 2.0f);
 		ImGui::TreePop();
 	}
 }

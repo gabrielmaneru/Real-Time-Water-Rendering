@@ -47,15 +47,23 @@ struct Ocean
 	{
 		bool m_wireframe_mode{false};
 
-		float m_shore_distance{ 50.0f };
-		vec3 m_shore_water_color{ 0.0f, 1.0f, 0.2f };
-		vec3 m_deep_water_color{ 0.0f, 0.2f, 1.0f };
+		float m_shore_distance{ 30.0f };
+		float m_shore_color_power{ 2.0f };
+		vec3 m_shore_water_color{ 0.00f, 0.47f, 0.37f };
+		vec3 m_deep_water_color{ 0.02f, 0.25f, 0.45f };
+		float m_shore_blend_power{ 1.2f };
 
 		float m_reflection_step{ 0.01f };
-		int m_reflection_step_max{ 225 };
-		int m_reflection_refinement_count{ 4 };
+		int m_reflection_step_max{ 500 };
+		int m_reflection_refinement_count{ 0 };
 
-		float m_refraction_angle{ 0.75f };
+		float m_refraction_angle{ 0.9f };
+
+		float m_caustic_power{ 20.0f };
+		vec2 m_caustic_interval{ 0.0f, 1.5f };
+
+		vec2 m_light_interval{ 0.0f, 0.75f };
+		float m_light_specular{ 1.0f };
 	} shade_info{};
 };
 

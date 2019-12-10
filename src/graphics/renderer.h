@@ -102,7 +102,7 @@ public:
 		bool  mb_camera_blur{ false };
 
 		bool  do_bloom{ true };
-		float bl_coef{ 1.f };
+		float bl_coef{ 0.85f };
 
 		int   blur_bloom_iterations{ 1 };
 		int   blur_general_iterations{ 1 };
