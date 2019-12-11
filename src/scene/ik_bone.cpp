@@ -191,6 +191,16 @@ void ik_chain::draw_GUI()
 	ImGui::Text(("Iteration Count: " + std::to_string(m_iterations.iteration_count)).c_str());
 	ImGui::InputInt("Iterations Limit", &m_iterations.iteration_maximum);
 	ImGui::InputInt("Iterations per Frame", &m_iterations.iteration_per_frame);
+	if (m_solver == e_2BoneIK)
+	{
+		if(m_bones.size() == 2)
+				m_end_effector.z = 0.0f;
+		else
+		{
+			ImGui::TextColored(ImColor(255, 0, 0), "Bone size must be 2");
+			m_status = e_Failed;
+		}
+	}
 	if (m_active && m_status == e_Running)
 		run_solver();
 
