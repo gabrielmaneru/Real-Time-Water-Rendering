@@ -52,7 +52,6 @@ void ik_bone::set_tail(const vec3 & t)
 	m_rotation = glm::normalize(quat{ prev,cur });
 }
 
-
 void ik_chain::run_solver()
 {
 	for (int i = 0; i < m_iterations.iteration_per_frame; i++)
@@ -261,4 +260,28 @@ ik_chain::e_Status ik_chain::run_FABRIK()
 		m_bones[i]->set_tail(m_positions[i + 1]);
 
 	return status_check();
+}
+
+void ik_chain::add_bone()
+{
+	ik_bone * b = new ik_bone(m_bones[m_selected]);
+	if (m_selected < m_bones.size() - 1)
+		m_bones[m_selected + 1]->m_parent = b;
+
+	m_bones.insert(m_bones.begin() + m_selected + 1, b);
+	m_status = e_Running;
+}
+
+void ik_chain::remove_bone()
+{
+	delete m_bones[m_selected];
+	m_bones.erase(m_bones.begin() + m_selected);
+
+	if (m_selected == m_bones.size())
+		m_selected--;
+	else if(m_selected == 0)
+		m_bones[0]->m_parent = nullptr;
+	else
+		m_bones[m_selected]->m_parent = m_bones[m_selected - 1];
+	m_status = e_Running;
 }

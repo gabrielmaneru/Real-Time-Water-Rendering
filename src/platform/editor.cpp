@@ -184,6 +184,10 @@ void c_editor::draw_selected_window()
 				ik_bone* b = c->m_bones[c->m_selected];
 				model = glm::inverse(c->m_transform.get_model()) * model;
 				b->set_model(model);
+				if (ImGui::Button("Add Bone"))
+					c->add_bone();
+				if (c->m_bones.size() > 2 && ImGui::Button("Remove Bone"))
+					c->remove_bone();
 			}
 		}
 		

@@ -42,12 +42,14 @@ public:
 	e_Status run_2_bone_ik();
 	e_Status run_ccd();
 	e_Status run_FABRIK();
+	void add_bone();
+	void remove_bone();
 
 	struct Iteration_Info
 	{
-		int iteration_per_frame{50};
+		int iteration_per_frame{100};
 		int iteration_count{0};
-		int iteration_maximum{ 1000 };
+		int iteration_maximum{ 10000 };
 	} m_iterations;
 	float m_epsilon{ 0.1f };
 	bool m_active{false};
