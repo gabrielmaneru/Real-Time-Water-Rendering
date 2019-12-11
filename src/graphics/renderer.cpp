@@ -214,13 +214,19 @@ void c_renderer::update()
 		/**/scene_cam.set_uniforms(g_buffer_shader);
 		/**/g_buffer_shader->set_uniform("near", scene_cam.m_near);
 		/**/g_buffer_shader->set_uniform("far", scene_cam.m_far);
-		/**/g_buffer_shader->set_uniform("uv_scale", 50.0f);
-		/**/scene->m_objects[0]->draw(g_buffer_shader);
-		/**/g_buffer_shader->set_uniform("uv_scale", 1.0f);
-		/**/for (size_t i = 1; i < scene->m_objects.size(); i++)
-		/**/	scene->m_objects[i]->draw(g_buffer_shader);
-		/**/g_buffer.set_drawbuffers();
 		/**/
+		/**/if (m_ocean.shade_info.m_render_terrain)
+		/**/{
+		/**/	g_buffer_shader->set_uniform("uv_scale", 50.0f);
+		/**/	scene->m_objects[0]->draw(g_buffer_shader);
+		/**/	g_buffer_shader->set_uniform("uv_scale", 1.0f);
+		/**/}
+		/**/if(m_ocean.shade_info.m_render_props)
+		/**/{
+		/**/	for (size_t i = 1; i < scene->m_objects.size(); i++)
+		/**/		scene->m_objects[i]->draw(g_buffer_shader);
+		/**/	g_buffer.set_drawbuffers();
+		/**/}
 		/**/if(m_render_options.dc_active)
 		/**/{
 		/**/	if (m_render_options.dc_mode == 0)

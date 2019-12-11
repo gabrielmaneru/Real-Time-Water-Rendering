@@ -24,14 +24,20 @@ uniform float ShoreColorPower;
 uniform vec3 ShoreWaterColor;
 uniform vec3 DeepWaterColor;
 uniform float ShoreBlendPower;
+uniform bool DoReflection;
 uniform float ReflectionStep;
 uniform int ReflectionStepMax;
 uniform int ReflectionRefinementCount;
+uniform float ReflectionMaxPen;
+uniform bool DoRefraction;
 uniform float RefractionAngle;
+uniform bool DoCaustic;
 uniform float CausticPower;
 uniform vec2 CausticInterval;
+uniform bool DoLighting;
 uniform vec2 LightInterval;
 uniform float LightSpecular;
+uniform bool DoFoam;
 
 layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
@@ -71,9 +77,8 @@ vec3 RaymarchPosition(vec3 vReflectView, vec3 vRayPos)
 			return vec3(0.0);
 		vHitZ = get_vPrevPos(HitUv.xy).z;
 		float delta_z = vRayPos.z - vHitZ;
-		float error_margin = vReflectView.z - delta_z;
-
-		if(error_margin <= 1)
+		float pen = vReflectView.z - delta_z;
+		if(pen <= ReflectionMaxPen)
 		{
 			if(delta_z <= 0.0)
 			{
@@ -91,7 +96,7 @@ vec3 RaymarchPosition(vec3 vReflectView, vec3 vRayPos)
 					vHitZ = get_vPrevPos(HitUv.xy).z;
 					delta_z = vRayPos.z - vHitZ;
 				}
-				return vec3(HitUv.xy, 1);
+				return vec3(HitUv.xy, 1-pow(clamp(pen/ReflectionMaxPen,0,1),2));
 			}
 		}
 	}
@@ -141,26 +146,36 @@ void main()
 
 	vec3 vView = normalize(vPosition);
 	vec3 vReflectView = normalize(reflect(vView, vNormal));
-	vec3 ReflectedColor = get_ReflectedColor(vPosition, vReflectView);
+	vec3 ReflectedColor = DoReflection ? get_ReflectedColor(vPosition, vReflectView) : vec3(1);
 
 	vec3 vRefractView = normalize(refract(vView, vNormal, RefractionAngle));
-	vec2 dRefractUv = (vRefractView.xy-vView.xy)*ShoreFactor;
-	vec3 PrevColor = get_PrevColor(ScrUv + dRefractUv).xyz;
-	float CausticValue = pow(get_Caustic(wUv),CausticPower);
-	PrevColor *= mix(1.0,mix(CausticInterval.x, CausticInterval.y,CausticValue),ShoreFactor);
+	vec2 dRefractUv = DoRefraction ? (vRefractView.xy-vView.xy)*ShoreFactor : vec2(0);
+	vec3 RefractedColor = get_PrevColor(ScrUv + dRefractUv).xyz;
+
+	if(DoCaustic)
+	{
+		float CausticValue = pow(get_Caustic(wUv),CausticPower);
+		RefractedColor *= mix(1.0,mix(CausticInterval.x, CausticInterval.y,CausticValue),ShoreFactor);
+	}
 
 	float ShoreColorFactor = pow(ShoreFactor,ShoreColorPower);
 	vec3 ShoreColor = mix(ShoreWaterColor,DeepWaterColor,ShoreColorFactor);
 	float ShoreBlendFactor = pow(ShoreFactor,ShoreBlendPower);
-	vec3 WaterColor = mix(PrevColor,ShoreColor,ShoreBlendFactor);
+	vec3 WaterColor = mix(RefractedColor,ShoreColor,ShoreBlendFactor);
 
 	float LightFactor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
 	vec3 ReflectedLight = normalize(reflect(normalize(-l_dir),vNormal));
 	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),4);
-	WaterColor += ReflectedColor * (mix(LightInterval.x,LightInterval.y,LightFactor)+LightSpecular*SpecularFactor);
-	float foam = texture(foam_txt, vUv*15).r;
-	float foam_factor = pow(length(mNormal.xz),1.2);
-	WaterColor += vec3(foam)*foam_factor;
+	float light = DoLighting ? mix(LightInterval.x,LightInterval.y,LightFactor) + LightSpecular*SpecularFactor : 0.2;
+	if(DoReflection || DoLighting)
+		WaterColor += ReflectedColor * light;
+
+	if(DoFoam)
+	{
+		float foam = texture(foam_txt, vUv*15).r;
+		float foam_factor = clamp(pow(length(mNormal.xz*2),0.1)-0.7f,0,1);
+		WaterColor += vec3(foam)*foam_factor;
+	}
 
 	attr_albedo = vec4(WaterColor, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

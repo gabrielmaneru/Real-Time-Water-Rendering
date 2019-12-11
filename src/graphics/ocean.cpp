@@ -83,14 +83,6 @@ void noise_layer::apply_height(std::vector<vec3>& vertices)
 
 void Ocean::init()
 {
-	m_noise.emplace_back(new noise_layer{ m_resolution, 0.1f, 2, 2.0f,
-		3u, 0.2f, 5.0f, {0.0f, 1.0f} });
-	m_noise.emplace_back(new noise_layer{ m_resolution, 2.0f, 4, 4.0f,
-		3u, 0.3f, 2.0f, {0.0f, 1.0f} });
-	m_noise.emplace_back(new noise_layer{ m_resolution, 8.0f, 4, 4.0f,
-		3u, 0.5f, 0.5f, {0.0f, 1.0f} });
-	m_noise.emplace_back(new noise_layer{ m_resolution, 0.05f, 2, 2.0f,
-		3u, 0.2f, 7.5f, {0.0f, -1.0f} });
 
 	m_mesh.build_plane((int)m_resolution, m_mesh_scale);
 	m_mesh.compute_normals();
@@ -114,14 +106,25 @@ void Ocean::draw(Shader_Program* shader)
 	shader->set_uniform("ShoreWaterColor", shade_info.m_shore_water_color);
 	shader->set_uniform("DeepWaterColor", shade_info.m_deep_water_color);
 	shader->set_uniform("ShoreBlendPower", shade_info.m_shore_blend_power);
+
+	shader->set_uniform("DoReflection", shade_info.m_do_reflection);
 	shader->set_uniform("ReflectionStep", shade_info.m_reflection_step);
 	shader->set_uniform("ReflectionStepMax", shade_info.m_reflection_step_max);
 	shader->set_uniform("ReflectionRefinementCount", shade_info.m_reflection_refinement_count);
+	shader->set_uniform("ReflectionMaxPen", shade_info.m_reflection_maxpen);
+
+	shader->set_uniform("DoRefraction", shade_info.m_do_refraction);
 	shader->set_uniform("RefractionAngle", shade_info.m_refraction_angle);
+
+	shader->set_uniform("DoCaustic", shade_info.m_do_caustic);
 	shader->set_uniform("CausticPower", shade_info.m_caustic_power);
 	shader->set_uniform("CausticInterval", shade_info.m_caustic_interval);
+
+	shader->set_uniform("DoLighting", shade_info.m_do_lighting);
 	shader->set_uniform("LightInterval", shade_info.m_light_interval);
 	shader->set_uniform("LightSpecular", shade_info.m_light_specular);
+
+	shader->set_uniform("DoFoam", shade_info.m_do_foam);
 
 
 	m_mesh.draw();
@@ -141,6 +144,20 @@ void Ocean::drawGUI()
 		if (ImGui::Button("Add New Layer"))
 			m_noise.emplace_back(new noise_layer{ m_resolution, 5.0f, 4, 4.0f,
 				3u, 0.5f, 1.0f, {0.0f, 1.0f} });
+		if (ImGui::Button("Reset Default"))
+		{
+			m_resolution = 256;
+			m_mesh.build_plane((int)m_resolution, m_mesh_scale);
+			m_noise.clear();
+			m_noise.emplace_back(new noise_layer{ m_resolution, 0.1f, 2, 2.0f,
+				3u, 0.2f, 5.0f, {0.0f, 1.0f} });
+			m_noise.emplace_back(new noise_layer{ m_resolution, 2.0f, 4, 4.0f,
+				3u, 0.3f, 2.0f, {0.0f, 1.0f} });
+			m_noise.emplace_back(new noise_layer{ m_resolution, 8.0f, 4, 4.0f,
+				3u, 0.5f, 0.5f, {0.0f, 1.0f} });
+			m_noise.emplace_back(new noise_layer{ m_resolution, 0.05f, 2, 2.0f,
+				3u, 0.2f, 7.5f, {0.0f, -1.0f} });
+		}
 
 		for (size_t l = 0; l < m_noise.size(); l++)
 		{
@@ -179,7 +196,7 @@ void Ocean::drawGUI()
 				ImGui::NewLine();
 				ImGui::NewLine();
 				ImGui::SliderFloat("Speed", &layer->m_speed, 0.f, 5.f);
-				ImGui::SliderFloat("Height", &layer->m_height, 0.f, 10.f);
+				ImGui::SliderFloat("Height", &layer->m_height, 0.f, 25.f);
 
 				const char * modes[] = { "Straight", "Whirpool" };
 				if (ImGui::BeginCombo("Direction Modes", modes[layer->m_mode]))
@@ -198,8 +215,14 @@ void Ocean::drawGUI()
 					ImGui::EndCombo();
 				}
 				if (layer->m_mode == 0)
-					if(ImGui::SliderFloat2("Direction", &layer->m_direction.x, -1.0f, 1.0f))
+				{
+					float ang = atan2(layer->m_direction.y, layer->m_direction.x);
+					if (ImGui::SliderAngle("Dir", &ang, -180.f, 180.f))
+					{
+						layer->m_direction = { cosf(ang),sinf(ang) };
 						layer->m_dirs = straight(layer->m_direction, m_resolution);
+					}
+				}
 
 				if (ImGui::Button("Remove Layer"))
 				{
@@ -230,26 +253,60 @@ void Ocean::drawGUI()
 	if (ImGui::TreeNode("Shading:"))
 	{
 		ImGui::Checkbox("Wireframe", &shade_info.m_wireframe_mode);
-		ImGui::Text("Shore Properties");
+		ImGui::Checkbox("Render Terrain", &shade_info.m_render_terrain);
+		ImGui::Checkbox("Render Props", &shade_info.m_render_props);
+
+		ImGui::Text("Shore Properties"); ImGui::SameLine(); if (ImGui::Button("R"))shade_info.m_shore_distance = { 30.0f }, shade_info.m_shore_color_power = { 2.0f }, shade_info.m_shore_water_color = { 0.00f, 0.47f, 0.37f }, shade_info.m_deep_water_color = { 0.02f, 0.25f, 0.45f }, shade_info.m_shore_blend_power = { 1.2f };
 		ImGui::SliderFloat("Distance", &shade_info.m_shore_distance, 0.1f, 100.0f);
 		ImGui::SliderFloat("Color Power", &shade_info.m_shore_color_power, 0.1f, 10.0f);
 		ImGui::ColorEdit3("Shore Color", &shade_info.m_shore_water_color.x);
 		ImGui::ColorEdit3("Deep Color", &shade_info.m_deep_water_color.x);
 		ImGui::SliderFloat("Blend Power", &shade_info.m_shore_blend_power, 0.1f, 10.0f);
-		ImGui::Text("Reflection");
-		ImGui::SliderFloat("Step", &shade_info.m_reflection_step, 0.01f, 10.0f);
-		ImGui::SliderInt("Max Step", &shade_info.m_reflection_step_max, 1, 500);
-		ImGui::SliderInt("Refinement", &shade_info.m_reflection_refinement_count, 0, 16);
-		ImGui::Text("Refraction");
-		ImGui::SliderFloat("Angle", &shade_info.m_refraction_angle, 0.1f, 1.0f);
-		ImGui::Text("Caustic");
-		ImGui::SliderFloat("Power", &shade_info.m_caustic_power, 1.0f, 64.0f);
-		ImGui::SliderFloat("MinFactor", &shade_info.m_caustic_interval.x, 0.0f, shade_info.m_caustic_interval.y - 0.01f);
-		ImGui::SliderFloat("MaxFactor", &shade_info.m_caustic_interval.y, shade_info.m_caustic_interval.x + 0.01f, 2.0f);
-		ImGui::Text("Light Reflection");
-		ImGui::SliderFloat("MinLight", &shade_info.m_light_interval.x, 0.0f, shade_info.m_light_interval.y - 0.01f);
-		ImGui::SliderFloat("MaxLight", &shade_info.m_light_interval.y, shade_info.m_light_interval.x + 0.01f, 1.0f);
-		ImGui::SliderFloat("Specular Factor", &shade_info.m_light_specular, 0.0f, 2.0f);
+
+		ImGui::Checkbox("Reflection", &shade_info.m_do_reflection);
+		if (shade_info.m_do_reflection)
+		{
+			ImGui::PushID(1);
+			ImGui::SameLine(); if (ImGui::Button("R"))shade_info.m_reflection_step = { 0.01f }, shade_info.m_reflection_step_max = { 500 }, shade_info.m_reflection_refinement_count = { 0 }, shade_info.m_reflection_maxpen = {0.1f};
+			ImGui::SliderFloat("Step", &shade_info.m_reflection_step, 0.01f, 10.0f);
+			ImGui::SliderInt("Max Step", &shade_info.m_reflection_step_max, 1, 500);
+			ImGui::SliderInt("Refinement", &shade_info.m_reflection_refinement_count, 0, 16);
+			ImGui::SliderFloat("Max Penetration", &shade_info.m_reflection_maxpen, 0.0f, 50.0f);
+			ImGui::PopID();
+		}
+
+		ImGui::Checkbox("Refraction", &shade_info.m_do_refraction);
+		if (shade_info.m_do_refraction)
+		{
+			ImGui::PushID(2);
+			ImGui::SameLine(); if (ImGui::Button("R"))shade_info.m_refraction_angle = { 0.9f };
+			ImGui::SliderFloat("Angle", &shade_info.m_refraction_angle, 0.1f, 1.0f);
+			ImGui::PopID();
+		}
+
+		ImGui::Checkbox("Caustic", &shade_info.m_do_caustic);
+		if (shade_info.m_do_caustic)
+		{
+			ImGui::PushID(3);
+			ImGui::SameLine(); if (ImGui::Button("R"))shade_info.m_caustic_interval = { 0.0f, 1.5f }, shade_info.m_caustic_power = { 20.0f };
+			ImGui::SliderFloat("Power", &shade_info.m_caustic_power, 1.0f, 64.0f);
+			ImGui::SliderFloat("MinFactor", &shade_info.m_caustic_interval.x, 0.0f, shade_info.m_caustic_interval.y - 0.01f);
+			ImGui::SliderFloat("MaxFactor", &shade_info.m_caustic_interval.y, shade_info.m_caustic_interval.x + 0.01f, 2.0f);
+			ImGui::PopID();
+		}
+
+		ImGui::Checkbox("Light Reflection", &shade_info.m_do_lighting);
+		if (shade_info.m_do_lighting)
+		{
+			ImGui::PushID(4);
+			ImGui::SameLine(); if (ImGui::Button("R"))shade_info.m_light_interval = { 0.0f, 0.75f }, shade_info.m_light_specular = { 1.0f };
+			ImGui::SliderFloat("MinLight", &shade_info.m_light_interval.x, 0.0f, shade_info.m_light_interval.y - 0.01f);
+			ImGui::SliderFloat("MaxLight", &shade_info.m_light_interval.y, shade_info.m_light_interval.x + 0.01f, 1.0f);
+			ImGui::SliderFloat("Specular Factor", &shade_info.m_light_specular, 0.0f, 2.0f);
+			ImGui::PopID();
+		}
+
+		ImGui::Checkbox("Foam", &shade_info.m_do_foam);
 		ImGui::TreePop();
 	}
 }
@@ -284,32 +341,34 @@ void Ocean::update_mesh()
 	});
 	m_caustics.load();
 
-
-	map2d<vec3> copy_vtx{ m_resolution, m_resolution };
-	copy_vtx.loop([&](size_t x, size_t y, vec3)->vec3
+	if (shade_info.m_render_props && m_resolution == 256)
 	{
-		return m_mesh.vertices[y*m_resolution + x];
-	});
-	vec3 real_pos = scene->m_objects[1]->m_transform.get_pos();
-	real_pos.x = glm::clamp(real_pos.x, -120.f, 120.f);
-	real_pos.z = glm::clamp(real_pos.z, -120.f, 120.f);
+		map2d<vec3> copy_vtx{ m_resolution, m_resolution };
+		copy_vtx.loop([&](size_t x, size_t y, vec3)->vec3
+		{
+			return m_mesh.vertices[y*m_resolution + x];
+		});
+		vec3 real_pos = scene->m_objects[1]->m_transform.get_pos();
+		real_pos.x = glm::clamp(real_pos.x, -120.f, 120.f);
+		real_pos.z = glm::clamp(real_pos.z, -120.f, 120.f);
 
-	vec2 uv = { real_pos.x+128.0f, real_pos.z+128.0f };
-	vec3 w_pos = { real_pos.x, copy_vtx.get_linear(uv).y, real_pos.z };
-	vec3 w_pos_front = copy_vtx.get_linear(uv + vec2(2, 0));
-	vec3 w_pos_back = copy_vtx.get_linear(uv + vec2(-2, 0));
-	vec3 w_pos_right = copy_vtx.get_linear(uv + vec2(0, 2));
-	vec3 w_pos_left = copy_vtx.get_linear(uv + vec2(0, -2));
-	w_pos.y = (w_pos.y + w_pos_back.y + w_pos_front.y + w_pos_right.y + w_pos_left.y)/5.f;
+		vec2 uv = { real_pos.x+128.0f, real_pos.z+128.0f };
+		vec3 w_pos = { real_pos.x, copy_vtx.get_linear(uv).y, real_pos.z };
+		vec3 w_pos_front = copy_vtx.get_linear(uv + vec2(2, 0));
+		vec3 w_pos_back = copy_vtx.get_linear(uv + vec2(-2, 0));
+		vec3 w_pos_right = copy_vtx.get_linear(uv + vec2(0, 2));
+		vec3 w_pos_left = copy_vtx.get_linear(uv + vec2(0, -2));
+		w_pos.y = (w_pos.y + w_pos_back.y + w_pos_front.y + w_pos_right.y + w_pos_left.y)/5.f;
 
-	vec3 to_right = glm::normalize(w_pos_right - w_pos_left);
-	vec3 to_front = glm::normalize(w_pos_front - w_pos_back);
-	vec3 up = glm::normalize(glm::cross(to_right, to_front));
+		vec3 to_right = glm::normalize(w_pos_right - w_pos_left);
+		vec3 to_front = glm::normalize(w_pos_front - w_pos_back);
+		vec3 up = glm::normalize(glm::cross(to_right, to_front));
 
-	scene->m_objects[1]->m_transform.set_pos(w_pos + vec3(0, 1.0, 0));
-	scene->m_objects[1]->m_transform.set_rot(glm::quatLookAt(to_front, up));
-	scene->m_objects[1]->m_transform.get_model();
-	scene->m_objects[1]->m_transform.m_tr.m_pos = real_pos;
+		scene->m_objects[1]->m_transform.set_pos(w_pos + vec3(0, 1.0, 0));
+		scene->m_objects[1]->m_transform.set_rot(glm::quatLookAt(to_front, up));
+		scene->m_objects[1]->m_transform.get_model();
+		scene->m_objects[1]->m_transform.m_tr.m_pos = real_pos;
+	}
 }
 
 map2d<vec2> straight(vec2 dir, size_t scale)
