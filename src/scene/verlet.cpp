@@ -2,6 +2,7 @@
 #include <graphics/renderer.h>
 #include <graphics/model.h>
 
+
 cloth::cloth(transform3d tr)
 	:scene_object("", tr, nullptr, nullptr)
 {
