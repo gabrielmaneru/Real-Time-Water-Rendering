@@ -237,7 +237,7 @@ ik_chain::e_Status ik_chain::run_2_bone_ik()
 }
 ik_chain::e_Status ik_chain::run_ccd()
 {
-	for (int i = m_bones.size() - 1; i >= 0; i--)
+	for (size_t i = m_bones.size() - 1; i >= 0; i--)
 	{
 		vec3 head = m_bones[i]->get_head();
 		vec3 chain_tail = m_bones.back()->get_tail();

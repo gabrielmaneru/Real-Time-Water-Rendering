@@ -12,18 +12,24 @@ Author: Gabriel Mañeru - gabriel.m
 #include <glm/glm.h>
 struct raw_mesh
 {
+	void draw();
 	void load();
 	void free();
-	void compute_terrain_normals();
+	void compute_normals();
+	void build_plane(const int scale, float size);
 
 	unsigned int m_vao{ 0 };
 	unsigned int m_vtx{ 0 };
 	unsigned int m_idx{ 0 };
 	unsigned int m_norm{ 0 };
 	unsigned int m_uvs{ 0 };
+	unsigned int m_tan{ 0 };
+	unsigned int m_bit{ 0 };
 	
 	std::vector<vec3> vertices;
 	std::vector<vec3> normals;
 	std::vector<vec2> uv_coord;
 	std::vector<unsigned> faces;
+	std::vector<vec3> bit;
+	std::vector<vec3> tan;
 };
