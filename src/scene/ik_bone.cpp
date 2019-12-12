@@ -10,8 +10,8 @@ mat4 ik_bone::get_model()const
 	mat4 model{ 1.0f };
 	if (m_parent)
 	{
-		vec3 real_pos = vec3(m_parent->get_model() * vec4(1, 0, 0, 1));
-		model = glm::translate(mat4(1.0f), real_pos);
+		vec3 head_pos = get_head();
+		model = glm::translate(mat4(1.0f), head_pos);
 	}
 	model *= get_concat_rotation();
 	return glm::scale(model, vec3(m_length));
@@ -29,14 +29,14 @@ void ik_bone::set_model(const mat4& m)
 mat4 ik_bone::get_concat_rotation()const
 {
 	if (m_parent)
-		return m_parent->get_concat_rotation() * glm::mat4_cast(m_rotation);
+		return glm::mat4_cast(m_rotation)*m_parent->get_concat_rotation();
 	return glm::mat4_cast(m_rotation);
 }
 
 vec3 ik_bone::get_head() const
 {
 	if (m_parent)
-		return vec3(m_parent->get_model() * vec4(1, 0, 0, 1));
+		return m_parent->get_tail();
 	return vec3{ 0.0f };
 }
 
@@ -245,10 +245,7 @@ ik_chain::e_Status ik_chain::run_ccd()
 		vec3 to_tail = normalize(chain_tail - head);
 		vec3 to_end_effector = normalize(m_end_effector - head);
 
-		if (1.0f - glm::dot(to_tail, to_end_effector) < glm::epsilon<float>())
-			continue;
-
-		quat q{ to_tail, to_end_effector };
+		quat q=quat{ to_tail, to_end_effector };
 		m_bones[i]->m_rotation = normalize(m_bones[i]->m_rotation * normalize(q));
 	}
 
@@ -260,12 +257,15 @@ ik_chain::e_Status ik_chain::run_FABRIK()
 	std::vector<vec3> m_positions;
 	for (size_t i = 0; i < m_bones.size(); i++)
 		m_positions.push_back(m_bones[i]->get_head());
+
 	m_positions.push_back(m_end_effector);
 	for (int i = (int)m_bones.size() - 1; i >= 0; i--)
 		m_positions[i] = m_positions[i + 1] - m_bones[i]->m_length * glm::normalize(m_positions[i + 1] - m_positions[i]);
+
 	m_positions.front() = vec3(0);
 	for (int i = 1; i <= (int)m_bones.size(); i++)
 		m_positions[i] = m_positions[i - 1] - m_bones[i-1]->m_length * glm::normalize(m_positions[i - 1] - m_positions[i]);
+
 	for (int i = 0; i < (int)m_bones.size(); i++)
 		m_bones[i]->set_tail(m_positions[i + 1]);
 
