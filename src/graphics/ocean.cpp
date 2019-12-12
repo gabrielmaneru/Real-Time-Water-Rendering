@@ -306,7 +306,7 @@ void Ocean::drawGUI()
 			ImGui::PopID();
 		}
 
-		ImGui::Checkbox("Foam", &shade_info.m_do_foam);
+		//ImGui::Checkbox("Foam", &shade_info.m_do_foam);
 		ImGui::TreePop();
 	}
 }
