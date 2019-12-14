@@ -14,7 +14,7 @@ struct light_data
 	static vec3 m_ambient;
 	static float m_att_max;
 	vec3 m_diffuse{1.0f};
-	vec3 m_att_factor{.0f, .05f, .02f};
+	vec3 m_att_factor{.0f, .001f, .001f};
 	void drawGUI();
 };
 

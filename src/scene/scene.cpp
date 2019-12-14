@@ -244,17 +244,10 @@ bool c_scene::load_scene(std::string path)
 
 bool c_scene::init()
 {
-	if (!load_scene(m_scene_name))
-		return false;
+	load_scene(m_scene_name);
 
 	transform3d tr;
-	tr.set_pos({ 0,1000,0 });
-	light_data ld;
-	ld.m_diffuse = vec3(0.4f);
-	m_dir_light = new dir_light(tr, ld);
-
-	tr.set_pos({ 0,10,0 });
-	tr.set_scl(vec3{0.5f});
+	m_point_lights.push_back(new point_light(tr));
 	m_objects.emplace_back(new cloth(tr));
 	return true;
 }
@@ -399,9 +392,11 @@ void c_scene::drawGUI()
 		for (int i = 0; i < m_objects.size(); i++)
 		{
 			ImGui::PushID(i);
-			std::string tree_name = m_objects[i]->m_model
-				? m_objects[i]->m_model->m_name
-				: "Unknown";
+			std::string tree_name{ "Unknown" };
+			if (m_objects[i]->m_model)
+				tree_name = m_objects[i]->m_model->m_name;
+			else if (dynamic_cast<cloth*>(m_objects[i]))
+				tree_name = "cloth";
 
 			bool is_selected = m_objects[i] == editor->m_selected;
 			if (ImGui::Selectable(tree_name.c_str(), is_selected))
@@ -439,7 +434,7 @@ void c_scene::drawGUI()
 			ImGui::PushID(i);
 			bool is_selected = m_point_lights[i] == editor->m_selected;
 			if (ImGui::Selectable("Light", is_selected))
-				editor->m_selected = m_objects[i];
+				editor->m_selected = m_point_lights[i];
 			ImGui::PopID();
 		}
 

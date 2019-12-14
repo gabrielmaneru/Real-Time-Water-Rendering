@@ -21,7 +21,7 @@ class c_scene
 	dir_light* m_dir_light{ nullptr };
 	std::vector<decal*> m_decals;
 	std::vector<ik_chain*> m_chains;
-	std::string m_scene_name{"scene"};
+	std::string m_scene_name{""};
 	bool load_scene(std::string);
 
 public:

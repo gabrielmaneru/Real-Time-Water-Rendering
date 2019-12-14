@@ -83,11 +83,11 @@ bool c_renderer::init()
 		{1.0f},{},
 		1.0f,{}
 		});
-	Model::m_def_materials.push_back(new Material{ "copper",
-		{},"plasticpattern1-albedo.png",
-		{},"oxidized-copper-metal.png",
-		{},"oxidized-coppper-roughness.png",
-		1.0f,"oxidized-copper-normal-ue.png"
+	Model::m_def_materials.push_back(new Material{ "curtain",
+		{},"Sponza_Curtain_Red_diffuse.tga",
+		{},"Sponza_Curtain_metallic.tga",
+		{},"Sponza_Curtain_roughness.tga",
+		1.0f,"Sponza_Curtain_Red_normal.tga"
 		});
 
 	// Load Resources
@@ -106,8 +106,9 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 	
 	// Setup Cameras
-	scene_cam.m_eye = { -8,16,16 };
+	scene_cam.m_eye = { 0,0,14 };
 	scene_cam.m_yaw = 270.0f;
+	scene_cam.m_pitch = -30.0f;
 	scene_cam.update();
 
 	skybox.loadCubemapFromFile({
