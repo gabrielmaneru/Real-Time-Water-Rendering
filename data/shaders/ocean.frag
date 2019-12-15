@@ -167,15 +167,23 @@ void main()
 	vec3 ReflectedLight = normalize(reflect(normalize(-l_dir),vNormal));
 	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),4);
 	float light = DoLighting ? mix(LightInterval.x,LightInterval.y,LightFactor) + LightSpecular*SpecularFactor : 0.2;
-	if(DoReflection || DoLighting)
-		WaterColor += ReflectedColor * light;
-
-	if(DoFoam)
-	{
-		float foam = texture(foam_txt, vUv*15).r;
-		float foam_factor = clamp(pow(length(mNormal.xz*2),0.1)-0.7f,0,1);
-		WaterColor += vec3(foam)*foam_factor;
-	}
+	if(DoReflection)
+		WaterColor = mix(ReflectedColor,WaterColor,pow(max(dot(vNormal,-vView),0),0.05));
+	if(DoLighting)
+		;//WaterColor += light;
+	const float h_0 = 0.4f;
+	const float h_max = 1.2f;
+	float foam = clamp(smoothstep(h_0,h_max,mPosition.y),0,1);
+	float foam_color = length(texture(foam_txt, vUv*15).rgb);
+	if(foam_color> 0.8)
+		WaterColor = mix(WaterColor,vec3(foam_color),foam);
+	//WaterColor = vec3(foam);
+	//if(DoFoam)
+	//{
+	//	float foam = texture(foam_txt, vUv*15).r;
+	//	float foam_factor = clamp(pow(length(mNormal.xz*2),0.1)-0.7f,0,1);
+	//	WaterColor += vec3(foam)*foam_factor;
+	//}
 
 	attr_albedo = vec4(WaterColor, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);
