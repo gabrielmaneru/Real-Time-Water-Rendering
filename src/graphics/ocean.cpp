@@ -161,13 +161,13 @@ void Ocean::drawGUI()
 			m_noise.clear();
 
 			m_noise.emplace_back(new noise_layer{ m_resolution, 0.1f, 2, 2.0f,
-				3u, 0.2f, 0.75f, {0.0f, 1.0f} });
+				3u, 0.2f, 5.0f, {0.0f, 1.0f} });
 			m_noise.emplace_back(new noise_layer{ m_resolution, 2.0f, 4, 4.0f,
-				3u, 0.3f, 0.2f, {0.0f, 1.0f} });
+				3u, 0.3f, 2.0f, {0.0f, 1.0f} });
 			m_noise.emplace_back(new noise_layer{ m_resolution, 8.0f, 4, 4.0f,
-				3u, 0.5f, 0.05f, {0.0f, 1.0f} });
+				3u, 0.5f, 0.5f, {0.0f, 1.0f} });
 			m_noise.emplace_back(new noise_layer{ m_resolution, 0.05f, 2, 2.0f,
-				3u, 0.2f, 1.0f, {0.0f, -1.0f} });
+				3u, 0.2f, 7.5f, {0.0f, -1.0f} });
 		}
 
 		for (size_t l = 0; l < m_noise.size(); l++)
