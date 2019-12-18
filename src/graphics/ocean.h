@@ -37,7 +37,7 @@ struct Ocean
 	void drawGUI();
 	void update_mesh();
 
-	size_t m_resolution{ 64u };
+	size_t m_resolution{ 256u };
 	float m_mesh_scale{ 1.f };
 	std::vector<noise_layer*> m_noise;
 	raw_mesh m_mesh;
@@ -46,9 +46,9 @@ struct Ocean
 
 	struct Shading
 	{
-		bool m_wireframe_mode{ true };
-		bool m_render_terrain{ false };
-		bool m_render_props{ false };
+		bool m_wireframe_mode{ false };
+		bool m_render_terrain{ true };
+		bool m_render_props{ true };
 
 		float m_shore_distance{ 30.0f };
 		float m_shore_color_power{ 2.0f };
@@ -56,24 +56,25 @@ struct Ocean
 		vec3 m_deep_water_color{ 0.02f, 0.25f, 0.45f };
 		float m_shore_blend_power{ 1.2f };
 
-		bool m_do_reflection{ false };
+		bool m_do_reflection{ true };
 		float m_reflection_step{ 0.01f };
 		int m_reflection_step_max{ 500 };
 		int m_reflection_refinement_count{ 0 };
 		float m_reflection_maxpen{ 0.1f };
 
-		bool m_do_refraction{ false };
+		bool m_do_refraction{ true };
 		float m_refraction_angle{ 0.9f };
 
-		bool m_do_caustic{ false };
+		bool m_do_caustic{ true };
 		float m_caustic_power{ 20.0f };
 		vec2 m_caustic_interval{ 0.0f, 1.5f };
 
-		bool m_do_lighting{ false };
-		vec2 m_light_interval{ 0.0f, 0.75f };
-		float m_light_specular{ 1.0f };
+		bool m_do_lighting{ true };
+		vec2 m_light_interval{ 0.8f, 1.0f };
+		float m_light_specular{ 0.25f };
 
-		bool m_do_foam{ false };
+		bool m_do_foam{ true };
+		vec2 m_foam_interval{ 2.0f, 8.0f };
 	} shade_info{};
 };
 

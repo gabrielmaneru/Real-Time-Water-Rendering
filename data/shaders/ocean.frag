@@ -38,6 +38,7 @@ uniform bool DoLighting;
 uniform vec2 LightInterval;
 uniform float LightSpecular;
 uniform bool DoFoam;
+uniform vec2 FoamInterval;
 
 layout (location = 0) out vec4 attr_position;
 layout (location = 1) out vec4 attr_albedo;
@@ -163,27 +164,21 @@ void main()
 	float ShoreBlendFactor = pow(ShoreFactor,ShoreBlendPower);
 	vec3 WaterColor = mix(RefractedColor,ShoreColor,ShoreBlendFactor);
 
-	float LightFactor = max(pow(dot(vNormal,normalize(l_dir)),2),0);
+	float LightFactor = max(pow(dot(vNormal,normalize(l_dir)),0.1),0);
 	vec3 ReflectedLight = normalize(reflect(normalize(-l_dir),vNormal));
-	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),4);
-	float light = DoLighting ? mix(LightInterval.x,LightInterval.y,LightFactor) + LightSpecular*SpecularFactor : 0.2;
+	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),2);
+	float light = DoLighting ? mix(LightInterval.x,LightInterval.y,LightFactor) + LightSpecular*SpecularFactor : mix(LightInterval.x,LightInterval.y,0.5);
 	if(DoReflection)
 		WaterColor = mix(ReflectedColor,WaterColor,pow(max(dot(vNormal,-vView),0),0.05));
 	if(DoLighting)
-		;//WaterColor += light;
-	const float h_0 = 0.4f;
-	const float h_max = 1.2f;
-	float foam = clamp(smoothstep(h_0,h_max,mPosition.y),0,1);
-	float foam_color = length(texture(foam_txt, vUv*15).rgb);
-	if(foam_color> 0.8)
-		WaterColor = mix(WaterColor,vec3(foam_color),foam);
-	//WaterColor = vec3(foam);
-	//if(DoFoam)
-	//{
-	//	float foam = texture(foam_txt, vUv*15).r;
-	//	float foam_factor = clamp(pow(length(mNormal.xz*2),0.1)-0.7f,0,1);
-	//	WaterColor += vec3(foam)*foam_factor;
-	//}
+		WaterColor *= light;
+	if(DoFoam)
+	{
+		float foam = clamp(smoothstep(FoamInterval.x,FoamInterval.y,mPosition.y),0,1);
+		float foam_color = length(texture(foam_txt, vUv*15).rgb);
+		if(foam_color> 0.8)
+			WaterColor = mix(WaterColor,vec3(foam_color),foam);
+	}
 
 	attr_albedo = vec4(WaterColor, 1.0);
 	attr_metallic = vec4(vec3(0.0), 1.0);

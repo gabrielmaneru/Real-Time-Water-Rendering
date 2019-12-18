@@ -88,9 +88,18 @@ void Ocean::init()
 	m_mesh.compute_normals();
 	m_mesh.load();
 
+	m_noise.emplace_back(new noise_layer{ m_resolution, 0.1f, 2, 2.0f,
+		3u, 0.2f, 5.0f, {0.0f, 1.0f} });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 2.0f, 4, 4.0f,
+		3u, 0.3f, 2.0f, {0.0f, 1.0f} });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 8.0f, 4, 4.0f,
+		3u, 0.5f, 0.5f, {0.0f, 1.0f} });
+	m_noise.emplace_back(new noise_layer{ m_resolution, 0.05f, 2, 2.0f,
+		3u, 0.2f, 7.5f, {0.0f, -1.0f} });
+
 	m_caustics.setup(256, 256);
 	m_caustics.clear(0.0f);
-	m_foam.loadFromFile(Texture::filter_name("foam.jpg").c_str());
+	m_foam.loadFromFile(Texture::filter_name("foam2.jpg").c_str());
 }
 
 void Ocean::draw(Shader_Program* shader)
@@ -125,6 +134,7 @@ void Ocean::draw(Shader_Program* shader)
 	shader->set_uniform("LightSpecular", shade_info.m_light_specular);
 
 	shader->set_uniform("DoFoam", shade_info.m_do_foam);
+	shader->set_uniform("FoamInterval", shade_info.m_foam_interval);
 
 
 	m_mesh.draw();
@@ -149,14 +159,15 @@ void Ocean::drawGUI()
 			m_resolution = 256;
 			m_mesh.build_plane((int)m_resolution, m_mesh_scale);
 			m_noise.clear();
+
 			m_noise.emplace_back(new noise_layer{ m_resolution, 0.1f, 2, 2.0f,
-				3u, 0.2f, 5.0f, {0.0f, 1.0f} });
+				3u, 0.2f, 0.75f, {0.0f, 1.0f} });
 			m_noise.emplace_back(new noise_layer{ m_resolution, 2.0f, 4, 4.0f,
-				3u, 0.3f, 2.0f, {0.0f, 1.0f} });
+				3u, 0.3f, 0.2f, {0.0f, 1.0f} });
 			m_noise.emplace_back(new noise_layer{ m_resolution, 8.0f, 4, 4.0f,
-				3u, 0.5f, 0.5f, {0.0f, 1.0f} });
+				3u, 0.5f, 0.05f, {0.0f, 1.0f} });
 			m_noise.emplace_back(new noise_layer{ m_resolution, 0.05f, 2, 2.0f,
-				3u, 0.2f, 7.5f, {0.0f, -1.0f} });
+				3u, 0.2f, 1.0f, {0.0f, -1.0f} });
 		}
 
 		for (size_t l = 0; l < m_noise.size(); l++)
@@ -306,7 +317,15 @@ void Ocean::drawGUI()
 			ImGui::PopID();
 		}
 
-		//ImGui::Checkbox("Foam", &shade_info.m_do_foam);
+		ImGui::Checkbox("Foam", &shade_info.m_do_foam);
+		if (shade_info.m_do_foam)
+		{
+			ImGui::PushID(4);
+			ImGui::SameLine(); if (ImGui::Button("R"))shade_info.m_foam_interval = { 0.4f, 0.12f };
+			ImGui::SliderFloat("MinFoam", &shade_info.m_foam_interval.x, 0.0f, shade_info.m_foam_interval.y - 0.01f);
+			ImGui::SliderFloat("MaxFoam", &shade_info.m_foam_interval.y, shade_info.m_foam_interval.x + 0.01f, 10.0f);
+			ImGui::PopID();
+		}
 		ImGui::TreePop();
 	}
 }
