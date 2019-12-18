@@ -90,18 +90,6 @@ bool c_renderer::init()
 		{0.0f},{},
 		1.0f,{}
 		});
-	Model::m_def_materials.push_back(new Material{ "plastic",
-		{},"plasticpattern1-albedo.png",
-		{},"Dielectric_metallic.tga",
-		{},"plasticpattern1-roughness2.png",
-		1.0f,"plasticpattern1-normal2b.png"
-		});
-	Model::m_def_materials.push_back(new Material{ "copper",
-		{},"plasticpattern1-albedo.png",
-		{},"oxidized-copper-metal.png",
-		{},"oxidized-coppper-roughness.png",
-		1.0f,"oxidized-copper-normal-ue.png"
-		});
 	Model::m_def_materials.push_back(new Material{ "sand",
 		{},"sand1-albedo.png",
 		{},"sand1-metalness.png",
