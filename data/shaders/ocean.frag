@@ -168,8 +168,28 @@ void main()
 	vec3 ReflectedLight = normalize(reflect(normalize(-l_dir),vNormal));
 	float SpecularFactor = pow(max(dot(ReflectedLight,-vView),0),2);
 	float light = DoLighting ? mix(LightInterval.x,LightInterval.y,LightFactor) + LightSpecular*SpecularFactor : mix(LightInterval.x,LightInterval.y,0.5);
+	
+	float n_rat = 1.0 / 1.3333;
+	float u_rat = 1.0 / 1.3333;
+	float R_factor = 1.0;
+
+	// Fresnel Equation
+	if(n_rat > 0.01)
+	{
+		float cosI = dot(-vView, vNormal);
+		float sinI = 1.0 - cosI * cosI;
+		float in_root = 1.0 - n_rat * n_rat * sinI;
+		if(in_root > 0.0)
+		{
+			float root = sqrt(in_root);
+			float e_perp = (n_rat*cosI - u_rat*root) / (n_rat*cosI + u_rat*root);
+			float e_para = (u_rat*cosI - n_rat*root) / (u_rat*cosI + n_rat*root);
+			R_factor = 0.5 * (e_perp*e_perp + e_para*e_para);
+		}
+	}
+
 	if(DoReflection)
-		WaterColor = mix(ReflectedColor,WaterColor,pow(max(dot(vNormal,-vView),0),0.05));
+		WaterColor = mix(WaterColor,ReflectedColor,R_factor);
 	if(DoLighting)
 		WaterColor *= light;
 	if(DoFoam)

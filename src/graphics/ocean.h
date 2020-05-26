@@ -73,7 +73,7 @@ struct Ocean
 		vec2 m_light_interval{ 0.8f, 1.0f };
 		float m_light_specular{ 0.25f };
 
-		bool m_do_foam{ true };
+		bool m_do_foam{ false };
 		vec2 m_foam_interval{ 2.0f, 8.0f };
 	} shade_info{};
 };
